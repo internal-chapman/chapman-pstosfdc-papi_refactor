@@ -1,0 +1,58 @@
+# All https proprties
+http:
+  # HTTPS Listener Configurations
+  listener:
+    host: "0.0.0.0"
+    port: "8081"
+    path: "/*"
+    consolePath: "/console/*" 
+        
+  # HTTPS Request Configurations 
+  request:
+    # Process related Request configurations
+    process: ""
+    # System related Request configurations
+    system:
+      responseTimeout: "30000"
+      connectionTimeout: "30000"
+      persistence:
+        host: "localhost"
+        port: "8081"
+        basePath: "/api"
+        path:
+          contactsSpouses: "/persistant/contactsSpouses"
+          contactsNonSpouses: "/persistant/contactsNonSpouses"
+          addresses: "/persistance/contacts/addresses"
+          accounts: "/persistant/accounts"
+      sfdc:
+        host: "localhost"
+        port: "8082"
+        basePath: "/api/sfdc"
+        path:
+          createContact: "contacts"
+          createAddress: "aqb__addresses"
+          createAccount: "accounts"
+          extOrgAccounts: "ext-org-accounts"
+          createEducation: "Education"
+          createRelationship: "relationship"
+db:
+  rpt:
+    host: "psdb-cs92rpt.chapman.edu"
+    port: "1521"
+    user: "sfusr"
+    password: "Chap4me"
+    serviceName: "CS92RPT"
+  aux:
+    host: "psdb-cs92int1.chapman.edu"
+    port: "1521"
+    user: "sfusr"
+    password: "Chap4me"
+    serviceName: "CS92INT1"
+system:
+  salesforce:
+    user: "apisero@chapman.edu.intgr"
+    password: "Genesis2020!"
+    authorizationUrl: "https://chapman--intgr.my.salesforce.com/services/Soap/u/46.0"
+scheduler:
+  frequency:
+    seconds: "1"

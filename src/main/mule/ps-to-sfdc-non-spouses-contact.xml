@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<sub-flow name="sf-contacts-non-spouses" doc:id="63c77740-4f43-41bc-b44d-7d12fa162d98" >
+		<logger level="INFO" doc:name="LOG INFO" doc:id="37e1536d-0b54-49c0-818d-e7627efd81a8" message="nonSpousesContacts record request: #[payload]" />
+		<ee:transform doc:name="DW Set Variables AuxDataInsert and originalPayload" doc:id="799ff089-8182-413f-bac9-8bc2211e5583" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="AuxDataInsert" ><![CDATA[%dw 2.0
+output application/json
+---
+[vars.AuxDetails[(vars.counter default 0)-1]]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Ref sf-non-spouses-contacts-ps-aux-sync-insert" doc:id="a9d2e1ed-74ac-4f71-be99-d7a039f7576a" name="sf-non-spouses-contacts-ps-aux-sync-insert" />
+		<ee:transform doc:name="DW Set Payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pNSCCreateAccRequest.dwl" />
+						</ee:message>
+					</ee:transform>
+		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
+		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
+		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="NonSpouses Account creation completed!" />
+		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pNSCCreatePriNSCRequest.dwl" />
+						</ee:message>
+					</ee:transform>
+		<http:request method="POST" doc:name="POST Create nonSpouse Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcContactsResponse" config-ref="sfdc-system-http-request-config" />
+		<ee:transform doc:name="DW Set Payload" doc:id="8fdb3823-a6f7-4aeb-853c-a968a8f90866">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pNSCCreateSecNSCRequest.dwl" />
+						</ee:message>
+						<ee:variables />
+					</ee:transform>
+		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
+		<logger level="INFO" doc:name="LOG INFO" doc:id="caaf8f61-9138-4023-a720-e011a938748e" message="Trigger entered for creating Relationship object " />
+		<ee:transform doc:name="DW Set Payload To JSON" doc:id="9b791420-551a-4803-ac53-0de16c8267fd">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.originalPayload]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+		<http:request method="POST" doc:name="POST Create Relationship" doc:id="24b2323b-26dc-48d5-94aa-394ad3253551" path="${http.request.system.sfdc.path.createRelationship}" config-ref="sfdc-system-http-request-config" />
+		<flow-ref doc:name="Flow Ref sf-non-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-non-spouses-contacts-ps-aux-sync-update" />
+	</sub-flow>
+	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61" initialState="stopped">
+	<scheduler doc:name="Scheduler" doc:id="f8978aac-a846-4704-8c7d-7f22be8e1160">
+			<scheduling-strategy>
+				<fixed-frequency frequency="5" startDelay="1" timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler> 
+		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync batch"]' />
+		<db:select doc:name="Select nonSpouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
+			<db:sql>Select
+distinct(a.EMPLID)      as &quot;EMPLID&quot;
+, a.FIRST_NAME          as &quot;FIRST_NAME&quot;
+, a.LAST_NAME           as &quot;LAST_NAME&quot;
+, a.MIDDLE_NAME         as &quot;MIDDLE_NAME&quot;
+, a.MAIDEN_NAME         as &quot;MAIDEN_NAME&quot;
+, a.XC_AQ_MAR_STATUS    as &quot;MARTIALSTATUS&quot;
+, a.XC_AQ_BIRTHPLACE    as &quot;BIRTHPLACE&quot;
+, a.XC_AQ_CAE_CATEGORY  as &quot;CAE&quot;
+, a.XC_AQ_GENDER        as &quot;GENDER&quot;
+, a.EMAIL_ADDR          as &quot;EMAIL&quot;
+, a.XC_AQ_EMAIL_PREF    as &quot;EMAILPREF&quot;
+, a.SALUTATION          as &quot;SALUTATION&quot;
+, a.HOME_PHONE                        as &quot;HomePhone&quot;
+, a.MOBILE_PHONE                      as &quot;Mobile&quot;
+, a.XC_AQ_OTHER_PHONE                 as &quot;Otherphone&quot;
+, a.WORK_PHONE                        as &quot;Workphone&quot;
+, a.XC_AQ_ADDR_PREF     as &quot;ADDRESSPREF&quot;
+, a.XC_AQ_MAIL_ADDR     as &quot;MAILPREF&quot;
+, a.XC_AQ_MAIL_STREET   as &quot;STREET&quot;
+, a.CITY                as &quot;CITY&quot;
+, a.COUNTY              as &quot;COUNTY&quot;
+, a.COUNTRY_DESCR       as &quot;COUNTRYDESC&quot;
+, a.STATE               as &quot;STATE&quot;
+, a.STATE_DESCR         as &quot;STATEDESC&quot;
+, a.POSTAL              as &quot;POSTAL&quot;
+, a.COUNTRY             as &quot;COUNTRY&quot;
+, CAST(a.BIRTHDATE as DATE)          as &quot;BIRTHDATE&quot;
+, a.DT_OF_DEATH         as &quot;DECEASEDDATE&quot;
+, a.XC_AQ_DECEASED      as &quot;DECEASED&quot;
+, a.XC_AQ_DUP_FLAG      as &quot;DUPFLAG&quot;
+, a.XC_AQ_DUP_EMPLID    as &quot;DUPEMPLID&quot;
+,CAST(a.LAST_UPDT_DTTM as DATE) as &quot;LASTUPDATEDDATE&quot;
+, af.SCC_AFL_CODE                     as &quot;AFFCODE&quot;
+, af.SCC_AFL_DESCRSHORT               as &quot;AFFDESCSHORT&quot;
+, r.EMPLID              as &quot;RELEMPLID&quot;
+, CAST(r.END_DT as DATE)as &quot;RELENDDATE&quot;
+, r.XC_AQ_ENDED         as &quot;RELENDED&quot;
+, r.EMPLID_RELATED      as &quot;RELATEDEMPLID&quot;
+, r.Name                as &quot;RELNAME&quot;
+, r.RELATION_DESCR      as &quot;RELATIONSHIP&quot;
+, r.XC_AQ_REVERSE_RELA  as &quot;REVRELATIONSHIP&quot;
+, CAST(r.START_DT as DATE) as &quot;STARTDATE&quot;
+, r.XC_AQ_STARTED       as &quot;STARTED&quot;
+FROM SYSADM.PS_XC_AQ_INCTCT_VW a
+LEFT JOIN sysadm.PS_XC_AQ_INRELA_VW r ON a.emplid = r.emplid
+LEFT JOIN sysadm.PS_XC_AQ_AFL_VW af ON a.emplid = af.emplid
+where r.RELATION_DESCR != 'Spouse'
+and af.scc_afl_descrshort in ('Alumni', 'Friend', 'Employee', 'Parent', 'Student')
+and a.EMPLID in ('0916425','1960382')</db:sql>
+		</db:select>
+		<ee:transform doc:name="DW Java To JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.DBConData]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="AuxDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+
+ 
+payload map ((indexOfEmpl, emplDetails ) ->
+	{
+		emplID: indexOfEmpl.EMPLID as String,
+		LastUpdatedDate: indexOfEmpl.LASTUPDATEDDATE as LocalDateTime as String {format: 'yyyy-MM-dd HH.mm.ss.SSSSSSSSS '}
+	}
+)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO Payload" doc:id="3422a71e-fb54-423c-9b1f-a01421ef5a00" message="#[output application/json --- payload]" />
+		<logger level="INFO" doc:name="LOG INFO payload size" doc:id="99cab1f6-4811-4ac8-a98c-7d99b0c0ee63" message="nonSpousesContacts records size from PS db : #[sizeOf(payload)]" />
+		<foreach doc:name="For Each" doc:id="222cf17f-1d1b-4ac4-afdc-8277891e5c44" collection="#[payload]">
+			<ee:transform doc:name="DW Set Payload as an Array" doc:id="6d9c4a2b-bd75-4196-bcd6-2a7331bc8873" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[payload]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Ref sf-contacts-non-spouses" doc:id="32b84162-fed1-4e33-8991-b4f3f44a9c5f" name="sf-contacts-non-spouses" />
+		</foreach>
+	</flow>
+	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="bf800ce0-587f-438d-a203-952063d25dae" message="Flow entered aux insert" />
+		<set-variable value="#[output application/json --- vars.AuxDataInsert map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="SET FV uuid" doc:id="36326e84-dff4-4ae4-8db0-aab88021c655" variableName="uuid" />
+		<ee:transform doc:name="DW Set Payload" doc:id="9e197ea2-866c-474d-95ab-90464f84bb87">
+			<ee:message>
+				<ee:set-payload resource="dataweave/pNSCAuxDbInsert.dwl" />
+			</ee:message>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk Insert Aux db" doc:id="c7c24b25-dd8c-4fad-a425-0f9a282f522b" config-ref="aux-db-config" target="response">
+			<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="96847c92-8ac7-438a-94b2-240ab19d90ef" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
+	</sub-flow>
+	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
+		<logger level="INFO" doc:name="LOG INFO  Aux Update" doc:id="642913c5-5497-43eb-ad11-58ee6d62d6ad" message="Flow entered aux update" />
+		<ee:transform doc:name="DW Set Payload" doc:id="9303c14c-5689-4ad4-a234-7f86fe19e4d0" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pNSCAuxDbUpdate.dwl" />
+			</ee:message>
+		</ee:transform>
+		<db:bulk-update doc:name="Bulk Update Aux db" doc:id="8a816248-9c82-4d59-9518-995fd1bf4ab0" config-ref="aux-db-config" target="response" >
+			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = :now,
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = 'Records inserted in SFDC',
+DESCR250 = :description
+where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response]" />
+	</sub-flow>
+</mule>

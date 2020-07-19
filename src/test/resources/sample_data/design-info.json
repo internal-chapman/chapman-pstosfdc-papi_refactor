@@ -1,0 +1,19 @@
+{
+  "sampleData": {
+    "41c9bfa4-3b42-4794-b223-51218d244414": {
+      "vars-ps_account_result": "sample_data/unknown.dwl"
+    },
+    "081fff8b-0abe-4eeb-8c64-08a7c423d8c2": {
+      "payload": "sample_data/unknown_1.dwl"
+    },
+    "1ea6a1c9-e8bb-48d1-ae3a-76710322989c": {
+      "payload": "sample_data/list_json.json"
+    },
+    "c074e529-5d66-47a9-a0af-f1cac036e8eb": {
+      "vars-DBConData": "sample_data/unknown.json"
+    },
+    "649536a2-6b46-4f65-af87-b115f208c63c": {
+      "vars-DBConData": "sample_data/list_json_1.json"
+    }
+  }
+}

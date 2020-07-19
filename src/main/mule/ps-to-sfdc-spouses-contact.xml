@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<sub-flow name="sf-contacts-spouses" doc:id="63c77740-4f43-41bc-b44d-7d12fa162d98" >
+		<logger level="INFO" doc:name="LOG START" doc:id="37e1536d-0b54-49c0-818d-e7627efd81a8" message="nonSpousesContacts record request: #[payload]" />
+		<ee:transform doc:name="DW Set Variables AuxDataInsert and originalPayload" doc:id="799ff089-8182-413f-bac9-8bc2211e5583" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="AuxDataInsert" ><![CDATA[%dw 2.0
+output application/json
+---
+[vars.AuxDetails[(vars.counter default 0)-1]]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-insert" doc:id="a9d2e1ed-74ac-4f71-be99-d7a039f7576a" name="sf-spouses-contacts-ps-aux-sync-insert" />
+		<ee:transform doc:name="DW Set Payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pSCCreateAccRequest.dwl" />
+						</ee:message>
+					</ee:transform>
+		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
+		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
+		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="NonSpouses Account creation completed!" />
+		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pSCCreatePrimarySCRequest.dwl" />
+						</ee:message>
+					</ee:transform>
+		<http:request method="POST" doc:name="POST  Create Primary Spouse Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcPrimaryContactsResponse" config-ref="sfdc-system-http-request-config" />
+		<ee:transform doc:name="DW Set Payload" doc:id="b2626fc0-2594-47a1-976f-821fc05d23a9" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pSCCreateSecSCRequest.dwl" />
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="POST  Create Secondary Spouse Contact" doc:id="31dffc46-4757-4651-889f-c79ae48ec5ef" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcSecondaryContactsResponse" />
+		<ee:transform doc:name="DW Set Payload" doc:id="8fdb3823-a6f7-4aeb-853c-a968a8f90866">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pSCAccUpdateRequest.dwl" />
+						</ee:message>
+						<ee:variables />
+					</ee:transform>
+		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
+		<logger level="INFO" doc:name="LOG INFO" doc:id="caaf8f61-9138-4023-a720-e011a938748e" message="Trigger entered for creating Relationship object " />
+		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
+	</sub-flow>
+	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61" initialState="started">
+	<scheduler doc:name="Scheduler" doc:id="f8978aac-a846-4704-8c7d-7f22be8e1160">
+			<scheduling-strategy>
+				<fixed-frequency frequency="5" startDelay="1" timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler> 
+		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync batch"]' />
+		<db:select doc:name="Select spouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
+			<db:sql>SELECT T.&quot;SFDCRecordTypeId&quot;  as &quot;RecordTypeId&quot;
+,T.&quot;SFDCAccountName&quot;        as &quot;AccountName&quot;
+,T.&quot;EmplID&quot;                 as &quot;EmplID&quot; 
+,T.&quot;Emp_CAE&quot;                as &quot;Emp_CAE&quot;
+,T.&quot;FirstName&quot;              as &quot;FirstName&quot;
+,T.&quot;MiddleName&quot;             as &quot;MiddleName&quot;
+,T.&quot;LastName&quot;               as &quot;LastName&quot;
+,T.&quot;Gender&quot;                 as &quot;Gender&quot;
+,T.&quot;LastUpdatedDate&quot;        as &quot;LastUpdatedDate&quot;
+,T.&quot;MAIDEN_NAME&quot;            as &quot;MAIDEN_NAME&quot;
+,T.&quot;Birthplace&quot;             as &quot;Birthplace&quot;
+,T.&quot;Birthdate&quot;              as &quot;Birthdate&quot;
+,T.&quot;HomePhone&quot;              as &quot;HomePhone&quot;
+,T.&quot;Mobile&quot;                 as &quot;Mobile&quot;
+,T.&quot;Otherphone&quot;             as &quot;Otherphone&quot;
+,T.&quot;Workphone&quot;              as &quot;Workphone&quot;
+,T.&quot;StateDescr&quot;             as &quot;StateDescr&quot;
+,T.&quot;SpouseEmplID&quot;           as &quot;SpouseEmplID&quot;
+,T.&quot;SpouseCAE&quot;              as &quot;SpouseCAE&quot;
+,T.&quot;SpouseFirstName&quot;        as &quot;SpouseFirstName&quot;
+,T.&quot;SpouseMiddleName&quot;       as &quot;SpouseMiddleName&quot;
+,T.&quot;SpouseLastName&quot;         as &quot;SpouseLastName&quot;
+,T.&quot;SpouseGender&quot;           as &quot;SpouseGender&quot;
+,T.&quot;SpouseEmail&quot;            as &quot;SpouseEmail&quot;
+,T.&quot;SpouseEmailPreference&quot;  as &quot;SpouseEmailPreference&quot;
+,T.&quot;SpouseLastUpdatedDate&quot;  as &quot;SpouseLastUpdatedDate&quot;
+,T.&quot;SpouseMaidenName&quot;       as &quot;SpouseMaidenName&quot;
+,T.&quot;SpouseBirthplace&quot;       as &quot;SpouseBirthplace&quot;
+,T.&quot;SpouseBirthdate&quot;        as &quot;SpouseBirthdate&quot;
+,T.&quot;SpouseHomePhone&quot;        as &quot;SpouseHomePhone&quot;
+,T.&quot;SpouseMobile&quot;           as &quot;SpouseMobile&quot;
+,T.&quot;SpouseWorkphone&quot;        as &quot;SpouseWorkphone&quot;
+,T.&quot;SpouseOtherphone&quot;       as &quot;SpouseOtherphone&quot;
+,T.&quot;SpouseStateDescr&quot;       as &quot;SpouseStateDescr&quot;
+,T.&quot;DupFlag&quot;                as &quot;DupFlag&quot;
+,T.&quot;DupEmplId?&quot;             as &quot;DupEmplId?&quot;
+,T.&quot;PermAddrPref&quot;           as &quot;PermAddrPref&quot;
+,T.&quot;PermAddress&quot;            as &quot;PermAddress&quot;
+,T.&quot;PermStreet&quot;             as &quot;PermStreet&quot;
+,T.&quot;PermCity&quot;               as &quot;PermCity&quot;
+,T.&quot;PermState&quot;              as &quot;PermState&quot;
+,T.&quot;PermPostal_Zip&quot;         as &quot;PermPostal_Zip&quot;
+,T.&quot;PermCountryId&quot;          as &quot;PermCountryId&quot;
+,T.&quot;PermCountry&quot;            as &quot;PermCountry&quot;
+,T.&quot;PermCounty&quot;             as &quot;PermCounty&quot;
+,T.&quot;AccountStatus&quot;          as &quot;AccountStatus&quot;
+,T.&quot;EmailPreference&quot;        as &quot;EmailPreference&quot; 
+,T.&quot;Email&quot;                  as &quot;Email&quot;
+,T.&quot;MaritalStatus&quot;          as &quot;MaritalStatus&quot;
+,T.&quot;RelatedStartDate&quot;       as &quot;RelatedStartDate&quot;
+,T.&quot;RelatedEndDate&quot;         as &quot;RelatedEndDate&quot;
+,T.&quot;RelatedStart&quot;           as &quot;RelatedStart&quot;
+,T.&quot;RelatedEnd&quot;             as &quot;RelatedEnd&quot;
+,T.&quot;RelatedLastUpdateDate&quot;  as &quot;RelatedLastUpdateDate&quot;
+,T.&quot;AffCode&quot;                as &quot;AffCode&quot;
+,T.&quot;AffDescShort&quot;           as &quot;AffDescShort&quot;
+FROM
+(
+SELECT (
+ CASE WHEN a.xc_aq_cae_category IS NOT NULL
+      THEN CASE WHEN l.xc_aq_cae_category IS NOT NULL
+        THEN CASE a.xc_aq_cae_category WHEN 'Alumni' 
+            THEN CASE l.xc_aq_cae_category WHEN 'Alumni'
+                THEN CASE a.xc_aq_gender WHEN 'F'
+                    THEN a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                THEN (' ' || a.last_name)
+                                                ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                        || ' and '
+                        || l.first_name || (CASE WHEN l.middle_name = ' '
+                                                 THEN (' ' || l.last_name)
+                                                 ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                    ELSE l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                                THEN (' ' || l.last_name)
+                                                ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END) 
+                        || ' and '
+                        || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                  THEN (' ' || a.last_name)
+                                                  ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                END
+                ELSE
+                    a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                           THEN (' ' || a.last_name)
+                                           ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                    || ' and '
+                    || l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                              THEN  (' ' || l.last_name)
+                                              ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                                                
+            END
+        WHEN 'Parent' THEN CASE l.xc_aq_cae_category
+        WHEN 'Alumni' THEN l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                                  THEN (' ' || l.last_name)
+                                                  ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                    || ' and '
+                        || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                  THEN (' ' || a.last_name)
+                                                  ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+         WHEN 'Parent' THEN CASE a.xc_aq_gender WHEN 'F'
+            THEN a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                        THEN (' ' || a.last_name)
+                                        ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                    || ' and '
+                    || l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                              THEN (' ' || l.last_name)
+                                              ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+            ELSE l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                        THEN (' ' || l.last_name)
+                                        ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                    || ' and '
+                    || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                              THEN (' ' || a.last_name)
+                                              ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                      END
+                      ELSE
+                            a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                   THEN (' ' || a.last_name)
+                                                   ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                    || ' and '
+                    || l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                              THEN (' ' || l.last_name)
+                                              ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                END
+                ELSE
+                    CASE l.xc_aq_cae_category WHEN 'Other Individual'
+                        THEN CASE a.xc_aq_gender WHEN 'F'
+                            THEN a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                        THEN (' ' || a.last_name)
+                                                        ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                                || ' and '
+                                || l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                                          THEN (' ' || l.last_name)
+                                                          ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                            ELSE l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                                        THEN (' ' || l.last_name)
+                                                        ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                                || ' and '
+                                || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                          THEN (' ' || a.last_name)
+                                                          ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                        END
+                ELSE
+                        l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                               THEN (' ' || l.last_name)
+                                               ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                                     || ' and '
+                                     || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                               THEN (' ' || a.last_name)
+                                                               ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                END
+            END
+                ELSE
+                        a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                               THEN (' ' || a.last_name)
+                                               ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                                     || ' and '
+                                     || l.first_name ||  (CASE WHEN l.middle_name = ' '
+                                                               THEN (' ' || l.last_name)
+                                                               ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                END
+                ELSE
+                    CASE WHEN l.xc_aq_cae_category IS NOT NULL
+                         THEN l.first_name ||   (CASE WHEN l.middle_name = ' '
+                                                      THEN (' ' || l.last_name)
+                                                      ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                              || ' and '
+                              || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                        THEN (' ' || a.last_name)
+                                                        ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                         ELSE
+                             CASE a.xc_aq_gender WHEN 'F'
+                                 THEN a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                         THEN (' ' || a.last_name)
+                                                         ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                                  || ' and '
+                                  || l.first_name ||   (CASE WHEN l.middle_name = ' '
+                                                             THEN (' ' || l.last_name)
+                                                             ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                             ELSE l.first_name ||   (CASE WHEN l.middle_name = ' '
+                                                          THEN (' ' || l.last_name)
+                                                          ELSE (' ' || substr(l.middle_name,1,1) || ' ' || l.last_name) END)
+                                  || ' and '
+                                  || a.first_name ||  (CASE WHEN a.middle_name = ' '
+                                                            THEN (' ' || a.last_name)
+                                                            ELSE (' ' || substr(a.middle_name,1,1) || ' ' || a.last_name) END)
+                        END
+                    END
+END) as &quot;SFDCAccountName&quot;
+,'0122E000000h0RDQAY'                 as &quot;SFDCRecordTypeId&quot;
+, a.emplid                            as &quot;EmplID&quot;
+, a.xc_aq_cae_category                as &quot;Emp_CAE&quot;
+, a.first_name                        as &quot;FirstName&quot;
+, a.middle_name                       as &quot;MiddleName&quot;
+, a.last_name                         as &quot;LastName&quot;
+, a.xc_aq_gender                      as &quot;Gender&quot;
+, CAST(a.LAST_UPDT_DTTM as Date)      as &quot;LastUpdatedDate&quot;
+, a.MAIDEN_NAME                       as &quot;MAIDEN_NAME&quot;
+, a.XC_AQ_BIRTHPLACE                  as &quot;Birthplace&quot;
+, a.BIRTHDATE                         as &quot;Birthdate&quot;
+, a.HOME_PHONE                        as &quot;HomePhone&quot;
+, a.MOBILE_PHONE                      as &quot;Mobile&quot;
+, a.XC_AQ_OTHER_PHONE                 as &quot;Otherphone&quot;
+, a.WORK_PHONE                        as &quot;Workphone&quot;
+, a.STATE_DESCR                       as &quot;StateDescr&quot;
+, l.emplid                            as &quot;SpouseEmplID&quot;
+, l.xc_aq_cae_category                as &quot;SpouseCAE&quot;
+, l.first_name                        as &quot;SpouseFirstName&quot;
+, l.middle_name                       as &quot;SpouseMiddleName&quot;
+, l.last_name                         as &quot;SpouseLastName&quot;
+, l.xc_aq_gender                      as &quot;SpouseGender&quot;
+, l.email_addr                        as &quot;SpouseEmail&quot;
+, l.xc_aq_email_pref                  as &quot;SpouseEmailPreference&quot;
+, CAST(l.LAST_UPDT_DTTM as Date)      as &quot;SpouseLastUpdatedDate&quot;
+, l.MAIDEN_NAME                       as &quot;SpouseMaidenName&quot;
+, l.XC_AQ_BIRTHPLACE                  as &quot;SpouseBirthplace&quot;
+, l.BIRTHDATE                         as &quot;SpouseBirthdate&quot;
+, l.HOME_PHONE                        as &quot;SpouseHomePhone&quot;
+, l.MOBILE_PHONE                      as &quot;SpouseMobile&quot;
+, l.WORK_PHONE                        as &quot;SpouseWorkphone&quot;
+, l.XC_AQ_OTHER_PHONE                 as &quot;SpouseOtherphone&quot;
+, l.STATE_DESCR                       as &quot;SpouseStateDescr&quot;
+, a.xc_aq_dup_flag                    as &quot;DupFlag&quot;
+, a.xc_aq_dup_emplid                  as &quot;DupEmplId?&quot;
+, a.xc_aq_addr_pref                   as &quot;PermAddrPref&quot;
+, a.xc_aq_mail_addr                   as &quot;PermAddress&quot;
+, a.xc_aq_mail_street                 as &quot;PermStreet&quot;
+, a.city                              as &quot;PermCity&quot;
+, a.state                             as &quot;PermState&quot;
+, a.postal                            as &quot;PermPostal_Zip&quot;
+, a.country                           as &quot;PermCountryId&quot;
+, a.country_descr                     as &quot;PermCountry&quot;
+, a.county                            as &quot;PermCounty&quot;
+, a.xc_aq_deceased                    as &quot;AccountStatus&quot;
+, a.xc_aq_email_pref                  as &quot;EmailPreference&quot;
+, a.email_addr                        as &quot;Email&quot;
+, a.xc_aq_mar_status                  as &quot;MaritalStatus&quot;
+, CAST(r.START_DT as Date)            as &quot;RelatedStartDate&quot;
+, CAST(r.END_DT as Date)              as &quot;RelatedEndDate&quot;
+, r.XC_AQ_STARTED                     as &quot;RelatedStart&quot;
+, r.XC_AQ_ENDED                       as &quot;RelatedEnd&quot;
+, CAST(r.LAST_UPDT_DTTM as Date)      as &quot;RelatedLastUpdateDate&quot;
+, af.SCC_AFL_CODE                     as &quot;AffCode&quot;
+, af.SCC_AFL_DESCRSHORT               as &quot;AffDescShort&quot;
+FROM sysadm.PS_XC_AQ_INCTCT_VW a
+LEFT JOIN sysadm.PS_XC_AQ_INRELA_VW r ON a.emplid = r.emplid
+LEFT JOIN sysadm.PS_XC_AQ_INCTCT_VW l ON r.EMPLID_RELATED = l.emplid
+LEFT JOIN sysadm.PS_XC_AQ_AFL_VW af ON a.emplid = af.emplid
+WHERE 
+r.RELATION_DESCR = 'Spouse' and r.XC_AQ_REVERSE_RELA = 'Spouse' and
+(a.xc_aq_dup_flag IS NULL OR a.xc_aq_dup_flag = 'DPB') 
+and a.emplid = '0502107' 
+and af.SCC_AFL_IS_ROOT = 'N'
+and scc_afl_descrshort in ('Alumni', 'Friend', 'Employee', 'Parent', 'Student')
+ORDER BY &quot;SFDCAccountName&quot;
+--FETCH FIRST 100 ROWS ONLY
+) T
+WHERE (SUBSTR(T.&quot;SFDCAccountName&quot;,1,INSTR(&quot;SFDCAccountName&quot;,' and ')-1)) = 
+(CASE WHEN T.&quot;MiddleName&quot; = ' '
+       THEN T.&quot;FirstName&quot; || ' ' || T.&quot;LastName&quot;
+       ELSE T.&quot;FirstName&quot; || ' ' || SUBSTR(T.&quot;MiddleName&quot;,1,1) || ' ' || T.&quot;LastName&quot; End)</db:sql>
+		</db:select>
+		<ee:transform doc:name="DW Java to JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.DBConData]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/vSCAuxDetails.dwl" variableName="AuxDetails" />
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="3422a71e-fb54-423c-9b1f-a01421ef5a00" message="#[output application/json --- payload]" />
+		<logger level="INFO" doc:name="LOG INFO payload size" doc:id="99cab1f6-4811-4ac8-a98c-7d99b0c0ee63" message="nonSpousesContacts records size from PS db : #[sizeOf(payload)]" />
+		<foreach doc:name="For Each" doc:id="222cf17f-1d1b-4ac4-afdc-8277891e5c44" collection="#[payload]">
+			<ee:transform doc:name="DW Set Payload as an Array" doc:id="6d9c4a2b-bd75-4196-bcd6-2a7331bc8873" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[payload]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Ref sf-contacts-spouses" doc:id="32b84162-fed1-4e33-8991-b4f3f44a9c5f" name="sf-contacts-spouses" />
+		</foreach>
+	</flow>
+	<sub-flow name="sf-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="bf800ce0-587f-438d-a203-952063d25dae" message="Flow entered aux insert" />
+		<set-variable value="#[output application/json --- vars.AuxDataInsert map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="SET FV uuid" doc:id="36326e84-dff4-4ae4-8db0-aab88021c655" variableName="uuid" />
+		<ee:transform doc:name="DW Set Payload" doc:id="9e197ea2-866c-474d-95ab-90464f84bb87">
+			<ee:message>
+				<ee:set-payload resource="dataweave/pSCAuxDbInsert.dwl" />
+			</ee:message>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk Insert Into AUX db" doc:id="c7c24b25-dd8c-4fad-a425-0f9a282f522b" config-ref="aux-db-config" target="response">
+			<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="96847c92-8ac7-438a-94b2-240ab19d90ef" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
+	</sub-flow>
+	<sub-flow name="sf-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
+		<logger level="INFO" doc:name="LOG INFO  Aux Update" doc:id="642913c5-5497-43eb-ad11-58ee6d62d6ad" message="Flow entered aux update" />
+		<ee:transform doc:name="DW Set Payload" doc:id="9303c14c-5689-4ad4-a234-7f86fe19e4d0" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pSCAuxDbUpdate.dwl" />
+			</ee:message>
+		</ee:transform>
+		<db:bulk-update doc:name="Bulk Update Into AUX db" doc:id="8a816248-9c82-4d59-9518-995fd1bf4ab0" config-ref="aux-db-config" target="response" >
+			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = :now,
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = 'Records inserted in SFDC',
+DESCR250 = :description
+where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response]" />
+	</sub-flow>
+</mule>

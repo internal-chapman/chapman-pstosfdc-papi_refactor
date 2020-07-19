@@ -1,0 +1,156 @@
+#%RAML 1.0
+title: usecase-1-papi
+
+
+/ps/ScheduledTrigger:
+  /Account:
+    /create:
+      get:
+        description: Scheduled extraction of records from campus solutions.
+        responses:
+          200:
+            body:
+              application/json:
+                examples:
+                  output: 
+                    {
+                      "Student": [
+                        {
+                          "id": "101",
+                          "name": "Max",
+                          "age": "21",
+                          "gender": "m"
+                        }
+                      ]
+                    }
+          201:
+            body:
+              application/json:
+                example:
+                  message: No new record update.
+    /update:
+      get:
+        description: Updated extraction of records from campus solutions.
+        responses:
+          200:
+            body:
+              application/json:
+                examples:
+                  output: 
+                    {
+                      "Student": [
+                        {
+                          "id": "101",
+                          "name": "Max",
+                          "age": "21",
+                          "gender": "m"
+                        }
+                      ]
+                    }
+          201:
+            body:
+              application/json:
+                example:
+                  message: No new record update.
+  /Contact:
+    /create:
+      get:
+        description: Scheduled extraction of records from campus solutions.
+        responses:
+          200:
+            body:
+              application/json:
+                examples:
+                  output: 
+                    {
+                      "Student": [
+                        {
+                      "AccountId":"0012i00000BPG7EAAX",
+                      "Salutation": "Mr.",
+                      "FirstName": "Max",
+                      "LastName": ""
+                        }
+                      ]
+                    }
+          201:
+            body:
+              application/json:
+                example:
+                  message: No new record update.
+    /update:
+      get:
+        description: Updated extraction of records from campus solutions.
+        responses:
+          200:
+            body:
+              application/json:
+                examples:
+                  output: 
+                    {
+                      "Student": [
+                        {
+                      "AccountId": "0012i00000BPG7EAAX",
+                "Salutation": "Mr.",
+                      "FirstName": "Max",
+                      "LastName": ""
+                        }
+                      ]
+                    }
+          201:
+            body:
+              application/json:
+                example:
+                  message: No new record update.
+  /Address:
+    /create:
+      get:
+        description: Scheduled extraction of records from campus solutions.
+        responses:
+          200:
+            body:
+              application/json:
+                examples:
+                  output: 
+                    {
+                      "Student": [
+                        {
+  "AQB__Account__c": "0012i00000BPG7EAAX",
+  "AQB__Contact__c": "0032i000008T9wWAAS",
+  "AQB__AccountExternlId__c": "12",
+  "AQB__StateId__c": "12"
+                        }
+                      ]
+                    }
+          201:
+            body:
+              application/json:
+                example:
+                  message: No new record update.
+    
+        
+                  
+                  
+  /Email:
+    /Create:
+      get:
+        description: Scheduled Extraction OF Email Records
+        body:
+          application/json:
+
+        responses:
+          200:
+            body:
+              application/json:
+              
+              
+  /Phone:
+    /Create:
+      get:
+        description: Scheduled Extraction OF Email Records
+        body:
+          application/json:
+
+        responses:
+          200:
+            body:
+              application/json:

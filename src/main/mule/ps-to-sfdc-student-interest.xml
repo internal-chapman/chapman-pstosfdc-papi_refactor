@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="d6f8c3f7-8db9-4cd1-a11f-ff16e5c375ea" >
+			<scheduling-strategy >
+				<fixed-frequency timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Employment sync started" />
+		<os:retrieve doc:name="os retrieve student-intr_lastProcessedTime" doc:id="52d88df5-e6e5-4960-86fa-81be73c83807" key="student-intr_lastProcessedTime" objectStore="Object_store" target="lastProcessedTime">
+			<os:default-value><![CDATA[2017-07-09 00:43:45]]></os:default-value>
+		</os:retrieve>
+		<db:select doc:name="Fetch Count From People Soft db" doc:id="241a87a9-8cf5-4d55-befd-b18efffcb8fd" config-ref="rpt-db-config" >
+			<db:sql >select count(*) cnt from sysadm.PS_XC_AQ_STUINT_VW
+ where LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Check Student Count" doc:id="13461270-e88d-4b3d-8742-a1a5f834aa6b" >
+			<when expression="#[payload[0].CNT &gt; 0]" >
+				<ee:transform doc:name="SET Variables max_LAST_UPDT_DTTM and batch_size" doc:id="ba8283b7-d631-443d-9a79-f7f0675471bb">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="batch_size"><![CDATA[20 as Number]]></ee:set-variable>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA['']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<logger level="INFO" doc:name="LOG INFO" doc:id="4fb47233-2cfe-461a-adcc-886a1050f8c2" message='#["Total Data Set Size: " ++ (payload[0].CNT default 0) ++ " Batch Count: " ++ ceil((payload[0].CNT default 0)/50)]' />
+				<set-variable value="#[1 to ceil((payload[0].CNT default 0)/vars.batch_size)]" doc:name="SET  FV batch_list" doc:id="c6fb2768-31e0-43c9-a4f6-001599597b42" variableName="batch_list" />
+				<foreach doc:name="For Each" doc:id="815a8769-7076-40d6-85eb-681e94a4d022" collection="#[vars.batch_list]" >
+					<logger level="INFO" doc:name="LOG INFO" doc:id="85540f29-88ed-4640-8bfe-6394b4855d04" message='#["Fetching the records for batch: " ++ vars.counter]'/>
+					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="cad3d4e3-480e-434f-990a-d5e9957cbc5a" config-ref="rpt-db-config" >
+						<db:sql >SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,LAST_UPDT_DTTM FROM (
+  SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,LAST_UPDT_DTTM, RANK() OVER (ORDER BY EMPLID , LAST_UPDT_DTTM) as my_rank
+  FROM sysadm.PS_XC_AQ_STUINT_VW 
+  where LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
+  )
+WHERE my_rank &gt;= :start_offset AND my_rank &lt;= :end_offset</db:sql>
+						<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime,
+	"start_offset": ((vars.counter-1)* vars.batch_size) + 1,
+	"end_offset": ((vars.counter-1) * vars.batch_size) + vars.batch_size
+}]]]></db:input-parameters>
+					</db:select>
+					<ee:transform doc:name="DW Payload Java to JSON" doc:id="e2d1ed1e-7d68-4c1f-b6fb-91aa4c27846a">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(payload.LAST_UPDT_DTTM orderBy ($))[sizeOf(payload)-1]]]></ee:set-variable>
+							<ee:set-variable variableName="aux_data_insert" ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(value, index) ->{
+	"source": "PS-CS",
+	"source_id": value.EMPLID default '',
+	"metadata": "CS to SFDC",
+	"description": "StudentInterest data transfer from Campus Solution to SFDC"
+}]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<flow-ref doc:name="Flow Ref sf-aux-insert" doc:id="14a9ea7c-1aae-44f7-b906-d272f80e42fc" name="sf-aux-insert"/>
+					<logger level="INFO" doc:name="LOG INFO" doc:id="2313b54f-2965-41e8-9365-1c743b621fc7" message="#[payload]" />
+					<try doc:name="Try" doc:id="4cb2d958-338f-4da3-b261-5cb080b083d0" >
+						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="12b1b85f-a3f0-4061-b09f-382b10662dc2" message='#["Sending request to system api to sync StudentInterest for batch: " ++ vars.counter]'/>
+						<http:request method="POST" doc:name="StudentInterest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest"/>
+						<logger level="INFO" doc:name="LOG INFO Sync End" doc:id="453bdb98-49be-4058-b7e0-3cbefcdc25d4" message="#[payload]" />
+						<choice doc:name="Check Error Records" doc:id="e2fdcb4b-82b6-4991-b4ac-cb3a728eb692" >
+							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]) &gt; 0]" >
+								<logger level="ERROR" doc:name="LOG INFO Errored Records" doc:id="51cb97e8-2c45-4984-b5d5-c7c2f949a06d" message="#[output application/json
+---
+(payload[?(sizeOf($.errors default [])&gt;0)]) map(value, index) -&gt;{
+    &quot;errors&quot;: value.errors.message reduce($$++ ' , ' ++$)
+}]" />
+							</when>
+						</choice>
+						<error-handler >
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7aba5190-eb7b-4844-b959-dc229e99e964" >
+								<logger level="INFO" doc:name="LOG INFO" doc:id="c6acf8d2-0893-4969-84cb-5fc33e172118" message="#[error]" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+					<ee:transform doc:name="DW Set aux_data_update" doc:id="29575994-9dfa-4cfe-b4a7-e945a0426731" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable resource="dataweave/vStudentIntrestAuxDataUpdate.dwl" variableName="aux_data_update" />
+						</ee:variables>
+					</ee:transform>
+					<flow-ref doc:name="Flow Ref sf-aux-update" doc:id="eca881ee-1e41-4a47-a94a-9d3a3cd05154" name="sf-aux-update"/>
+					<os:store doc:name="os store student-intr_lastProcessedTime" doc:id="f9bcd805-aa5b-417b-b6b3-2079fa914b3d" key="student-intr_lastProcessedTime" objectStore="Object_store">
+			<os:value><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
+		</os:store>
+					<logger level="INFO" doc:name="LOG INFO Batch End" doc:id="1c887553-f73c-454b-b386-38a0b74e7405" message='#["Data Insert/Update for Batch: " ++ vars.counter ++ "is completed"]' />
+				</foreach>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO" doc:id="c64648b7-2993-40b9-b33a-efb7f6d9def0" message="No records available!!" />
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="LOG END" doc:id="a526224b-cf19-4d56-965c-9a478491e32a" message='#["StudentInterest Sync Completed from PS to SF at " ++ now()]'/>
+	</flow>
+</mule>

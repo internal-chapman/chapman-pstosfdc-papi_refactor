@@ -1,0 +1,14 @@
+persistant:
+  http:
+    host: "localhost"
+    port: "8081"
+    contacts: "/api/persistant/contacts"
+    addresses: "/api/persistance/contacts/addresses"
+    accounts: "/api/persistant/accounts"
+sfdc:
+  http:
+    host: "localhost"
+    port: "8082"
+    createContact: "/api/sfdc/contacts"
+    createAddress: "/api/sfdc/aqb__addresses"
+    createAccount: "/api/sfdc/accounts"

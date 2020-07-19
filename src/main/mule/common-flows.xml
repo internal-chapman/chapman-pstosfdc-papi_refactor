@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="sf-correlationId" doc:id="6bbce4c0-9827-4df3-a454-644b373cc55b" >
+		<ee:transform doc:name="DW Set CorrelationId" doc:id="d95389b6-4b59-4e2c-bd72-5c01163c9e46" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/correlationId.dwl" variableName="correlationId" />
+				<ee:set-variable resource="dataweave/correlationId.dwl" variableName="correlationId" />
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="sf-generate-uuid" doc:id="dc62faf0-693f-4eab-9dc9-c0822bf5478b" >
+		<ee:transform doc:name="DW Generate UUID" doc:id="0cfba8b3-a194-483c-815f-fee319d5d258" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/vUUID.dwl" variableName="uuid" />
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+</mule>

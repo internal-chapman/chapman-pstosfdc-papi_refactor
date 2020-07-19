@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="ext-accounts-sync-process-flow" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="d22d956f-f9c8-450d-b959-4dc46e3cb9c3">
+			<scheduling-strategy>
+				<fixed-frequency frequency="10" startDelay="1" timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Log At Start" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
+		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
+			<db:sql>SELECT * FROM SYSADM.PS_XC_AQ_EOACCT_VW OFFSET 61 ROWS  FETCH NEXT 10 ROWS ONLY</db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Log payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
+		<flow-ref doc:name="Insert records to Aux DB" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="ext-accounts-ps-aux-sync-insert-sub-flow" target="vars.auxSyncPayload" />
+		<ee:transform doc:name="Sfdc message" doc:id="c70ab1a1-eefa-461c-bdb4-b95cd370543c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map(account, index) -> {
+	AQC_Inst_ID__c: account.'EXT_ORG_ID',
+	Name: account.'ACCOUNT_NAME',
+	AQC_Inst_City__c: account.'CITY',
+	AQC_Inst_State__c: account.'STATE',
+	AQC_Inst_Country__c: account.'COUNTRY_NM'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Invoke Batch Process" doc:id="7ebe7664-257c-4ea0-a313-eee88a4872a6" name="ext-accounts-sync-process-batch"/>
+	</flow>
+	<flow name="ext-accounts-sync-process-batch" doc:id="bb7e26f4-b1bf-44c4-ac1a-5e54a57907d7" >
+		<batch:job jobName="ext-accounts-sync-process" doc:id="3b3129ee-fb6a-4029-b284-59e19478e9fc" >
+			<batch:process-records >
+				<batch:step name="sync-ps-records-to-sfdc" doc:id="d7cd6edd-7998-4ba5-aff2-4d80cf8d08c8" >
+					<logger level="INFO" doc:name="Log request" doc:id="29a2b9f2-dbbc-44d1-b915-b88bf111b828" message="Account record request: #[payload]"/>
+					<http:request method="POST" doc:name="Call SFDC System Api" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}"/>
+					<ee:transform doc:name="Sfdc response" doc:id="fdb04c8e-be4f-49f4-9f60-19402a4a02ae">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					<logger level="INFO" doc:name="Log response" doc:id="464d1c0a-b9f2-43d8-8252-53ee477ca594" message="Account record response: #[payload]"/>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="aca46e01-ae76-48d8-afb6-e6ef9b8e24f1" size="100">
+						<logger level="INFO" doc:name="Log size" doc:id="306c1d2b-f9f2-475a-93e9-50e2ca8d11ba" message="Batch aggregator size : #[sizeOf(payload)], #[payload]"/>
+						<flow-ref doc:name="Update records with Aux" doc:id="f3aaae58-bdfc-4664-8edb-c98c54f91398" name="ext-accounts-ps-aux-sync-update-sub-flow"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="Batch summary" doc:id="d0c8fd58-38e3-4620-b58c-2fbf0c92c884" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	batchSummary: payload
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log summary" doc:id="5e6834f4-6471-4919-93ec-a33469c72ccc" message="Batch Summary : #[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<sub-flow name="ext-accounts-ps-aux-sync-insert-sub-flow" doc:id="70a37f2f-ccca-455d-aedf-2f3753af196d" >
+		<ee:transform doc:name="PS to Aux message" doc:id="ec373f5d-2d5b-4da4-a3fc-84cc767017ce" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var sourceId = uuid()
+---
+payload map (account, index) -> {
+	GUID: account.'EXT_ORG_ID',
+	XC_AQ_SOURCE: 'PS-CS',
+	XC_AQ_SOURCE_ID: uuid()[0 to 7] ++ uuid()[9] as String,
+	XC_AQ_SOURCE_TYPE: account.'EXT_ORG_ID',
+	XC_AQ_DESTINATION: "SFDC",
+	XC_AQ_DEST_ID: "-",
+	XC_AQ_STATUS: "In progress",
+	DTTM_CREATED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	DTTM_MODIFIED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	XC_AQ_METADATA: "CS to SFDC",
+	DESCR250: "Accounts: Data transfer from Campus Solution to SFDC"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Payload Size" doc:id="64fd3734-395c-4368-9023-8353ddbedbeb" message="Account records bulk insert size : #[sizeOf(payload)]"/>
+		<db:bulk-insert doc:name="Invoke Aux DB" doc:id="89477600-a380-4db3-9962-1d625548c873" config-ref="aux-db-config" transactionalAction="NOT_SUPPORTED">
+			<reconnect />
+			<db:sql>INSERT INTO SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+VALUES (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="Log status" doc:id="1618614d-ae37-428f-aa99-3a1ec0f4a7ed" message="Bulk insert to Aux success!" />
+
+	</sub-flow>
+	<sub-flow name="ext-accounts-ps-aux-sync-update-sub-flow" doc:id="61026db1-5a18-406b-9e86-a75430b68bb7" >
+		<ee:transform doc:name="SF to Aux message" doc:id="4a978e46-10db-40fc-aec2-73daa719511a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (account, index) -> {
+	XC_AQ_SOURCE_TYPE: account.id,
+	XC_AQ_DESTINATION: 'SFDC',
+	XC_AQ_DEST_ID: account.data[0].id,
+	DT_TIMESTAMP: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	XC_AQ_STATUS: 'Completed',
+	XC_AQ_METADATA: "Record inserted in SFDC",
+	DESCR250: "Record inserted in SFDC"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Size" doc:id="7fe3ab74-a9e6-4dec-8e80-79ccc31ed84e" message="Account records bulk update size : #[sizeOf(payload)]" />
+		<db:bulk-update doc:name="Bulk update to Aux" doc:id="3444448c-1652-4317-9084-3202e038a488" config-ref="aux-db-config" transactionalAction="NOT_SUPPORTED">
+			<db:sql >UPDATE SYSADM.PS_XC_AQ_AUX_TBL 
+set XC_AQ_DESTINATION = :XC_AQ_DESTINATION, 
+XC_AQ_DEST_ID = :XC_AQ_DEST_ID,
+DT_TIMESTAMP = :DT_TIMESTAMP,
+XC_AQ_STATUS = :XC_AQ_STATUS,
+XC_AQ_METADATA = :XC_AQ_METADATA,
+DESCR250 = :DESCR250
+WHERE XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="Log status" doc:id="09235204-563b-4459-8f78-ab99bd85d9f2" message="Account records bulk update status : #[payload]" />
+	</sub-flow>
+</mule>

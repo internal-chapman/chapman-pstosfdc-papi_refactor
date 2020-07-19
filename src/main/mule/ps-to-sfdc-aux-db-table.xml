@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<sub-flow name="sf-aux-insert" doc:id="371827f1-4087-435b-9972-abeb28b11f4f" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="405f4fae-f76b-4fe1-ac4f-9cc96f99ea1b" message="Flow entered aux insert" />
+		<set-variable value="#[output application/json --- payload map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="Set FV uuid" doc:id="09f9dbc5-047b-45ef-9536-3e597df9ec83" variableName="uuid" />
+		<ee:transform doc:name="DW Set Payload" doc:id="5ab50e71-8310-4674-bd5d-051b623f0774" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.aux_data_insert default []) map {
+GUID: vars.uuid[$$] default '',
+XC_AQ_SOURCE: $.source default '', 
+XC_AQ_SOURCE_ID: $.source_id default '',  
+XC_AQ_SOURCE_TYPE: vars.uuid[$$] default '',
+XC_AQ_DESTINATION: '-',
+XC_AQ_DEST_ID: '-',
+XC_AQ_STATUS: 'INPROGRESS',
+DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+XC_AQ_METADATA: $.metadata default '',
+DESCR250: $.description default ''
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="f76a7a24-2264-46f0-8c94-acc6b80ceefa" config-ref="aux-db-config" target="response" >
+			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="b9df7065-ec1e-4267-91bb-ab120993ef5e" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
+		<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="5a2af549-ebc3-456a-95d0-fab7255a6f83" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.originalPayload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="aux_insert_response" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.aux_data_insert default []) map(value, index) ->{
+	"uuid": vars.uuid[index],
+	"source_id": value.source_id default ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="sf-aux-update" doc:id="4bad4660-dc9b-4501-be1f-1bdf949d3989" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="71ee8204-f214-43c1-aabf-23b4c1a52a1b" message="Flow entered aux update" />
+		<db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="9f7b93be-5d27-4519-a348-f7aa30e68e30" config-ref="aux-db-config">
+			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>
+			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'),
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = :metadata,
+DESCR250 = :description
+where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="29828c9f-5319-49c1-a739-f55b8e7265fc" message="Updated AUX table #[payload]" />
+	</sub-flow>
+</mule>

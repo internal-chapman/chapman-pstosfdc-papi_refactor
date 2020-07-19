@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<flow name="usecase-1-education-papiSub_Flow1" doc:id="c830b3ac-acbf-4b08-93b9-75e211416566" >
+		<scheduler doc:name="Scheduler" doc:id="ac156c6a-169b-452f-a648-00f3b48edf54" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="60" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="eff590f1-eb5e-4956-8046-520a05ec44de" message="Trigger entered for create Education " />
+		<flow-ref doc:name="persistance-education-subflow" doc:id="3aa6ff97-3898-4c09-ac39-d3fe869832fb" name="persistance-education-subflow"/>
+		<flow-ref doc:name="usecase-1-education-papiFlow" doc:id="e451c758-bb77-448c-9f68-f79d78e67336" name="usecase-1-education-papiFlow"/>
+	</flow>
+	<flow name="usecase-1-education-papiFlow" doc:id="5d3b0d46-1e2a-443e-badb-6e573b076386" >
+		<batch:job jobName="usecase-1-education-papiBatch_Job" doc:id="668263b7-1f6d-469a-9b8f-3145f2d7360c" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="7b273287-5228-4a9b-b050-70aa6b5ce39d">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="0e48b774-dc07-402c-a5f1-5d94bf14f89c" size="20">
+						<ee:transform doc:name="Mapping for Aux" doc:id="887d2d3e-90ce-4407-8a08-4aa164115d97">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="auxData"><![CDATA[%dw 2.0
+output application/json
+--- 
+payload map
+{
+		emplID: $.EMPLID as String,
+		(LastUpdatedDate: $."LAST_UPDT_DTTM" as LocalDateTime as String {format: 'yyyy-MM-dd HH.mm.ss.SSSSSSSSS '}) if($."LAST_UPDT_DTTM" != null)
+}
+]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+						<flow-ref doc:name="persistance_Aux_Insert_SubFlow" doc:id="7487c2c2-0700-4dc2-856c-8f29151f35db" name="persistance_Aux_Insert_SubFlow" />
+						<logger level="INFO" doc:name="LOG - Aux Table Insert" doc:id="5933c4d2-e05e-4a06-9e4e-33a17556390d" message="Record Inserted in Aux table " />
+						<ee:transform doc:name="Mapping from CS To SFDC" doc:id="848e8d44-4446-4885-b7c2-c9d4add1940d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var degree = [
+"Brandman - Graduate",
+"Brandman - Undergraduate",
+"Extended Education",
+"Graduate",
+"Graduate Health Sciences",
+"Law",
+"Undergraduate",
+"Certificate",
+"Associate",
+"Non-Degree",
+"Other Degree",
+"Credential",
+"Honorary"
+]
+
+var month = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+]
+
+var status = [
+  "Program Completed",
+  "Discontinuation",
+  "Data Changed",
+  "Dismissal",
+  "Matriculated",
+  "Plan Change",
+  "Activated",
+  "Suspension",
+  "Return from Leave of Absense",
+  "Program Change",
+  "Readmitted",
+  "Leave of Absence",
+  "Administrative Withdrawal",
+  "Admitted",
+  "Denied",
+  "Deferred Enrollment"
+]
+
+var speciality = [
+  "Surgery",
+  "Envir, Land Use, Real Est Law",
+  "Joint UCI, Chem Engineering",
+  "Lit, Rhetoric, Cult Studies",
+  "Marriage, Family, Child Cnslng",
+  "Accounting",
+  "Acting and Directing",
+  "Administrative",
+  "Adult-Gero Acute Care",
+  "Adult-Gero Primary Care",
+  "Advanced Methodology",
+  "Advertising",
+  "Advocacy & Dispute Resolution",
+  "American Politics",
+  "American Studies",
+  "Anatomy and Physiology AOS",
+  "Animation",
+  "Applied",
+  "Art Direction",
+  "Art History",
+  "Athletic Training",
+  "Autism",
+  "Biokinesiology",
+  "Biomolecular Sciences",
+  "Broadcast Journalism",
+  "Business",
+  "Business & Com",
+  "Business Administration",
+  "Business Communications",
+  "Business Economics",
+  "Business Law",
+  "Business Law & Economics",
+  "Business Management",
+  "Business Presentations",
+  "Business Systems Admin",
+  "Career Counseling",
+  "Central Subjects",
+  "Chemistry subtests",
+  "CIMA SEED Minor Track",
+  "Cinematography",
+  "Clinical",
+  "Clinical & Community Psych",
+  "Coaching & Sport Perf",
+  "College of Educational Studies",
+  "Commercial Art",
+  "Community Health",
+  "Comparative Literature",
+  "Computer Science",
+  "Concert Music",
+  "Conducting",
+  "Content Strategies",
+  "Corrections Emphasis",
+  "Counseling",
+  "Counseling Psychology",
+  "Creative Writing",
+  "Creative Writing focus",
+  "Criminal Justice",
+  "Criminal Justice Leadership",
+  "Criminal Law",
+  "Cultural & Curricular Studies",
+  "Cultural Studies",
+  "Culture and Media Studies",
+  "Curriculum and Foundations",
+  "Curriculum and Instruction",
+  "Dance",
+  "Dance and Theatre",
+  "Dance Performance",
+  "Design",
+  "Directing",
+  "Disability Studies",
+  "Documentary Filmmaking",
+  "Early Childhood Dev",
+  "Early Childhood Education",
+  "Early Childhood Special Educ",
+  "Earth Systems",
+  "East Asian History",
+  "E-Business Strategic Mgmt",
+  "Ecology",
+  "Ecology and Evolution AOS",
+  "Editing",
+  "Education",
+  "Educational Administration",
+  "Educational Leadership",
+  "Educational Leadership & Admin",
+  "Educational Systems Mgmt",
+  "ELA Emphasis; (Admin Services)",
+  "Electroacoustic Music",
+  "Elementary",
+  "Elementary Education",
+  "Elementary Education (Int)",
+  "Elementary Education (MM1)",
+  "Elementary Education/Bilingual",
+  "English As Second Language",
+  "English subtests",
+  "Enterprise Resource Mgmt",
+  "Entertainment and Media Law",
+  "Entertainment Law",
+  "Entrepreneurship",
+  "Environmental Chemistry",
+  "Environmental Design",
+  "Environmental Policy",
+  "European History",
+  "Exercise Physiology",
+  "Exercise Science",
+  "Family Psychiatric",
+  "Film & Television",
+  "Film & Television Production",
+  "Film & Television Studies",
+  "Film & TV Production",
+  "Film and Television",
+  "Film Studies",
+  "Finance",
+  "Food Science",
+  "General",
+  "General Business",
+  "General Communications",
+  "Geosciences subtests",
+  "Graphic Art",
+  "Graphic Arts",
+  "Graphic Design",
+  "Graphic Design focus",
+  "Guidance Counseling",
+  "Health & Fitness Administation",
+  "Health Administration",
+  "Health Communication",
+  "Health Risk & Crisis Com",
+  "Homeland Security",
+  "Human Resource Management",
+  "Human Resource Mgmt Dev",
+  "Human Resource Mgmt/Devlp",
+  "Human Resource/Mgmt Dvlpmt",
+  "Human Resources",
+  "Human Resources Management",
+  "Humanities",
+  "IESBA MACI",
+  "Individualized Emphasis",
+  "Information Security Mgmt",
+  "Information Systems Management",
+  "Information Technology",
+  "Instructional Technology",
+  "Instrumental",
+  "Instrumental (Guitar)",
+  "Instrumental (Piano)",
+  "Integrated Circuit Design",
+  "Integrative Biology",
+  "Interdisciplinary Health Care",
+  "Interior Design",
+  "International Business",
+  "International Law",
+  "International Relations",
+  "Intl and Comparative Law",
+  "Intl Relation & Comp Plts",
+  "Journalism",
+  "Keyboard Collaborative Arts",
+  "Kinesiology",
+  "Latin American Studies",
+  "Law",
+  "Lead in Early Childhood Ed",
+  "Lead in Early Childhood Educ",
+  "Leadership",
+  "Leadership and Administration",
+  "Learning Handicapped",
+  "Liberal Arts",
+  "Literature",
+  "Literature & Composition",
+  "Literature and Film",
+  "Local Government",
+  "Management",
+  "Management Science",
+  "Marketing",
+  "Marriage and Family Therapy",
+  "Mass Communications",
+  "Mass Media",
+  "Math subtests",
+  "Media Performance",
+  "Media Rhetoric",
+  "Media Writing",
+  "Military Studies",
+  "Molecular Biology AOS",
+  "MSMPP Teaching",
+  "Multiple Subjects",
+  "Multiple Subjects Teaching",
+  "Music Education",
+  "Music subtests",
+  "Narrative Television",
+  "New Media",
+  "Nutrition",
+  "Organismal Biology",
+  "Organizational Administration",
+  "Organizational Communication",
+  "Organizational Leadership",
+  "Percussion",
+  "Performance",
+  "Performing Arts",
+  "Philosophy & Religion",
+  "Philosophy and Religion",
+  "Photography",
+  "Physical Ed & Athletic Train",
+  "Physical Education",
+  "Physics subtests",
+  "Physiology",
+  "Political Communications",
+  "Political Philosophy",
+  "Political Theory & Philosophy",
+  "Pre-Allied Health",
+  "Pre-Athletic Training",
+  "Pre-Clinical",
+  "Pre-Dr of Podiatric Medicine",
+  "Pre-Food Science",
+  "Pre-Health Communication",
+  "Pre-Law",
+  "Pre-Medicine",
+  "Pre-Nursing",
+  "Pre-Occupational Therapy",
+  "Pre-Physical Therapy",
+  "Pre-Physician Assistant",
+  "Producing",
+  "Production",
+  "Production Design",
+  "Production Management",
+  "Prof Clinical Counseling",
+  "Prof Learning Community",
+  "Prof Teaching Standards",
+  "Professional Counseling",
+  "Professional Learning Cmnty",
+  "Professional Writing",
+  "Proffesional Learning Cmnty",
+  "Project Management",
+  "Prosecutorial Science",
+  "Public Affairs",
+  "Public History",
+  "Public Management",
+  "Public Relations",
+  "Reading",
+  "Reading and Literacy",
+  "Reading Education",
+  "Reading Instruction",
+  "Real Estate",
+  "Religion",
+  "Rhetoric and Composition",
+  "School Counseling",
+  "School Psychology",
+  "Sci: Biological Sci subtests",
+  "Screenwriting",
+  "Secondary Education",
+  "Secondary Education (Int)",
+  "Secondary Education (MM1MS1)",
+  "Secondary Emphasis",
+  "Social Science subtests",
+  "Social Studies Environment",
+  "Social Studies Hlth Medicine",
+  "Social Work",
+  "Software Design",
+  "Sound Design",
+  "Special Education (EEMM1)",
+  "Special Education (EEMS1)",
+  "Special Education (MM 2010)",
+  "Special Education (MM1)",
+  "Special Education (MM1C)",
+  "Special Education (MM1MS1C)",
+  "Special Education (MMMS 2010)",
+  "Special Education (MS 2010)",
+  "Special Education (MS1)",
+  "Special Education (MS1C)",
+  "Special Education (SEMM1)",
+  "Special Education (SEMS1)",
+  "Speech Communications",
+  "Sports Med/Athletic Training",
+  "Sports Medicine",
+  "Sports Medicine/Exercise Sci",
+  "Strings",
+  "Studio Art",
+  "Subject Matter Competency",
+  "Supply Chain Systems",
+  "Taxation",
+  "Taxation Law",
+  "Tchng/Learning in Community",
+  "Tchng/Learning in Schools",
+  "Teaching",
+  "Teaching and Learning",
+  "Teaching I",
+  "Teaching II",
+  "Teaching Preparation",
+  "Technical Theatre",
+  "Technology",
+  "TESOL Emphasis",
+  "Theatre",
+  "Theatre Performance",
+  "Theatre Studies",
+  "Theatre Technology",
+  "Trial Advocacy",
+  "UHP - GE 60 Transfer Credits",
+  "UHP - LT 60 Transfer Credits",
+  "Undecided",
+  "Undecided Emphasis",
+  "Undeclared Major",
+  "United States History",
+  "Visual Arts",
+  "Visual Effects",
+  "Vocal",
+  "Womens Studies",
+  "Woodwinds and Brass",
+  "World Affairs",
+  "Writing & Directing"
+]
+
+var dept = [
+  "(General Education)HNRS/INTI",
+  "Arts",
+  "Athletic Training & Phys Educ",
+  "Biological Sciences",
+  "Business Admin University Coll",
+  "Business and Economics",
+  "Career Counseling",
+  "Chapman Ability Project",
+  "Chapman University College",
+  "Chemistry",
+  "Comm Sciences and Disorders",
+  "Communication",
+  "Communication Studies",
+  "Computer Science",
+  "Conservatory of Music",
+  "Criminal Justice",
+  "CUC Arts & Sciences",
+  "CUC Bus & Professional Studies",
+  "CUC Education",
+  "CUC General Studies",
+  "CUC Nursing",
+  "Dance",
+  "Educ Stu - Extended Education",
+  "Education",
+  "Education - CUC",
+  "Emerging Scholar - Extended Ed",
+  "English",
+  "Extended Education",
+  "Extended Education - CES",
+  "Film and Television",
+  "Food Science",
+  "General/Unknown/ND",
+  "Health Admin",
+  "Health Communication",
+  "Health Science and Kinesiology",
+  "Health Sciences",
+  "History",
+  "Holocaust Studies Ex Ed",
+  "Honors Program",
+  "Human Resource Management Busi",
+  "Human Resources",
+  "International Studies",
+  "Law",
+  "Leadership Program",
+  "Liberal Studies",
+  "Marriage and Family Therapy",
+  "Mathematics",
+  "Mathematics and Computer Scien",
+  "Natural Science",
+  "Nursing",
+  "Organizational Leadership",
+  "Other - Clg Huma & Soc Scie",
+  "Other - College of Science",
+  "Peace Studies",
+  "Pharmacy",
+  "Philosophy",
+  "Physical Therapy",
+  "Physician Assistant",
+  "Physics, Comput Sci & Engineering",
+  "Political Science",
+  "Psychology",
+  "Public Administration",
+  "Registrar Use",
+  "Religious Studies",
+  "Schmid College Ex Ed",
+  "Social Sciences",
+  "Sociology",
+  "Theatre",
+  "World Languages and Cultures"
+]
+
+var school = [
+  "Unknown",
+  "School of Business & Economics",
+  "School of Communication",
+  "College of Educational Studies",
+  "Coll Arts, Hum, & Social Sci",
+  "General",
+  "College of Health & Behav Sci",
+  "CUC General Studies",
+  "College of Film & Media Arts",
+  "College of Science & Tech",
+  "College of Performing Arts",
+  "School of Law",
+  "CUC Arts & Sciences",
+  "CUC Education",
+  "Chapman Univ Extended Educ",
+  "CUC Bus & Professional Studies",
+  "CUC Nursing",
+  "School of Pharmacy",
+  "Coll Humanities & Social Sci",
+  "Argyros School of Business & Economics",
+  "College of Health & Behavioral Sciences",
+  "Law School",
+  "College of Humanities & Social Sciences",
+  "Dodge College of Film & Media Arts",
+  "College of Science & Technology",
+  "University College: Education",
+  "General Education",
+  "Dale E. Fowler School of Law",
+  "University College: Arts & Sciences"
+]
+---
+vars.AuxDetails map 
+{
+  "AQB__Contact__c": ($."EMPLID" as String),
+  "AQB__Institution__c": (if($.INSTITUTION == "CHPMN") "a0u2E000009UhuSQAS" else ""),
+  "AQB__DegreeLevel__c": if(degree contains $.DESCR_CAREER) $.DESCR_CAREER as String else '',
+  "AQB__Graduation_Month__c": if(month contains $.MONTH_NAME) $.MONTH_NAME as String else '',
+  "AQB__GraduationYear__c": $.YEAR as String,
+  "AQB__DegreeDiploma__c": $.XC_DEGREE_DESCR as String,
+  "AQB__PreferredYear__c": $.REUNION_YR as String,
+  "AQB__EntryClassYear__c": $.START_DT_YEAR as String,
+  "AQB__LastYearofAttendance__c": $.END_DT_YEAR as String,
+  "AQB__Status__c": if(status contains $.STATUSIMG) $.STATUSIMG as String else "",
+  "AQB__Specialty__c": if(speciality contains $.PLAN_DESCR) $.PLAN_DESCR as String else "",
+  "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
+  "AQB__School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else ""
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+						<logger level="DEBUG" doc:name="LOG Education payload" doc:id="76d6d924-d4de-43ef-95db-351539706651" message="#[payload]" />
+						<http:request method="POST" doc:name="Create Education" doc:id="dce2f789-1343-4924-9b94-9c442f13d1d7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createEducation}" responseTimeout="120000">
+		</http:request>
+						<logger level="INFO" doc:name="LOG Education payload" doc:id="4b912509-0712-4fc4-b2a1-6f09d182251c" message="#[payload]" />
+						<logger level="INFO" doc:name="LOG-Education created" doc:id="d78b8aba-c2e9-4b3a-9c7d-181491ae41d3" message="UC-1 Education creation completed!" />
+						<flow-ref doc:name="persistance-Aux-Update-Subflow" doc:id="d3d48c9a-87cc-40cc-9d18-e8c0d936fcef" name="persistance-Aux-Update-Subflow" />
+						<logger level="INFO" doc:name="LOG - Aux Table Update" doc:id="ae241a50-cbda-4082-acc1-ef1371d6570f" message="Records updated in Aux table" />
+					</batch:aggregator>
+				
+</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="Batch summary" doc:id="2571fcb8-a3ba-497c-b552-4c4029b71fc9" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	batchSummary: payload
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Log summary" doc:id="813bb095-83cb-42fb-bc37-40b0a02eae84" message="Batch Summary : #[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<sub-flow name="persistance-education-subflow" doc:id="e6fb87e2-7d46-4b2d-93df-f52fcc5805ae" >
+		<logger level="INFO" doc:name="Info LOG" doc:id="115db141-5a22-45b4-adf8-56163feab61f" message="flow initiated for persistant get:Education with payload:" />
+		<db:select doc:name="DB | Select Education" doc:id="395b7d3c-6236-4dfc-b90c-229a4da8226b" target="PSEducation" config-ref="rpt-db-config">
+			<db:sql >select a.EMPLID,a.INSTITUTION,a.DESCR_CAREER,a.MONTH_NAME,a.YEAR,a.XC_DEGREE_DESCR,a.REUNION_YR,a.START_DT_YEAR,a.END_DT_YEAR,b.STATUSIMG,b.PLAN_DESCR,b.DEPT_DESCR,b.SCHOOL_DESCR from SYSADM.PS_XC_AQ_EDUCTN_VW a INNER JOIN SYSADM.PS_XC_AQ_DEGDTL_VW b ON a.EMPLID = b.EMPLID where a.EMPLID = '0000008'</db:sql>
+		</db:select>	
+		<foreach doc:name="For Each" doc:id="146d933d-cde0-48d8-97a3-558bbe73b75f" collection="#[vars.PSEducation]">
+			<salesforce:query doc:name="Query for ContactId" doc:id="93b989a5-d60a-4f97-8897-ef1c9753ab2d" target="contactid" config-ref="salesforce-config">
+				<salesforce:salesforce-query>select Id from Contact where AQB__ContactExternalID__c = ':id'</salesforce:salesforce-query>
+				<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"id" : "00" ++ payload.EMPLID
+}]]]></salesforce:parameters>
+			</salesforce:query>
+			<ee:transform doc:name="EmpId value mapping" doc:id="62250fb8-3ef5-4832-bee3-ab18e6efc2fa">
+			<ee:message>
+			</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="CSdata" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.CSdata default []) + ({"empid":payload.EMPLID} ++  (payload) mapObject (if(($$) ~= "EMPLID") (($$): vars.contactid[0].Id) else ($$): $)) 
+
+]]></ee:set-variable>
+				</ee:variables>
+		
+</ee:transform>
+		</foreach>
+		<ee:transform doc:name="payload" doc:id="17980688-0152-4385-a2b4-cbca68918091" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+vars.CSdata]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="fc03f87d-c042-4da7-8403-59920c79b64e" message="#[output application/json --- payload]"/>
+	</sub-flow>
+	<sub-flow name="persistance_Aux_Insert_SubFlow" doc:id="2e8b0e19-8757-4579-bb13-bf77d7f6f965" >
+		<logger level="INFO" doc:name="Info LOG | Aux Insert" doc:id="2e6e9ace-6eaf-434c-8e58-90bd89fb077d" message="Flow entered aux insert" />
+		<set-variable value="#[payload]" doc:name="payload" doc:id="80b2001b-3d48-4c71-884c-16e2769535fe" variableName="AuxDetails" />
+		<set-variable value="#[output application/json --- payload map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="UUID" doc:id="49413fb6-bded-4e86-abcb-2e40f49c38c1" variableName="uuid" />
+		<ee:transform doc:name="Transform Message" doc:id="d36ed3e7-d067-4e7f-9a18-837bc5571962" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+GUID: vars.uuid[$$] default '',
+XC_AQ_SOURCE: 'PS-CS', 
+XC_AQ_SOURCE_ID: $.empid default '',  
+XC_AQ_SOURCE_TYPE: vars.uuid[$$] default '',
+XC_AQ_DESTINATION: '-',
+XC_AQ_DEST_ID: '-',
+XC_AQ_STATUS: 'In progress',
+DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+XC_AQ_METADATA: 'CS to SFDC',
+DESCR250: 'Data transfer from Campus Solution to SFDC'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk insert" doc:id="b17b2dcd-76a0-4be3-9dd6-ff8f015bae7c" config-ref="aux-db-config" target="response">
+			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="Logger" doc:id="21ee0e44-09e5-4568-93f5-3553311d57b8" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
+	</sub-flow>
+	<sub-flow name="persistance-Aux-Update-Subflow" doc:id="4c51d9fe-ae8d-4943-ae2b-6dc2e5af94ae" >
+		<logger level="INFO" doc:name="Info LOG | Aux Update" doc:id="9da6e542-24ea-496c-8382-d9ef3f5c50c5" message="Flow entered aux update"/>
+		<ee:transform doc:name="Transform Message" doc:id="7d450ce9-1d77-4430-ba5c-6d5a2057e616" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.uuid map 
+{	
+	"id": payload.id[$$],
+	"tuuid": $,
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:bulk-update doc:name="Bulk update" doc:id="8d3be30d-a4b7-42c4-9b00-db0fe37982ad" config-ref="aux-db-config" target="response">
+			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = :now,
+XC_AQ_STATUS = 'Completed',
+XC_AQ_METADATA = 'Records inserted in SFDC',
+DESCR250 = 'Records inserted in SFDC'
+where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="Info LOG | Rows updated" doc:id="841ea3b6-14b6-46e2-ae4a-da69073ee1b0" message="Result Updated: #[vars.response]" />
+	</sub-flow>
+</mule>
