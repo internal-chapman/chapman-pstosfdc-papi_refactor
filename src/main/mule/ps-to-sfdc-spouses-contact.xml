@@ -53,7 +53,6 @@ output application/json
 						<ee:variables />
 					</ee:transform>
 		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
-		<logger level="INFO" doc:name="LOG INFO" doc:id="caaf8f61-9138-4023-a720-e011a938748e" message="Trigger entered for creating Relationship object " />
 		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
 	</sub-flow>
 	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61" initialState="started">
