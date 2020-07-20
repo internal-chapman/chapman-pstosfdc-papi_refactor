@@ -56,3 +56,11 @@ system:
 scheduler:
   frequency:
     seconds: "1"
+report:
+  scheduler:
+    pollFrequency: "300" #This is defined in Seconds.
+    initialState: "started"  #customercrm.schedulerFlow.initialState started stopped
+  time:
+    period: "PT"
+    interval: "60"
+    designator: "M"
