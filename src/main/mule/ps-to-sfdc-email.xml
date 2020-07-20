@@ -7,15 +7,22 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<sub-flow name="get-email-subflow" doc:id="77f30140-00a8-4471-90dd-f79ac20dea29" >
+	<flow name="ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="053b2900-ca66-4466-a9aa-86af2d2e3f4a" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="5000"/>
+			</scheduling-strategy>
+		</scheduler>
 		<logger level="INFO" doc:name="Log Info for Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
-		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail" >
-			<db:sql >Select EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM
+		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
+			<db:sql>Select EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM
 from SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID = '2383183' </db:sql>
-		</db:select>
-		<ee:transform doc:name="Java to Json" doc:id="f347aabd-5943-4626-8d59-bcb44aa88eb8" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+			
+		
+</db:select>
+		<ee:transform doc:name="Java to Json" doc:id="f347aabd-5943-4626-8d59-bcb44aa88eb8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 vars.PSEmail]]></ee:set-payload>
@@ -24,7 +31,7 @@ vars.PSEmail]]></ee:set-payload>
 		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[payload]" />
 		<flow-ref doc:name="Refer to email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="email-sync-process-batch" />
 		<set-payload value="#[output application/json --- payload]" doc:name=" Payload Of Execution Status Of Batch" doc:id="b8e34ee9-34af-4ea9-ad47-f60b41aac6da" />
-	</sub-flow>
+	</flow>
 	<flow name="email-sync-process-batch" doc:id="6e3810ba-6ed8-405f-af40-1d755bc65716" >
 		<batch:job jobName="email-sync-process" doc:id="7945c006-71c8-4229-bb42-1e1f89322caf" >
 			<batch:process-records >
@@ -66,24 +73,36 @@ output application/json
 	</flow>
 	<sub-flow name="email-persistance-aux-update-subflow" doc:id="03c21894-41ca-4c56-a061-3cab28874d89" >
 		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="59ea723e-a2b9-4b71-a3c7-fa131a38821b" message="Flow entered aux insert #[payload]" />
+		<ee:transform doc:name="Payload To Update" doc:id="e7d9f68e-b5ed-47eb-b568-374e6c9f6f50">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"id": vars.sdfc_address_result."id"[0] default'NA',
+	"tuuid": vars.tuuid,
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(vars.sdfc_address_result."success"[0] == true) "COMPLETED" else 'ERROR',
+	"metadata": if(vars.sdfc_address_result."success"[0] == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+    "description": if(vars.sdfc_address_result."success"[0] == true) "Record Insert or Updated in SFDC" else (flatten(vars.sdfc_address_result."errors"))."message"[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 		<db:update doc:name="Update To Aux Dbase" doc:id="573da85a-91a6-4f90-9db2-fb5ce3a3737b" config-ref="aux-db-config" >
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
 set 
 XC_AQ_DESTINATION = 'SFDC', 
 XC_AQ_DEST_ID = :id,
 DT_TIMESTAMP = :now,
-XC_AQ_STATUS = 'Completed',
-XC_AQ_METADATA = 'Records inserted in SFDC',
-DESCR250 = 'Records inserted in SFDC'
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = :metadata,
+DESCR250 = :description
 where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	"id": vars.sdfc_address_result."id"[0],
-	"tuuid": vars.tuuid,
-	"now": now()
-}]]]></db:input-parameters>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
 		</db:update>
 		<logger level="INFO" doc:name="Log Info Aux Dbase Updation Status" doc:id="62ff8ddd-aabb-47e3-be5f-9a71aef70e3c" message="Updated AUX table" />
-	</sub-flow>
+	
+</sub-flow>
 	<sub-flow name="email-getuuid-subflow" doc:id="18516c86-b1d4-405b-a22c-17e424d68f9d" >
 		<set-variable value="#[uuid()]" doc:name="UUID" doc:id="cc75c337-1d95-4c99-8081-077600f986e3" variableName="uuid" />
 		<ee:transform doc:name="Tuuid" doc:id="3ba67cce-2d1b-414e-ae23-9c98f2082802" >
