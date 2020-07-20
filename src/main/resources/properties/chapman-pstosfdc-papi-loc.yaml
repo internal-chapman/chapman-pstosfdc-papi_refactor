@@ -30,10 +30,10 @@ http:
         basePath: "/api/sfdc"
         path:
           createContact: "contacts"
-          createAddress: "aqb__addresses"
+          createAddress: "alternate-channels"
           createAccount: "accounts"
           extOrgAccounts: "ext-org-accounts"
-          createEducation: "Education"
+          createEducation: "education"
           createRelationship: "relationship"
 db:
   rpt:

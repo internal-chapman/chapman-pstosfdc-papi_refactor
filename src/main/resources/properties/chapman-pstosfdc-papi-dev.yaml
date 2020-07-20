@@ -30,11 +30,11 @@ http:
         basePath: "/api/sfdc"
         path:
           createContact: "contacts"
-          createAddress: "Alternate-channels"
+          createAddress: "alternate-channels"
           createAccount: "accounts"
           createRelationship: "relationship"
           extOrgAccounts: "ext-org-accounts"
-          createEducation: "Education"
+          createEducation: "education"
 db:
   rpt:
     host: "psdb-cs92rpt.chapman.edu"
