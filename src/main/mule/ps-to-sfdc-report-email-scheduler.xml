@@ -7,8 +7,8 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<http:request-config name="Email_Report_HTTPRequest_Config" doc:name="HTTP Request configuration" doc:id="9cdd6c95-5d04-414e-9f2e-b0392bcf1e62" >
-		<http:request-connection host="0.0.0.0" port="8081" />
+	<http:request-config name="Email_Report_HTTPRequest_Config" doc:name="HTTP Request configuration" doc:id="172f506b-2515-4e59-9396-96b0a61afd52" >
+		<http:request-connection host="s-email-api-dev.us-w2.cloudhub.io" port="80" />
 	</http:request-config>
 	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="started">
 		<scheduler doc:name="Report Scheduler" doc:id="e047b950-cbb3-456a-ba2e-9583ece7c672" >
@@ -54,10 +54,10 @@ output application/json
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-		<http:request method="POST" doc:name="Email Report Invoke" doc:id="4e9087f4-af96-41e5-831b-b8e62305faf1" path="/api/email" config-ref="Email_Report_HTTPRequest_Config" />
+		<http:request method="POST" doc:name="Email Report Invoke" doc:id="db498f28-17e2-443f-9156-0a231d3451c0" path="/api/email" config-ref="Email_Report_HTTPRequest_Config"/>
 		<logger level="INFO" doc:name="Email Report Response" doc:id="1e44cc52-d554-4b00-9d88-b0b792bfc294" message='"Response from Email Application: " #[payload]'/>
 		<os:store doc:name="OS Update timeStapmKey" doc:id="e8119ed8-4ce7-4a15-b6a7-12626b782891" key="timeStampKey" objectStore="Object_store">
-			<os:value ><![CDATA[#[if(payload.type == "SUCCESSFUL") (vars.queryStartDateTime + (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator'))) else vars.queryStartDateTime]]]></os:value>
+			<os:value ><![CDATA[#[if(payload."type" == "SUCCESSFUL") (vars.queryStartDateTime + (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator'))) else vars.queryStartDateTime]]]></os:value>
 		</os:store>
 		<logger level="INFO" doc:name="Email Report Completed" doc:id="cd141e59-0372-470f-9f19-19ecf1952d9e" />
 		<error-handler >
