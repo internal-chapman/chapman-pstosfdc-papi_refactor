@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
-	<flow name="usecase-1-education-papiSub_Flow1" doc:id="c830b3ac-acbf-4b08-93b9-75e211416566" >
+	<flow name="usecase-1-education-papiSub_Flow1" doc:id="c830b3ac-acbf-4b08-93b9-75e211416566" initialState="started">
 		<scheduler doc:name="Scheduler" doc:id="ac156c6a-169b-452f-a648-00f3b48edf54" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="60" timeUnit="SECONDS"/>
@@ -28,19 +28,19 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-				<ee:set-variable variableName="auxData"><![CDATA[%dw 2.0
+								<ee:set-variable variableName="aux_data_insert" ><![CDATA[%dw 2.0
 output application/json
---- 
-payload map
-{
-		emplID: $.EMPLID as String,
-		(LastUpdatedDate: $."LAST_UPDT_DTTM" as LocalDateTime as String {format: 'yyyy-MM-dd HH.mm.ss.SSSSSSSSS '}) if($."LAST_UPDT_DTTM" != null)
-}
-]]></ee:set-variable>
+---
+payload map(value, index) ->{
+	"source": "PS-CS",
+	"source_id": value.empid default '',
+	"metadata": "CS to SFDC",
+	"description": "Education data transfer from Campus Solution to SFDC"
+}]]></ee:set-variable>
 			</ee:variables>
 		
 </ee:transform>
-						<flow-ref doc:name="persistance_Aux_Insert_SubFlow" doc:id="7487c2c2-0700-4dc2-856c-8f29151f35db" name="persistance_Aux_Insert_SubFlow" />
+						<flow-ref doc:name="sf-aux-insert" doc:id="7487c2c2-0700-4dc2-856c-8f29151f35db" name="sf-aux-insert" />
 						<logger level="INFO" doc:name="LOG - Aux Table Insert" doc:id="5933c4d2-e05e-4a06-9e4e-33a17556390d" message="Record Inserted in Aux table " />
 						<ee:transform doc:name="Mapping from CS To SFDC" doc:id="848e8d44-4446-4885-b7c2-c9d4add1940d">
 			<ee:message>
@@ -507,17 +507,18 @@ var school = [
   "University College: Arts & Sciences"
 ]
 ---
-vars.AuxDetails map 
+payload map 
 {
   "AQB__Contact__c": ($."EMPLID" as String),
   "AQB__Institution__c": (if($.INSTITUTION == "CHPMN") "a0u2E000009UhuSQAS" else ""),
   "AQB__DegreeLevel__c": if(degree contains $.DESCR_CAREER) $.DESCR_CAREER as String else '',
   "AQB__Graduation_Month__c": if(month contains $.MONTH_NAME) $.MONTH_NAME as String else '',
-  "AQB__GraduationYear__c": $.YEAR as String,
-  "AQB__DegreeDiploma__c": $.XC_DEGREE_DESCR as String,
-  "AQB__PreferredYear__c": $.REUNION_YR as String,
-  "AQB__EntryClassYear__c": $.START_DT_YEAR as String,
-  "AQB__LastYearofAttendance__c": $.END_DT_YEAR as String,
+  "AQB__GraduationYear__c": $.YEAR as String default '',
+  "AQB__DegreeDiploma__c": $.XC_DEGREE_DESCR as String default '',
+  "AQB__PreferredYear__c": $.REUNION_YR as String default '',
+  "AQB__EntryClassYear__c": $.START_DT_YEAR as String default '',
+  "AQB__FirstYearofAttendance__c": $.START_DT_YEAR as String default '',
+  "AQB__LastYearofAttendance__c": $.END_DT_YEAR as String default '',
   "AQB__Status__c": if(status contains $.STATUSIMG) $.STATUSIMG as String else "",
   "AQB__Specialty__c": if(speciality contains $.PLAN_DESCR) $.PLAN_DESCR as String else "",
   "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
@@ -531,7 +532,25 @@ vars.AuxDetails map
 		</http:request>
 						<logger level="INFO" doc:name="LOG Education payload" doc:id="4b912509-0712-4fc4-b2a1-6f09d182251c" message="#[payload]" />
 						<logger level="INFO" doc:name="LOG-Education created" doc:id="d78b8aba-c2e9-4b3a-9c7d-181491ae41d3" message="UC-1 Education creation completed!" />
-						<flow-ref doc:name="persistance-Aux-Update-Subflow" doc:id="d3d48c9a-87cc-40cc-9d18-e8c0d936fcef" name="persistance-Aux-Update-Subflow" />
+						<ee:transform doc:name="aux_data-update" doc:id="facb05d8-4b9f-4189-ae55-d0e92982fa65" >
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="aux_data_update" ><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(vars.originalPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else (payload[index].errors.message reduce($$++ ' , ' ++$))[0 to size(payload[index].errors.message reduce($$++ ' , ' ++$))],
+	"tuuid": vars.aux_insert_response[index].uuid
+}]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="sf-aux-update" doc:id="d3d48c9a-87cc-40cc-9d18-e8c0d936fcef" name="sf-aux-update" />
 						<logger level="INFO" doc:name="LOG - Aux Table Update" doc:id="ae241a50-cbda-4082-acc1-ef1371d6570f" message="Records updated in Aux table" />
 					</batch:aggregator>
 				
@@ -589,64 +608,5 @@ vars.CSdata]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="fc03f87d-c042-4da7-8403-59920c79b64e" message="#[output application/json --- payload]"/>
-	</sub-flow>
-	<sub-flow name="persistance_Aux_Insert_SubFlow" doc:id="2e8b0e19-8757-4579-bb13-bf77d7f6f965" >
-		<logger level="INFO" doc:name="Info LOG | Aux Insert" doc:id="2e6e9ace-6eaf-434c-8e58-90bd89fb077d" message="Flow entered aux insert" />
-		<set-variable value="#[payload]" doc:name="payload" doc:id="80b2001b-3d48-4c71-884c-16e2769535fe" variableName="AuxDetails" />
-		<set-variable value="#[output application/json --- payload map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="UUID" doc:id="49413fb6-bded-4e86-abcb-2e40f49c38c1" variableName="uuid" />
-		<ee:transform doc:name="Transform Message" doc:id="d36ed3e7-d067-4e7f-9a18-837bc5571962" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload map {
-GUID: vars.uuid[$$] default '',
-XC_AQ_SOURCE: 'PS-CS', 
-XC_AQ_SOURCE_ID: $.empid default '',  
-XC_AQ_SOURCE_TYPE: vars.uuid[$$] default '',
-XC_AQ_DESTINATION: '-',
-XC_AQ_DEST_ID: '-',
-XC_AQ_STATUS: 'In progress',
-DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-XC_AQ_METADATA: 'CS to SFDC',
-DESCR250: 'Data transfer from Campus Solution to SFDC'
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<db:bulk-insert doc:name="Bulk insert" doc:id="b17b2dcd-76a0-4be3-9dd6-ff8f015bae7c" config-ref="aux-db-config" target="response">
-			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
-    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
-values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-		</db:bulk-insert>
-		<logger level="INFO" doc:name="Logger" doc:id="21ee0e44-09e5-4568-93f5-3553311d57b8" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
-	</sub-flow>
-	<sub-flow name="persistance-Aux-Update-Subflow" doc:id="4c51d9fe-ae8d-4943-ae2b-6dc2e5af94ae" >
-		<logger level="INFO" doc:name="Info LOG | Aux Update" doc:id="9da6e542-24ea-496c-8382-d9ef3f5c50c5" message="Flow entered aux update"/>
-		<ee:transform doc:name="Transform Message" doc:id="7d450ce9-1d77-4430-ba5c-6d5a2057e616" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-vars.uuid map 
-{	
-	"id": payload.id[$$],
-	"tuuid": $,
-	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'}
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<db:bulk-update doc:name="Bulk update" doc:id="8d3be30d-a4b7-42c4-9b00-db0fe37982ad" config-ref="aux-db-config" target="response">
-			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
-set 
-XC_AQ_DESTINATION = 'SFDC', 
-XC_AQ_DEST_ID = :id,
-DT_TIMESTAMP = :now,
-XC_AQ_STATUS = 'Completed',
-XC_AQ_METADATA = 'Records inserted in SFDC',
-DESCR250 = 'Records inserted in SFDC'
-where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
-		</db:bulk-update>
-		<logger level="INFO" doc:name="Info LOG | Rows updated" doc:id="841ea3b6-14b6-46e2-ae4a-da69073ee1b0" message="Result Updated: #[vars.response]" />
 	</sub-flow>
 </mule>
