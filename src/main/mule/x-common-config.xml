@@ -1,43 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:os="http://www.mulesoft.org/schema/mule/os"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
-http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
 	<configuration-properties doc:name="Configuration properties"
-		doc:id="757e81af-1f55-4f83-a243-2777057b2ada" file="properties\chapman-pstosfdc-papi-${mule.env}.yaml" doc:description="Dynamic properties."/>
+		doc:id="757e81af-1f55-4f83-a243-2777057b2ada" file="properties\application-properties.yaml" doc:description="Dynamic properties."/>
 
 	<http:listener-config name="pstosfdc-http-listener-config" doc:description="Process listener config.">
-		<http:listener-connection host="${http.listener.host}"
-			port="${http.listener.port}" />
+		<http:listener-connection host="${secure::http.listener.host}"
+			port="${secure::http.listener.port}" />
 	</http:listener-config>
 	<http:request-config name="sfdc-system-http-request-config"
-		doc:name="HTTP Request configuration" doc:id="4bc0f721-0f9c-4864-ab42-de756db99902" basePath="${http.request.system.sfdc.basePath}" doc:description="SFDC system config." responseTimeout="600000">
-		<http:request-connection host="${http.request.system.sfdc.host}"
-			port="${http.request.system.sfdc.port}" />
+		doc:name="HTTP Request configuration" doc:id="4bc0f721-0f9c-4864-ab42-de756db99902" basePath="${secure::http.request.system.sfdc.basePath}" doc:description="SFDC system config." responseTimeout="600000">
+		<http:request-connection host="${secure::http.request.system.sfdc.host}"
+			port="${secure::http.request.system.sfdc.port}" />
 	</http:request-config>
 	<http:request-config name="persistence-system-http-request-config"
-		doc:name="HTTP Request configuration" doc:id="92931d4e-a3bc-4494-a92d-6026fc3e84e1" basePath="${http.request.system.persistence.basePath}" doc:description="Persistence system config.">
-		<http:request-connection host="${http.request.system.persistence.host}" port="${http.request.system.persistence.port}" />
+		doc:name="HTTP Request configuration" doc:id="92931d4e-a3bc-4494-a92d-6026fc3e84e1" basePath="${secure::http.request.system.persistence.basePath}" doc:description="Persistence system config.">
+		<http:request-connection host="${secure::http.request.system.persistence.host}" port="${secure::http.request.system.persistence.port}" />
 	</http:request-config>
 	<db:config name="rpt-db-config" doc:name="Database Config"
 		doc:id="0ba8d50c-2dab-4509-af2a-f12d96b7dc45" doc:description="RPT Database config (PS)">
-		<db:oracle-connection host="${db.rpt.host}"
-			user="${db.rpt.user}" password="${db.rpt.password}" serviceName="${db.rpt.serviceName}" port="${db.rpt.port}"/>
+		<db:oracle-connection host="${secure::db.rpt.host}"
+			user="${secure::db.rpt.user}" password="${secure::db.rpt.password}" serviceName="${secure::db.rpt.serviceName}" port="${secure::db.rpt.port}"/>
 	</db:config>
 	<db:config name="aux-db-config" doc:name="Database Config"
 		doc:id="434ed2cb-2b06-4256-8771-f72e90457b52" doc:description="AUX Database config (Aux)">
-		<db:oracle-connection host="${db.aux.host}"
-			user="${db.aux.user}" password="${db.aux.password}" serviceName="${db.aux.serviceName}" port="${db.aux.port}"/>
+		<db:oracle-connection host="${secure::db.aux.host}"
+			user="${secure::db.aux.user}" password="${secure::db.aux.password}" serviceName="${secure::db.aux.serviceName}" port="${secure::db.aux.port}"/>
 	</db:config>
 	<os:object-store name="Object_store" doc:name="Object store" doc:id="5cbcbdb7-9b80-4c48-a66b-bd7b72c637a5" entryTtl="30" entryTtlUnit="DAYS" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="7a941cbe-4279-4e3b-bd79-959ca0298d44" file="properties\chapman-pstosfdc-papi-${mule.env}.yaml" key="${key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
 	
 	
 
