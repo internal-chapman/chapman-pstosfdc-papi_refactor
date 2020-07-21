@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<http:request-config name="Email_Report_HTTPRequest_Config" doc:name="HTTP Request configuration" doc:id="172f506b-2515-4e59-9396-96b0a61afd52" >
 		<http:request-connection host="s-email-api-dev.us-w2.cloudhub.io" port="80" />
 	</http:request-config>
-	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="started">
+	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="stopped">
 		<scheduler doc:name="Report Scheduler" doc:id="e047b950-cbb3-456a-ba2e-9583ece7c672" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="1" timeUnit="SECONDS"/>

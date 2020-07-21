@@ -11,9 +11,6 @@ http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
-	<apikit:config name="pstosfdc-api-config" api="usecase-1-papi.raml"
-		outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus"
-		raml="api/usecase-1-papi.raml" doc:description="Process router config."/>
 	<configuration-properties doc:name="Configuration properties"
 		doc:id="757e81af-1f55-4f83-a243-2777057b2ada" file="properties\chapman-pstosfdc-papi-${mule.env}.yaml" doc:description="Dynamic properties."/>
 
@@ -30,10 +27,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		doc:name="HTTP Request configuration" doc:id="92931d4e-a3bc-4494-a92d-6026fc3e84e1" basePath="${http.request.system.persistence.basePath}" doc:description="Persistence system config.">
 		<http:request-connection host="${http.request.system.persistence.host}" port="${http.request.system.persistence.port}" />
 	</http:request-config>
-
-	<salesforce:sfdc-config name="salesforce-config" doc:name="Salesforce Config" doc:id="499d0094-aba3-4617-a348-cac6c532ca24" >
-		<salesforce:basic-connection username="${system.salesforce.user}" password="${system.salesforce.password}" url="${system.salesforce.authorizationUrl}" />
-	</salesforce:sfdc-config>
 	<db:config name="rpt-db-config" doc:name="Database Config"
 		doc:id="0ba8d50c-2dab-4509-af2a-f12d96b7dc45" doc:description="RPT Database config (PS)">
 		<db:oracle-connection host="${db.rpt.host}"

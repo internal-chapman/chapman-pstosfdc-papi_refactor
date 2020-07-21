@@ -8,19 +8,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef" initialState="stopped">
-		<scheduler doc:name="Scheduler" doc:id="d6f8c3f7-8db9-4cd1-a11f-ff16e5c375ea" >
-			<scheduling-strategy >
-				<fixed-frequency timeUnit="MINUTES" />
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef">
 		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Employment sync started" />
-		<os:retrieve doc:name="os retrieve student-intr_lastProcessedTime" doc:id="52d88df5-e6e5-4960-86fa-81be73c83807" key="student-intr_lastProcessedTime" objectStore="Object_store" target="lastProcessedTime">
-			<os:default-value><![CDATA[2017-07-09 00:43:45]]></os:default-value>
-		</os:retrieve>
 		<db:select doc:name="Fetch Count From People Soft db" doc:id="241a87a9-8cf5-4d55-befd-b18efffcb8fd" config-ref="rpt-db-config" >
-			<db:sql >select count(*) cnt from sysadm.PS_XC_AQ_STUINT_VW
- where LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')</db:sql>
+			<db:sql >#[p('db.rpt.query.studentInterest')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -75,7 +66,7 @@ payload map(value, index) ->{
 					<logger level="INFO" doc:name="LOG INFO" doc:id="2313b54f-2965-41e8-9365-1c743b621fc7" message="#[payload]" />
 					<try doc:name="Try" doc:id="4cb2d958-338f-4da3-b261-5cb080b083d0" >
 						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="12b1b85f-a3f0-4061-b09f-382b10662dc2" message='#["Sending request to system api to sync StudentInterest for batch: " ++ vars.counter]'/>
-						<http:request method="POST" doc:name="StudentInterest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest"/>
+						<http:request method="POST" doc:name="POST Student Interest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest"/>
 						<logger level="INFO" doc:name="LOG INFO Sync End" doc:id="453bdb98-49be-4058-b7e0-3cbefcdc25d4" message="#[payload]" />
 						<choice doc:name="Check Error Records" doc:id="e2fdcb4b-82b6-4991-b4ac-cb3a728eb692" >
 							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]) &gt; 0]" >
@@ -100,9 +91,6 @@ payload map(value, index) ->{
 						</ee:variables>
 					</ee:transform>
 					<flow-ref doc:name="Flow Ref sf-aux-update" doc:id="eca881ee-1e41-4a47-a94a-9d3a3cd05154" name="sf-aux-update"/>
-					<os:store doc:name="os store student-intr_lastProcessedTime" doc:id="f9bcd805-aa5b-417b-b6b3-2079fa914b3d" key="student-intr_lastProcessedTime" objectStore="Object_store">
-			<os:value><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
-		</os:store>
 					<logger level="INFO" doc:name="LOG INFO Batch End" doc:id="1c887553-f73c-454b-b386-38a0b74e7405" message='#["Data Insert/Update for Batch: " ++ vars.counter ++ "is completed"]' />
 				</foreach>
 			</when>

@@ -9,15 +9,10 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
-	<flow name="ext-accounts-sync-process-flow" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683" initialState="stopped">
-		<scheduler doc:name="Scheduler" doc:id="d22d956f-f9c8-450d-b959-4dc46e3cb9c3">
-			<scheduling-strategy>
-				<fixed-frequency frequency="10" startDelay="1" timeUnit="MINUTES" />
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
 		<logger level="INFO" doc:name="Log At Start" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
-			<db:sql>SELECT * FROM SYSADM.PS_XC_AQ_EOACCT_VW OFFSET 61 ROWS  FETCH NEXT 10 ROWS ONLY</db:sql>
+			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
 		</db:select>
 		<logger level="INFO" doc:name="Log payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
 		<flow-ref doc:name="Insert records to Aux DB" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="ext-accounts-ps-aux-sync-insert-sub-flow" target="vars.auxSyncPayload" />
