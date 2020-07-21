@@ -9,12 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
-	<flow name="usecase-1-education-papiSub_Flow1" doc:id="c830b3ac-acbf-4b08-93b9-75e211416566" initialState="started">
-		<scheduler doc:name="Scheduler" doc:id="ac156c6a-169b-452f-a648-00f3b48edf54" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="60" timeUnit="SECONDS"/>
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="pf-ps-to-sfdc-education" doc:id="c830b3ac-acbf-4b08-93b9-75e211416566" initialState="started">
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="eff590f1-eb5e-4956-8046-520a05ec44de" message="Trigger entered for create Education " />
 		<flow-ref doc:name="persistance-education-subflow" doc:id="3aa6ff97-3898-4c09-ac39-d3fe869832fb" name="persistance-education-subflow"/>
 		<flow-ref doc:name="usecase-1-education-papiFlow" doc:id="e451c758-bb77-448c-9f68-f79d78e67336" name="usecase-1-education-papiFlow"/>
@@ -574,17 +569,16 @@ output application/json
 	<sub-flow name="persistance-education-subflow" doc:id="e6fb87e2-7d46-4b2d-93df-f52fcc5805ae" >
 		<logger level="INFO" doc:name="Info LOG" doc:id="115db141-5a22-45b4-adf8-56163feab61f" message="flow initiated for persistant get:Education with payload:" />
 		<db:select doc:name="DB | Select Education" doc:id="395b7d3c-6236-4dfc-b90c-229a4da8226b" target="PSEducation" config-ref="rpt-db-config">
-			<db:sql >select a.EMPLID,a.INSTITUTION,a.DESCR_CAREER,a.MONTH_NAME,a.YEAR,a.XC_DEGREE_DESCR,a.REUNION_YR,a.START_DT_YEAR,a.END_DT_YEAR,b.STATUSIMG,b.PLAN_DESCR,b.DEPT_DESCR,b.SCHOOL_DESCR from SYSADM.PS_XC_AQ_EDUCTN_VW a INNER JOIN SYSADM.PS_XC_AQ_DEGDTL_VW b ON a.EMPLID = b.EMPLID where a.EMPLID = '0000008'</db:sql>
+			<db:sql >#[p('db.rpt.query.education')]</db:sql>
 		</db:select>	
 		<foreach doc:name="For Each" doc:id="146d933d-cde0-48d8-97a3-558bbe73b75f" collection="#[vars.PSEducation]">
-			<salesforce:query doc:name="Query for ContactId" doc:id="93b989a5-d60a-4f97-8897-ef1c9753ab2d" target="contactid" config-ref="salesforce-config">
-				<salesforce:salesforce-query>select Id from Contact where AQB__ContactExternalID__c = ':id'</salesforce:salesforce-query>
-				<salesforce:parameters><![CDATA[#[output application/java
+			<http:request method="GET" doc:name="GET Contact From Salesforce" doc:id="39aa078f-fbf2-4626-89a7-f8627e7f9870" config-ref="sfdc-system-http-request-config" path="/sfdc/query" target="contactid">
+				<http:headers ><![CDATA[#[output application/java
 ---
 {
-	"id" : "00" ++ payload.EMPLID
-}]]]></salesforce:parameters>
-			</salesforce:query>
+	"query" : "select Id from Contact where AQB__ContactExternalID__c = " ++ "00" ++ payload.EMPLID
+}]]]></http:headers>
+			</http:request>
 			<ee:transform doc:name="EmpId value mapping" doc:id="62250fb8-3ef5-4832-bee3-ab18e6efc2fa">
 			<ee:message>
 			</ee:message>

@@ -55,12 +55,7 @@ output application/json
 		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
 		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
 	</sub-flow>
-	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61" initialState="started">
-	<scheduler doc:name="Scheduler" doc:id="f8978aac-a846-4704-8c7d-7f22be8e1160">
-			<scheduling-strategy>
-				<fixed-frequency frequency="5" startDelay="1" timeUnit="MINUTES" />
-			</scheduling-strategy>
-		</scheduler> 
+	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61"> 
 		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Spouses sync batch"]' />
 		<db:select doc:name="Select spouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
 			<db:sql>SELECT T.&quot;SFDCRecordTypeId&quot;  as &quot;RecordTypeId&quot;

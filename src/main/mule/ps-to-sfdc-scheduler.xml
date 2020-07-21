@@ -3,12 +3,37 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
-	<flow name="ps-to-sfdc-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa" >
+	<flow name="mf-ps-to-sfdc-account-sync-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa">
 		<scheduler doc:name="Scheduler" doc:id="480c13ca-afb3-41e3-8bfd-108ce00b00cd" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="SECONDS"/>
 			</scheduling-strategy>
 		</scheduler>
-		<flow-ref doc:name="Flow Reference" doc:id="4addab4c-70d5-4f1e-ac4d-1d5525119b69" name="email-getuuid-subflow"/>
+		<flow-ref doc:name="Flow Ref To sf-correlationId" doc:id="4addab4c-70d5-4f1e-ac4d-1d5525119b69" name="sf-correlationId"/>
+		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process" doc:id="dde579ac-f455-404d-9d47-4100fca82680" name="pf-ext-accounts-sync-process" />
+		<flow-ref doc:name="Flow Ref To ps-to-sfdc-address-sync" doc:id="01e3480e-d135-4a12-905a-f13b622c1710" name="ps-to-sfdc-address-sync"/>
+		<flow-ref doc:name="Flow Ref To pf-spouses-contacts-sync" doc:id="893b5f3b-8547-41b5-8b7e-6b48073cd9eb" name="pf-spouses-contacts-sync"/>
+		<flow-ref doc:name="Flow Ref To pf-non-spouses-contacts-sync" doc:id="fffa568f-2fc4-4006-ba82-0063468f8e93" name="pf-non-spouses-contacts-sync"/>
+		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education" doc:id="4066a968-b282-42f7-ac9b-a9df1be069ce" name="pf-ps-to-sfdc-education" />
+		<flow-ref doc:name="Flow Ref To pf-employment" doc:id="250fd1d5-c642-4d63-89f8-98ca9cc69394" name="pf-employment" />
+		<flow-ref doc:name="Flow Ref To pf-student-interest" doc:id="730d6bc0-fb6f-4b2c-91de-253d9001c2a2" name="pf-student-interest" />
+	</flow>
+	<flow name="mf-ps-to-sfdc-email-scheduler" doc:id="62950c74-1514-4cbd-ae1b-52dca4417b1b" >
+		<scheduler doc:name="Scheduler" doc:id="597d746e-e30d-4d93-86dc-27021a8505af" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Flow Ref To sf-correlationId" doc:id="17da40ae-07b0-4d55-a57e-25f3f405bc22" name="sf-correlationId" />
+		<flow-ref doc:name="Flow Ref To ps-to-sfdc-email-sync" doc:id="64256ff8-403b-41b3-a51c-a7b44f54e9ea" name="ps-to-sfdc-email-sync"/>
+	</flow>
+	<flow name="mf-ps-to-sfdc-phone-scheduler" doc:id="a1013068-d12c-4b31-836d-bce2498e3988">
+		<scheduler doc:name="Scheduler" doc:id="b583d8d6-dc53-4d03-8906-d00fb361ed53" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Flow Ref To sf-correlationId" doc:id="922dbdaa-910d-491d-b96c-f4741796c9d8" name="sf-correlationId" />
+		<flow-ref doc:name="Flow Ref To ps-to-sfdc-phone-sync" doc:id="fdcaf501-fa3f-44fe-8f89-76ed196c2561" name="ps-to-sfdc-phone-sync"/>
 	</flow>
 </mule>

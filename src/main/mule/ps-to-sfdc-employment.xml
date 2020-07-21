@@ -9,19 +9,13 @@ http://www.mulesoft.org/schema/mule/sfdc-sapi http://www.mulesoft.org/schema/mul
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<flow name="pf-employment" doc:id="992a184e-00b8-499f-b02a-b29f96f99876" initialState="started">
-		<scheduler doc:name="Scheduler" doc:id="3e402623-6682-448b-973f-38a10f0f3fcc" >
-			<scheduling-strategy >
-				<fixed-frequency timeUnit="MINUTES"/>
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="pf-employment" doc:id="992a184e-00b8-499f-b02a-b29f96f99876">
 		<logger level="INFO" doc:name="LOG START" doc:id="f3b2041d-719f-46c9-aa2c-f4a7ae584faa" message='#["Employment sync started from PS to SFDC at " ++ now()]'/>
 		<os:retrieve doc:name="os retrieve empl_lastProcessedTime" doc:id="2564cdca-a454-4c64-bf5e-9e4e644bce9a" key="lastProcessedTime" target="lastProcessedTime" objectStore="Object_store">
 			<os:default-value ><![CDATA[2020-07-09 00:43:45]]></os:default-value>
 		</os:retrieve>
 		<db:select doc:name="Fetch Count from PeopleSoft db" doc:id="4fcafee7-5de6-41ff-a30d-fd2146c78b37" config-ref="rpt-db-config">
-			<db:sql >select count(*) cnt from sysadm.PS_XC_AQ_EMPLOY_VW 
- where LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')</db:sql>
+			<db:sql >#[p('db.rpt.query.employmentCount')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -41,12 +35,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<foreach doc:name="For Each" doc:id="db931730-e1e8-4ee2-a33e-4ad8d5cc886f" collection="#[vars.batch_list]">
 					<logger level="INFO" doc:name="LOG INFO" doc:id="933637cf-f85f-405f-8189-adb7c375327d" message='#["Fetching the records for batch: " ++ vars.counter]'/>
 					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="b3a51809-bd74-495a-8046-26631a3f400a" config-ref="rpt-db-config">
-						<db:sql >SELECT EMPLID,EMPLOYER,END_DT,XC_AQ_ENDED,START_DT,XC_AQ_STARTED,SCC_STATUS_DESCR,BUSINESS_TITLE,DEPTID,DEPTNAME,REPORTS_TO_DEPT,ROLLUP_NAME,LAST_UPDT_DTTM FROM (
-  SELECT EMPLID,EMPLOYER,END_DT,XC_AQ_ENDED,START_DT,XC_AQ_STARTED,SCC_STATUS_DESCR,BUSINESS_TITLE,DEPTID,DEPTNAME,REPORTS_TO_DEPT,ROLLUP_NAME,LAST_UPDT_DTTM, RANK() OVER (ORDER BY EMPLID , LAST_UPDT_DTTM) as my_rank
-  FROM sysadm.PS_XC_AQ_EMPLOY_VW 
-  where LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
-  )
-WHERE my_rank &gt;= :start_offset AND my_rank &lt;= :end_offset</db:sql>
+						<db:sql >#[p('db.rpt.query.employmentBatch')]</db:sql>
 						<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime,
 	"start_offset": ((vars.counter-1)* vars.batch_size) + 1,
