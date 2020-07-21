@@ -111,7 +111,7 @@ LEFT JOIN sysadm.PS_XC_AQ_INRELA_VW r ON a.emplid = r.emplid
 LEFT JOIN sysadm.PS_XC_AQ_AFL_VW af ON a.emplid = af.emplid
 where r.RELATION_DESCR != 'Spouse'
 and af.scc_afl_descrshort in ('Alumni', 'Friend', 'Employee', 'Parent', 'Student')
-and a.EMPLID in ('0916425','1960382')</db:sql>
+and a.EMPLID in ('0916425','1960382','0000002', '0000023')</db:sql>
 		</db:select>
 		<ee:transform doc:name="DW Java To JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
 			<ee:message>

@@ -30,7 +30,9 @@ payload map(account, index) -> {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="4a60acd9-59fc-4a13-a5dd-01c6c1de3fad" message="Start of Batch step"/>
 		<flow-ref doc:name="Invoke Batch Process" doc:id="7ebe7664-257c-4ea0-a313-eee88a4872a6" name="ext-accounts-sync-process-batch"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2f9086ac-1042-44a4-86ba-80a8428d6789" message="Ext Account flow completed"/>
 	</flow>
 	<flow name="ext-accounts-sync-process-batch" doc:id="bb7e26f4-b1bf-44c4-ac1a-5e54a57907d7" >
 		<batch:job jobName="ext-accounts-sync-process" doc:id="3b3129ee-fb6a-4029-b284-59e19478e9fc" >
