@@ -7,16 +7,10 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<flow name="ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce" initialState="stopped">
-		<scheduler doc:name="Scheduler" doc:id="673177eb-1c2c-47c3-b874-47158c236545" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="5000"/>
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce">
 		<logger level="INFO" doc:name="Log Info for Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Phone from PS DB" doc:id="9d5426fb-de36-4dfb-a999-b57539db6277" config-ref="rpt-db-config" target="PSEmail">
-			<db:sql>Select EMPLID,PHONE_TYPE,COUNTRY_CODE,PHONE,EXTENSION,PREF_PHONE_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM
-from SYSADM.PS_XC_AQ_PHONE_VW  where EMPLID = '2383014'</db:sql>
+			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
 			
 		
 </db:select>
@@ -28,7 +22,7 @@ output application/json
 vars.PSEmail]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message="#[payload]" />
+		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message='#[sizeOf(payload) as String]' />
 		<flow-ref doc:name="Refer to phone-sync-process-batch" doc:id="17aac280-2952-4de4-b59f-ac9e46530d5a" name="phone-sync-process-batch" />
 		<set-payload value="#[output application/json --- payload]" doc:name=" Payload Of Execution Status Of Batch" doc:id="76ecdaf1-b91f-4ee5-96f1-8d8730b884c9" />
 	</flow>

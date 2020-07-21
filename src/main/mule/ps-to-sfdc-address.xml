@@ -7,19 +7,10 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
-	<flow name="ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31" initialState="stopped">
-		<scheduler doc:name="Scheduler" doc:id="b352b188-6835-49ec-88b6-e6d216f9358f" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="5000"/>
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
 		<logger level="INFO" doc:name=" Log Info for Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
-			<db:sql>select 
-	EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,
-	ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,
-	POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE	
-from SYSADM.PS_XC_AQ_ADDRSS_VW where emplID = '2383014'</db:sql>
+			<db:sql>#[p('db.rpt.query.address')]</db:sql>
 		</db:select>
 		<ee:transform doc:name="Java to Json" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
 			<ee:message>

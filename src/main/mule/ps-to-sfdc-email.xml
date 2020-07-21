@@ -7,16 +7,10 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<flow name="ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184" initialState="stopped">
-		<scheduler doc:name="Scheduler" doc:id="053b2900-ca66-4466-a9aa-86af2d2e3f4a" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="5000"/>
-			</scheduling-strategy>
-		</scheduler>
+	<flow name="ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
 		<logger level="INFO" doc:name="Log Info for Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
-			<db:sql>Select EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM
-from SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID = '2383183' </db:sql>
+			<db:sql>#[p('db.rpt.query.email')]</db:sql>
 			
 		
 </db:select>
@@ -28,7 +22,7 @@ output application/json
 vars.PSEmail]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[payload]" />
+		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[sizeOf(payload)]" />
 		<flow-ref doc:name="Refer to email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="email-sync-process-batch" />
 		<set-payload value="#[output application/json --- payload]" doc:name=" Payload Of Execution Status Of Batch" doc:id="b8e34ee9-34af-4ea9-ad47-f60b41aac6da" />
 	</flow>
