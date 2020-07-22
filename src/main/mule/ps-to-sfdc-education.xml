@@ -572,7 +572,7 @@ output application/json
 			<db:sql >#[p('db.rpt.query.education')]</db:sql>
 		</db:select>	
 		<foreach doc:name="For Each" doc:id="146d933d-cde0-48d8-97a3-558bbe73b75f" collection="#[vars.PSEducation]">
-			<http:request method="GET" doc:name="GET Contact From Salesforce" doc:id="39aa078f-fbf2-4626-89a7-f8627e7f9870" config-ref="sfdc-system-http-request-config" path="/sfdc/query" target="contactid">
+			<http:request method="GET" doc:name="GET Contact From Salesforce" doc:id="39aa078f-fbf2-4626-89a7-f8627e7f9870" config-ref="sfdc-system-http-request-config" path="/query" target="contactid">
 				<http:headers ><![CDATA[#[output application/java
 ---
 {
