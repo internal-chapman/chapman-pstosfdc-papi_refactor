@@ -7,26 +7,26 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<flow name="ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce">
-		<logger level="INFO" doc:name="Log Info for Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
-		<db:select doc:name="Select Phone from PS DB" doc:id="9d5426fb-de36-4dfb-a999-b57539db6277" config-ref="rpt-db-config" target="PSEmail">
+	<flow name="pf-ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce">
+		<logger level="INFO" doc:name="LOG START  Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
+		<db:select doc:name="Select Phone from PS DB" doc:id="9d5426fb-de36-4dfb-a999-b57539db6277" config-ref="rpt-db-config" target="PSPhone">
 			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
 			
 		
 </db:select>
-		<ee:transform doc:name="Java to Json" doc:id="53228e2a-8505-4461-a30a-b6f95dec3b96">
+		<ee:transform doc:name="DW Java To JSON" doc:id="53228e2a-8505-4461-a30a-b6f95dec3b96">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-vars.PSEmail]]></ee:set-payload>
+vars.PSPhone]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message='#[sizeOf(payload) as String]' />
-		<flow-ref doc:name="Refer to phone-sync-process-batch" doc:id="17aac280-2952-4de4-b59f-ac9e46530d5a" name="phone-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name=" Payload Of Execution Status Of Batch" doc:id="76ecdaf1-b91f-4ee5-96f1-8d8730b884c9" />
+		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message='#[payload]' />
+		<flow-ref doc:name="Flow Ref To pf-phone-sync-process-batch" doc:id="17aac280-2952-4de4-b59f-ac9e46530d5a" name="pf-phone-sync-process-batch" />
+		<set-payload value="#[output application/json --- payload]" doc:name="SET  Payload Of Execution Status Of Batch" doc:id="76ecdaf1-b91f-4ee5-96f1-8d8730b884c9" />
 	</flow>
-	<flow name="phone-sync-process-batch" doc:id="6ba067f8-e53b-4c7f-b602-4bd48fcee7b4" >
+	<flow name="pf-phone-sync-process-batch" doc:id="6ba067f8-e53b-4c7f-b602-4bd48fcee7b4" >
 		<batch:job jobName="phone-sync-process" doc:id="68ca8a79-ce78-4fd0-878c-2b8c3a4534d5" >
 			<batch:process-records >
 				<batch:step name="sync-ps-records-to-sfdc" doc:id="44d68f82-4d3f-4ea2-bee5-36ed9d09cb90" >
@@ -46,26 +46,25 @@ output application/json
 ]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<logger level="INFO" doc:name="Info for tuuid" doc:id="69eb8a5e-9da2-4383-8441-9e3fec2d09bd" message="#[vars.tuuid]" />
-					<flow-ref doc:name="Refer to phone-persistance-aux-insert-subFlow" doc:id="e833c480-1f80-44e4-bed5-d8f5d29a50aa" name="phone-persistance-aux-insert-subFlow" />
-					<http:request method="POST" doc:name="SFDC  System Api Call" doc:id="9824460e-7b23-428d-a21b-2ddf37578420" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
+					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-insert" doc:id="e833c480-1f80-44e4-bed5-d8f5d29a50aa" name="sf-phone-persistance-aux-insert" />
+					<http:request method="POST" doc:name="POST Create Address" doc:id="9824460e-7b23-428d-a21b-2ddf37578420" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
 						<http:query-params ><![CDATA[#[output application/java
 ---
 {
 	"ViewName" : "Phone"
 }]]]></http:query-params>
 					</http:request>
-					<logger level="INFO" doc:name="Log Info for SFDC Results" doc:id="28ef80cb-2713-4fed-805c-c0f8be5d95fc" message="#[vars.sdfc_address_result]" />
-					<flow-ref doc:name="Refer to phone-persistance-aux-update-subflow" doc:id="3b1da5d8-21d6-40eb-b53d-7aa903d3fd3b" name="phone-persistance-aux-update-subflow" />
-					<logger level="INFO" doc:name="Log Info Payload" doc:id="743c3951-8bc7-4aa6-af30-bca4367098d8" message="#[payload]" />
+					<logger level="INFO" doc:name="LOG INFO for SFDC Results" doc:id="28ef80cb-2713-4fed-805c-c0f8be5d95fc" message="#[vars.sdfc_address_result]" />
+					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-insert" doc:id="3b1da5d8-21d6-40eb-b53d-7aa903d3fd3b" name="sf-phone-persistance-aux-update" />
+					<logger level="INFO" doc:name="LOG INFO Payload" doc:id="743c3951-8bc7-4aa6-af30-bca4367098d8" message="#[payload]" />
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-				<logger level="INFO" doc:name="Info Log | Total Records" doc:id="9ab48532-f577-4d87-957a-f0d860956993" message="#[payload]" />
+				<logger level="INFO" doc:name="LOG INFO Total Records" doc:id="9ab48532-f577-4d87-957a-f0d860956993" message="#[payload]" />
 			</batch:on-complete>
 		</batch:job>
 	</flow>
-	<sub-flow name="phone-persistance-aux-update-subflow" doc:id="4bfc4c27-05e0-4aa8-a6e7-8e9e84fab69c" >
+	<sub-flow name="sf-phone-persistance-aux-update" doc:id="4bfc4c27-05e0-4aa8-a6e7-8e9e84fab69c" >
 		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="116b7dbf-91c7-4a5f-a574-e6e089bd71b9" message="Flow entered aux insert #[payload]" />
 		<ee:transform doc:name="Payload To Update" doc:id="faf1a99d-b398-4024-8cc6-d90faf3ae278">
 			<ee:message>
@@ -97,31 +96,17 @@ where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
 		<logger level="INFO" doc:name="Log Info Aux Dbase Updation Status" doc:id="26718c72-e550-4428-b605-923dbc8693a6" message="Updated AUX table" />
 	
 </sub-flow>
-	<sub-flow name="phone-getuuid-subflow" doc:id="77a31160-f645-4bf9-97de-25c76bece673" >
-		<set-variable value="#[uuid()]" doc:name="UUID" doc:id="352964a7-6597-475a-860c-01bbef9ac00f" variableName="uuid" />
-		<ee:transform doc:name="Tuuid" doc:id="a1e5c0ee-9473-488b-8d45-e2bfb8b7a370" >
-			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="tuuid" ><![CDATA[%dw 2.0
-output application/json
----
-vars.uuid[0 to 7] ++ vars.uuid[9]
-]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="Log Info Variable Tuuid " doc:id="0ee73512-e913-471e-9e24-00cdb1909cc6" message="#[vars.tuuid]" />
-	</sub-flow>
-	<sub-flow name="phone-persistance-aux-insert-subFlow" doc:id="7c2da920-d6e6-4b00-a89f-b19bdff9ce81" >
-		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="e531ddc6-3555-46fe-89aa-8811da5bf902" message="Flow entered aux insert" />
-		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="8cb4df8a-f0d2-4f40-8333-841e82b33944" variableName="AuxDetails" />
-		<flow-ref doc:name="Refer to phone-getuuid-subflow" doc:id="5e731984-9ea1-4304-a326-2f696ab912dd" name="phone-getuuid-subflow" />
-		<logger level="INFO" doc:name="Log Info EmplID" doc:id="ce22eb8a-d8f2-4eac-a804-5d2064be509b" message='#[vars.AuxDetails."emplID"]' />
-		<db:insert doc:name="Insert To Aux" doc:id="ec06c146-daaf-40d2-9cbf-c8e401576e8b" config-ref="aux-db-config" target="response" >
+	<sub-flow name="sf-phone-persistance-aux-insert" doc:id="7c2da920-d6e6-4b00-a89f-b19bdff9ce81" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="e531ddc6-3555-46fe-89aa-8811da5bf902" message="Flow entered aux insert" />
+		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="SET FV AuxDetails" doc:id="8cb4df8a-f0d2-4f40-8333-841e82b33944" variableName="AuxDetails" />
+		<flow-ref doc:name="Flow Ref To sf-generate-uuid" doc:id="5e731984-9ea1-4304-a326-2f696ab912dd" name="sf-generate-uuid" />
+		<logger level="INFO" doc:name="LOG INFO EmplID" doc:id="ce22eb8a-d8f2-4eac-a804-5d2064be509b" message='#[vars.AuxDetails."emplID"]' />
+		<db:insert doc:name="Insert To Aux Db" doc:id="ec06c146-daaf-40d2-9cbf-c8e401576e8b" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-GUID: vars.tuuid,
+GUID: vars.uuid,
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: vars.AuxDetails.emplID,  
 XC_AQ_SOURCE_TYPE: vars.tuuid,
@@ -134,6 +119,6 @@ XC_AQ_METADATA: 'CS to SFDC',
 DESCR250: 'Data transfer from Campus Solution to SFDC'
 }]]]></db:input-parameters>
 		</db:insert>
-		<logger level="INFO" doc:name="Log Info Dbase Results" doc:id="d5be1cb6-5e43-408e-893b-506761fffee9" message="Result inserted: #[vars.response.affectedRows]" />
+		<logger level="INFO" doc:name="LOG INFO Dbase Results" doc:id="d5be1cb6-5e43-408e-893b-506761fffee9" message="Result inserted: #[vars.response.affectedRows]" />
 	</sub-flow>
 </mule>

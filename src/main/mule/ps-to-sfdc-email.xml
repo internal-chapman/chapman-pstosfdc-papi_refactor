@@ -8,13 +8,13 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<flow name="ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
-		<logger level="INFO" doc:name="Log Info for Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
+		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
 			<db:sql>#[p('db.rpt.query.email')]</db:sql>
 			
 		
 </db:select>
-		<ee:transform doc:name="Java to Json" doc:id="f347aabd-5943-4626-8d59-bcb44aa88eb8">
+		<ee:transform doc:name="DW Java To JSON" doc:id="f347aabd-5943-4626-8d59-bcb44aa88eb8">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -22,11 +22,11 @@ output application/json
 vars.PSEmail]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[sizeOf(payload)]" />
-		<flow-ref doc:name="Refer to email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="email-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name=" Payload Of Execution Status Of Batch" doc:id="b8e34ee9-34af-4ea9-ad47-f60b41aac6da" />
+		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[payload]" />
+		<flow-ref doc:name="Flow Ref To pf-email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="pf-email-sync-process-batch" />
+		<set-payload value="#[output application/json --- payload]" doc:name="SET Payload Of Execution Status Of Batch" doc:id="b8e34ee9-34af-4ea9-ad47-f60b41aac6da" />
 	</flow>
-	<flow name="email-sync-process-batch" doc:id="6e3810ba-6ed8-405f-af40-1d755bc65716" >
+	<flow name="pf-email-sync-process-batch" doc:id="6e3810ba-6ed8-405f-af40-1d755bc65716" >
 		<batch:job jobName="email-sync-process" doc:id="7945c006-71c8-4229-bb42-1e1f89322caf" >
 			<batch:process-records >
 				<batch:step name="sync-ps-records-to-sfdc" doc:id="252f8712-1479-4ec3-8899-965dcf69a0a9" >
@@ -46,28 +46,28 @@ output application/json
 ]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<logger level="INFO" doc:name="Info for tuuid" doc:id="73370f73-360c-49fa-98b0-f016ab6f545c" message="#[vars.tuuid]" />
-					<flow-ref doc:name="Refer to email-persistance-aux-insert-subFlow" doc:id="8a3bcd68-9cce-402f-bb51-37f36c341ac0" name="email-persistance-aux-insert-subFlow" />
-					<http:request method="POST" doc:name="SFDC  System Api Call" doc:id="0a1fe3d9-2c08-4193-b357-c9afb7688d3a" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
+					<logger level="INFO" doc:name="LOG INFO  tuuid" doc:id="73370f73-360c-49fa-98b0-f016ab6f545c" message="#[vars.tuuid]" />
+					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-insert" doc:id="8a3bcd68-9cce-402f-bb51-37f36c341ac0" name="sf-email-persistance-aux-insert" />
+					<http:request method="POST" doc:name="POST Create Address" doc:id="0a1fe3d9-2c08-4193-b357-c9afb7688d3a" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
 						<http:query-params ><![CDATA[#[output application/java
 ---
 {
 	"ViewName" : "email"
 }]]]></http:query-params>
 					</http:request>
-					<logger level="INFO" doc:name="Log Info for SFDC Results" doc:id="101ee594-0db7-4a77-97ff-ed3e5fa08844" message="#[vars.sdfc_address_result]" />
-					<flow-ref doc:name="Refer to email-persistance-aux-update-subflow" doc:id="c87011b4-4db8-4ea0-9b3e-bdcc26ce7b14" name="email-persistance-aux-update-subflow" />
-					<logger level="INFO" doc:name="Log Info Payload" doc:id="0bf6a02c-d54d-4429-abb8-5ced99653704" message="#[payload]" />
+					<logger level="INFO" doc:name="LOG INFO SFDC Results" doc:id="101ee594-0db7-4a77-97ff-ed3e5fa08844" message="#[vars.sdfc_address_result]" />
+					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-update" doc:id="c87011b4-4db8-4ea0-9b3e-bdcc26ce7b14" name="sf-email-persistance-aux-update" />
+					<logger level="INFO" doc:name="LOG INFO Payload" doc:id="0bf6a02c-d54d-4429-abb8-5ced99653704" message="#[payload]" />
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-				<logger level="INFO" doc:name="Log Info Total Records" doc:id="6473209d-7b4c-48f8-990a-4ff1feb2545c" message="#[payload]" />
+				<logger level="INFO" doc:name="LOG INFO Total Records" doc:id="6473209d-7b4c-48f8-990a-4ff1feb2545c" message="#[payload]" />
 			</batch:on-complete>
 		</batch:job>
 	</flow>
-	<sub-flow name="email-persistance-aux-update-subflow" doc:id="03c21894-41ca-4c56-a061-3cab28874d89" >
+	<sub-flow name="sf-email-persistance-aux-update" doc:id="03c21894-41ca-4c56-a061-3cab28874d89" >
 		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="59ea723e-a2b9-4b71-a3c7-fa131a38821b" message="Flow entered aux insert #[payload]" />
-		<ee:transform doc:name="Payload To Update" doc:id="e7d9f68e-b5ed-47eb-b568-374e6c9f6f50">
+		<ee:transform doc:name="DW Set Payload Update" doc:id="e7d9f68e-b5ed-47eb-b568-374e6c9f6f50">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -82,7 +82,7 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<db:update doc:name="Update To Aux Dbase" doc:id="573da85a-91a6-4f90-9db2-fb5ce3a3737b" config-ref="aux-db-config" >
+		<db:update doc:name="Update To Aux Db" doc:id="573da85a-91a6-4f90-9db2-fb5ce3a3737b" config-ref="aux-db-config" >
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
 set 
 XC_AQ_DESTINATION = 'SFDC', 
@@ -94,34 +94,19 @@ DESCR250 = :description
 where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
 			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
 		</db:update>
-		<logger level="INFO" doc:name="Log Info Aux Dbase Updation Status" doc:id="62ff8ddd-aabb-47e3-be5f-9a71aef70e3c" message="Updated AUX table" />
+		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="62ff8ddd-aabb-47e3-be5f-9a71aef70e3c" message="Updated AUX table" />
 	
 </sub-flow>
-	<sub-flow name="email-getuuid-subflow" doc:id="18516c86-b1d4-405b-a22c-17e424d68f9d" >
-		<set-variable value="#[uuid()]" doc:name="UUID" doc:id="cc75c337-1d95-4c99-8081-077600f986e3" variableName="uuid" />
-		<ee:transform doc:name="Tuuid" doc:id="3ba67cce-2d1b-414e-ae23-9c98f2082802" >
-			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="tuuid" ><![CDATA[%dw 2.0
-output application/json
----
-vars.uuid[0 to 7] ++ vars.uuid[9]
-]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="Log Info Variable Tuuid " doc:id="e59bf8bb-9be7-440f-9e29-3f064d3cccca" message="#[vars.tuuid]" />
-	</sub-flow>
-	<sub-flow name="email-persistance-aux-insert-subFlow" doc:id="378aca4c-bf6f-45a5-8ff6-02d9ffac43ef" >
+	<sub-flow name="sf-email-persistance-aux-insert" doc:id="378aca4c-bf6f-45a5-8ff6-02d9ffac43ef" >
 		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="77a47c6d-f6eb-4de9-a70b-0632ac24fdfe" message="Flow entered aux insert" />
-		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="f65a59cc-cd62-4ddd-a67f-78fa86e75c32" variableName="AuxDetails" />
-		<flow-ref doc:name="Refer to email-getuuid-subflow" doc:id="935046b5-c0de-4ed9-a876-1c5ff2cacc0c" name="email-getuuid-subflow" />
-		<logger level="INFO" doc:name="Log Info EmplID" doc:id="67f1b91f-496f-406c-a589-4409a68b4f5e" message='#[vars.AuxDetails."emplID"]' />
-		<db:insert doc:name="Insert To Aux" doc:id="0eed0119-7c4a-4809-a9f4-8bc34cfc4e2e" config-ref="aux-db-config" target="response" >
+		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="SET FV AuxDetails" doc:id="f65a59cc-cd62-4ddd-a67f-78fa86e75c32" variableName="AuxDetails" />
+		<flow-ref doc:name="Flow Ref To sf-generate-uuid" doc:id="935046b5-c0de-4ed9-a876-1c5ff2cacc0c" name="sf-generate-uuid" />
+		<db:insert doc:name="Insert To Aux Db" doc:id="0eed0119-7c4a-4809-a9f4-8bc34cfc4e2e" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-GUID: vars.tuuid,
+GUID: vars.uuid,
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: vars.AuxDetails.emplID,  
 XC_AQ_SOURCE_TYPE: vars.tuuid,
@@ -134,6 +119,6 @@ XC_AQ_METADATA: 'CS to SFDC',
 DESCR250: 'Data transfer from Campus Solution to SFDC'
 }]]]></db:input-parameters>
 		</db:insert>
-		<logger level="INFO" doc:name="Log Info Dbase Results" doc:id="234f7b45-f2a6-4c1d-abb6-7b1afc14c51a" message="Result inserted: #[vars.response.affectedRows]" />
+		<logger level="INFO" doc:name="LOG INFO Dbase Results" doc:id="234f7b45-f2a6-4c1d-abb6-7b1afc14c51a" message="Result inserted: #[vars.response.affectedRows]" />
 	</sub-flow>
 </mule>
