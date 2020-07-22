@@ -72,12 +72,14 @@ output application/json
 output application/json
 ---
 {
-	"id": vars.sdfc_address_result."id"[0] default'NA',
+	"id": vars.sdfc_address_result.id[0] default'NA',
+	"destType": vars.XC_AQ_DEST_TYPE,
+	"sourceType":vars.XC_AQ_SOURCE_TYPE,
 	"tuuid": vars.tuuid,
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-	"status": if(vars.sdfc_address_result."success"[0] == true) "COMPLETED" else 'ERROR',
-	"metadata": if(vars.sdfc_address_result."success"[0] == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
-    "description": if(vars.sdfc_address_result."success"[0] == true) "Record Insert or Updated in SFDC" else (flatten(vars.sdfc_address_result."errors"))."message"[0]
+	"status": if(vars.sdfc_address_result.success[0] == true) "COMPLETED" else "ERROR",
+	"metadata": if(vars.sdfc_address_result.success[0] == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+    "description": if(vars.sdfc_address_result.success[0] == true) "Record Insert or Updated in SFDC" else (flatten(vars.sdfc_address_result.errors)).message[0]
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
@@ -86,11 +88,13 @@ output application/json
 set 
 XC_AQ_DESTINATION = 'SFDC', 
 XC_AQ_DEST_ID = :id,
+XC_AQ_DEST_TYPE=:destType,
 DT_TIMESTAMP = :now,
 XC_AQ_STATUS = :status,
 XC_AQ_METADATA = :metadata,
-DESCR250 = :description
-where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+DESCR250 = :description,
+XC_AQ_SOURCE_TYPE = :sourceType
+where GUID= :tuuid</db:sql>
 			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
 		</db:update>
 		<logger level="INFO" doc:name=" Log Info Aux Dbase Updation Status" doc:id="2074f4ac-49e7-4e2b-abb8-7134adcd05c5" message="Updated AUX table" />
@@ -109,30 +113,43 @@ vars.uuid[0 to 7] ++ vars.uuid[9]
 		</ee:transform>
 		<logger level="INFO" doc:name="Log Info Variable Tuuid " doc:id="d5fa7504-01cf-4fb1-94aa-85a831a1b0ef" message="#[vars.tuuid]" />
 	</sub-flow>
-	<sub-flow name="address-persistance-aux-insert-subFlow" doc:id="362afc50-ec45-4f58-8b7a-14c5bd810efa" >
-		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="2c4b66a3-59ee-4a69-983c-1d64f91c244d" message="Flow entered aux insert" />
-		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="835104a7-91ad-4bf7-81a7-74714a0a766b" variableName="AuxDetails" />
-		<flow-ref doc:name="Refer to address-getuuid-subflow" doc:id="4ff5487d-a7c1-46a2-8c70-8f26f75ea11f" name="address-getuuid-subflow" />
-		<logger level="INFO" doc:name="Log Info EmplID" doc:id="b09fc457-00df-46b4-9859-b9ce0957180f" message='#[vars.AuxDetails."emplID"]' />
-		<db:insert doc:name="Insert To Aux" doc:id="d16cd21d-2b26-445c-9965-ef5051f2d660" target="response" config-ref="aux-db-config">
-				<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
-    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
-values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-				<db:input-parameters><![CDATA[#[{
+	<sub-flow name="address-persistance-aux-insert-subFlow" doc:id="4c080cc0-45dd-46d3-a74c-02eefece791f" >
+		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="c009f2ad-e881-49f9-85fe-7f671f8f3410" message="Flow entered aux insert" />
+		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="e440756a-5a11-4c3e-96c6-5ed15f951a98" variableName="AuxDetails" />
+		<set-variable value="${auxDBColumns.XC_AQ_DEST_TYPE.address}" doc:name="XC_AQ_DEST_TYPE" doc:id="8a4d7ea6-1df2-48dd-a537-54e9ad6f78cb" variableName="XC_AQ_DEST_TYPE"/>
+		<set-variable value="${auxDBColumns.XC_AQ_SOURCE_TYPE.address}" doc:name="XC_AQ_SOURCE_TYPE" doc:id="38988c10-1fe3-44de-866c-78a3bd6768e2" variableName="XC_AQ_SOURCE_TYPE"/>
+		<flow-ref doc:name="Refer to address-getuuid-subflow" doc:id="a1459c85-f348-4870-aa16-7c283278e29f" name="address-getuuid-subflow" />
+		<logger level="INFO" doc:name="Log Info EmplID" doc:id="2a1f3e29-c70e-44cc-8b3b-6f887c316df1" message='#[vars.AuxDetails."emplID"]' />
+		<ee:transform doc:name="DW Set Payload" doc:id="7c97b6d4-fd33-493d-9b6e-6ef6c898099e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="AuxDBInsert" ><![CDATA[%dw 2.0
+output application/json
+---
+{
 GUID: vars.tuuid,
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: vars.AuxDetails.emplID,  
-XC_AQ_SOURCE_TYPE: vars.tuuid,
+XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
 XC_AQ_DESTINATION: '-',
 XC_AQ_DEST_ID: '-',
 XC_AQ_STATUS: 'In progress',
-DTTM_CREATED: now(),
-DTTM_MODIFIED: now(),
+DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 XC_AQ_METADATA: 'CS to SFDC',
-DESCR250: 'Data transfer from Campus Solution to SFDC'
-}]]]></db:input-parameters>
+DESCR250: 'Data transfer from Campus Solution to SFDC',
+XC_AQ_DEST_TYPE: vars.XC_AQ_DEST_TYPE
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert To Aux" doc:id="9f35cb68-af51-40df-b17d-c0c1a0665be8" target="response" config-ref="aux-db-config">
+				<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+				<db:input-parameters><![CDATA[#[vars.AuxDBInsert]]]></db:input-parameters>
 			
 			</db:insert>
-		<logger level="INFO" doc:name="Log Info Dbase Results" doc:id="0e31ffbd-d0ff-4046-bfa8-aa6ba550dbb0" message="Result inserted: #[vars.response.affectedRows]" />
+		<logger level="INFO" doc:name="Log Info Dbase Results" doc:id="6aab04e2-b878-410e-b486-cd7a8d0ee21c" message="Result inserted: #[vars.response.affectedRows]" />
 	</sub-flow>
 </mule>

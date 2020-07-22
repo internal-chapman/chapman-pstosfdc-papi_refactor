@@ -68,3 +68,22 @@ report:
     period: "PT"
     interval: "60"
     designator: "M"
+auxDBColumns:
+  XC_AQ_SOURCE_TYPE:
+    contacts: "PS_XC_AQ_INCTCT_VW,PS_XC_AQ_INRELA_VW,PS_XC_AQ_AFL_VW"
+    extAccounts: "PS_XC_AQ_EOACCT_VW"
+    address: "PS_XC_AQ_ADDRSS_VW"
+    phone: "PS_XC_AQ_PHONE_VW"
+    email: "PS_XC_AQ_EMAIL_VW"
+    employment: "PS_XC_AQ_EMPLOY_VW"
+    education: "PS_XC_AQ_EDDTLS_VW"
+    studentInterest: "PS_XC_AQ_STUINT_VW"
+  XC_AQ_DEST_TYPE:
+    contacts: "Contacts"
+    extAccounts: "LL-Institution"
+    address: "Alternate Channel"
+    phone: "Alternate Channel"
+    email: "Alternate Channel"
+    employment: "Employment"
+    education: "Education"
+    studentInterest: "AQB_StudentInterest__c"    

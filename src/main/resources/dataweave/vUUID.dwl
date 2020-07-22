@@ -1,4 +1,4 @@
 %dw 2.0
 output application/json
 ---
-uuid()[0 to 7] ++ uuid()[9]
+using(id = uuid())(id[0 to 7] ++  id[9])
