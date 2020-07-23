@@ -1,3 +1,56 @@
+# All https proprties
+http:      
+  # HTTPS Request Configurations 
+  request:
+    # Process related Request configurations
+    process: ""
+    # System related Request configurations
+    system:
+      responseTimeout: "30000"
+      connectionTimeout: "30000"
+      persistence:
+        host: "localhost"
+        port: "8081"
+        basePath: "/api"
+        path:
+          contactsSpouses: "/persistant/contactsSpouses"
+          contactsNonSpouses: "/persistant/contactsNonSpouses"
+          addresses: "/persistance/contacts/addresses"
+          accounts: "/persistant/accounts"
+      sfdc:
+        host: "localhost"
+        port: "8082"
+        basePath: "/api/sfdc"
+        path:
+          createContact: "contacts"
+          createAddress: "alternate-channels"
+          createAccount: "accounts"
+          extOrgAccounts: "ext-org-accounts"
+          createEducation: "education"
+          createRelationship: "relationship"
+          queryContact: "query"
+db:
+  rpt:
+    host: "psdb-cs92rpt.chapman.edu"
+    port: "1521"
+    user: "sfusr"
+    password: "Chap4me"
+    serviceName: "CS92RPT"
+    query:
+      studentInterest: "SELECT count(*) cnt FROM sysadm.PS_XC_AQ_STUINT_VW"
+      phone: "SELECT EMPLID,PHONE_TYPE,COUNTRY_CODE,PHONE,EXTENSION,PREF_PHONE_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_PHONE_VW where EMPLID='0000002'"
+      extAccounts: "SELECT * FROM SYSADM.PS_XC_AQ_EOACCT_VW OFFSET 61 ROWS  FETCH NEXT 10 ROWS ONLY"
+      employmentCount: "SELECT count(*) cnt FROM sysadm.PS_XC_AQ_EMPLOY_VW WHERE LAST_UPDT_DTTM > TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')"
+      employmentBatch: "SELECT EMPLID,EMPLOYER,END_DT,XC_AQ_ENDED,START_DT,XC_AQ_STARTED,SCC_STATUS_DESCR,BUSINESS_TITLE,DEPTID,DEPTNAME,REPORTS_TO_DEPT,ROLLUP_NAME,LAST_UPDT_DTTM FROM (   SELECT EMPLID,EMPLOYER,END_DT,XC_AQ_ENDED,START_DT,XC_AQ_STARTED,SCC_STATUS_DESCR,BUSINESS_TITLE,DEPTID,DEPTNAME,REPORTS_TO_DEPT,ROLLUP_NAME,LAST_UPDT_DTTM, RANK() OVER (ORDER BY EMPLID , LAST_UPDT_DTTM) as my_rank   FROM sysadm.PS_XC_AQ_EMPLOY_VW   where LAST_UPDT_DTTM > TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')   ) WHERE my_rank >= :start_offset AND my_rank <= :end_offset"
+      email: "SELECT EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID='0000002'"
+      education: "select EMPLID,XC_AQ_INST,CAMPUS,XC_AQ_PRI_DEG,XC_AQ_HONDEG,XC_AQ_RECTYPE,XC_AQ_DEG_LVL,XC_AQ_GRAD_MONTH,GRAD_YR_EOS,XC_DEGREE_DESCR,REUNION_YR,START_DT_YEAR,END_DT_YEAR,SCHOOL_DESCR,DEPT_DESCR,ACAD_PLAN_TYPE,XC_AQ_PROG_STATUS,CREATED_BY,CREATED_DTTM,LAST_UPDT_OPRID,LAST_UPDT_DTTM,PLAN_DESCR,SAA_SUBPLAN_DESCR from SYSADM.PS_XC_AQ_EDDTLS_VW where rownum < 3"
+      address: "SELECT EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where EMPLID='0000002'"
+  aux:
+    host: "psdb-cs92int1.chapman.edu"
+    port: "1521"
+    user: "sfusr"
+    password: "Chap4me"
+    serviceName: "CS92INT1"
 scheduler:
   frequency:
     seconds: "180"
@@ -9,43 +62,9 @@ report:
     period: "PT"
     interval: "60"
     designator: "M"
-db:
-  rpt:
-    query:
-      studentInterest: "SELECT count(*) cnt FROM sysadm.PS_XC_AQ_STUINT_VW"
-      phone: "SELECT EMPLID,PHONE_TYPE,COUNTRY_CODE,PHONE,EXTENSION,PREF_PHONE_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_PHONE_VW where EMPLID='0000002'"
-      extAccounts: "SELECT * FROM SYSADM.PS_XC_AQ_EOACCT_VW OFFSET 61 ROWS  FETCH NEXT 10 ROWS ONLY"
-      employmentCount: "SELECT count(*) cnt FROM sysadm.PS_XC_AQ_EMPLOY_VW WHERE LAST_UPDT_DTTM > TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')"
-      employmentBatch: "SELECT EMPLID,EMPLOYER,END_DT,XC_AQ_ENDED,START_DT,XC_AQ_STARTED,SCC_STATUS_DESCR,BUSINESS_TITLE,DEPTID,DEPTNAME,REPORTS_TO_DEPT,ROLLUP_NAME,LAST_UPDT_DTTM FROM (   SELECT EMPLID,EMPLOYER,END_DT,XC_AQ_ENDED,START_DT,XC_AQ_STARTED,SCC_STATUS_DESCR,BUSINESS_TITLE,DEPTID,DEPTNAME,REPORTS_TO_DEPT,ROLLUP_NAME,LAST_UPDT_DTTM, RANK() OVER (ORDER BY EMPLID , LAST_UPDT_DTTM) as my_rank   FROM sysadm.PS_XC_AQ_EMPLOY_VW   where LAST_UPDT_DTTM > TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')   ) WHERE my_rank >= :start_offset AND my_rank <= :end_offset"
-      email: "SELECT EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID='0000002'"
-      education: "select EMPLID,XC_AQ_INST,CAMPUS,XC_AQ_PRI_DEG,XC_AQ_HONDEG,XC_AQ_RECTYPE,XC_AQ_DEG_LVL,XC_AQ_GRAD_MONTH,GRAD_YR_EOS,XC_DEGREE_DESCR,REUNION_YR,START_DT_YEAR,END_DT_YEAR,SCHOOL_DESCR,DEPT_DESCR,ACAD_PLAN_TYPE,XC_AQ_PROG_STATUS,CREATED_BY,CREATED_DTTM,LAST_UPDT_OPRID,LAST_UPDT_DTTM,PLAN_DESCR,SAA_SUBPLAN_DESCR from SYSADM.PS_XC_AQ_EDDTLS_VW where rownum < 3"
-      address: "SELECT EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where EMPLID='0000002'"
-http:
-  listener:
-    path: "/*"
-    consolePath: "/console/*"
-  request:
-    process: ""
-    system:
-      responseTimeout: "30000"
-      connectionTimeout: "30000"
-      persistence:
-        path:
-          contactsSpouses: "/persistant/contactsSpouses"
-          contactsNonSpouses: "/persistant/contactsNonSpouses"
-          addresses: "/persistance/contacts/addresses"
-          accounts: "/persistant/accounts"
-      sfdc:
-        path:
-          createContact: "contacts"
-          createAddress: "alternate-channels"
-          createAccount: "accounts"
-          createRelationship: "relationship"
-          extOrgAccounts: "ext-org-accounts"
-          createEducation: "education"
 auxDBColumns:
   XC_AQ_SOURCE_TYPE:
-    contacts: "PS_XC_AQ_INCTCT_VW,PS_XC_AQ_INRELA_VW,PS_XC_AQ_AFL_VW"
+    contacts: "PS_XC_AQ_INCTCT_VW"
     extAccounts: "PS_XC_AQ_EOACCT_VW"
     address: "PS_XC_AQ_ADDRSS_VW"
     phone: "PS_XC_AQ_PHONE_VW"
@@ -61,4 +80,4 @@ auxDBColumns:
     email: "Alternate Channel"
     employment: "Employment"
     education: "Education"
-    studentInterest: "AQB_StudentInterest__c"          
+    studentInterest: "AQB_StudentInterest__c"     
