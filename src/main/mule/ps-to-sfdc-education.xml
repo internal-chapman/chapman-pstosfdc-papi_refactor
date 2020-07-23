@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
-	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0" initialState="started">
+	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0" initialState="stopped">
 		<scheduler doc:name="Scheduler" doc:id="54782852-20e0-4d5f-8840-9dd4845f2609" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="60000"/>

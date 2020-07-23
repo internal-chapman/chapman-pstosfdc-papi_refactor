@@ -10,7 +10,8 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
-			<db:sql>#[p('db.rpt.query.email')]</db:sql>
+			<db:sql>SELECT EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID='0000002'
+</db:sql>
 			
 		
 </db:select>
@@ -66,59 +67,76 @@ output application/json
 		</batch:job>
 	</flow>
 	<sub-flow name="sf-email-persistance-aux-update" doc:id="03c21894-41ca-4c56-a061-3cab28874d89" >
-		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="59ea723e-a2b9-4b71-a3c7-fa131a38821b" message="Flow entered aux insert #[payload]" />
-		<ee:transform doc:name="DW Set Payload Update" doc:id="e7d9f68e-b5ed-47eb-b568-374e6c9f6f50">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
+		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="2ee9ce92-ab64-4011-8bfd-9300c5d45b6e" message="Flow entered aux insert #[payload]" />
+		<ee:transform doc:name="Payload To Update" doc:id="2b77bba6-f4fe-4a27-acfa-5a44c23e8541" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	"id": vars.sdfc_address_result."id"[0] default'NA',
-	"tuuid": vars.tuuid,
+	"id": vars.sdfc_address_result.id[0] default'NA',
+	"destType": vars.XC_AQ_DEST_TYPE,
+	"sourceType":vars.XC_AQ_SOURCE_TYPE,
+	"tuuid": vars.uuid,
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-	"status": if(vars.sdfc_address_result."success"[0] == true) "COMPLETED" else 'ERROR',
-	"metadata": if(vars.sdfc_address_result."success"[0] == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
-    "description": if(vars.sdfc_address_result."success"[0] == true) "Record Insert or Updated in SFDC" else (flatten(vars.sdfc_address_result."errors"))."message"[0]
+	"status": if(vars.sdfc_address_result.success[0] == true) "COMPLETED" else "ERROR",
+	"metadata": if(vars.sdfc_address_result.success[0] == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+    "description": if(vars.sdfc_address_result.success[0] == true) "Record Insert or Updated in SFDC" else (flatten(vars.sdfc_address_result.errors)).message[0]
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<db:update doc:name="Update To Aux Db" doc:id="573da85a-91a6-4f90-9db2-fb5ce3a3737b" config-ref="aux-db-config" >
+		<db:update doc:name="Update To Aux Dbase" doc:id="65a02604-6cfa-4398-ac82-8629e8369348" config-ref="aux-db-config" >
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
 set 
 XC_AQ_DESTINATION = 'SFDC', 
 XC_AQ_DEST_ID = :id,
+XC_AQ_DEST_TYPE=:destType,
 DT_TIMESTAMP = :now,
 XC_AQ_STATUS = :status,
 XC_AQ_METADATA = :metadata,
-DESCR250 = :description
-where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+DESCR250 = :description,
+XC_AQ_SOURCE_TYPE = :sourceType
+where GUID= :tuuid</db:sql>
 			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
 		</db:update>
-		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="62ff8ddd-aabb-47e3-be5f-9a71aef70e3c" message="Updated AUX table" />
+		<logger level="INFO" doc:name="Log Info Aux Dbase Updation Status" doc:id="a7568a87-67ba-41b6-8e5c-1577fcb79b4d" message="Updated AUX table" />
 	
 </sub-flow>
 	<sub-flow name="sf-email-persistance-aux-insert" doc:id="378aca4c-bf6f-45a5-8ff6-02d9ffac43ef" >
-		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="77a47c6d-f6eb-4de9-a70b-0632ac24fdfe" message="Flow entered aux insert" />
-		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="SET FV AuxDetails" doc:id="f65a59cc-cd62-4ddd-a67f-78fa86e75c32" variableName="AuxDetails" />
-		<flow-ref doc:name="Flow Ref To sf-generate-uuid" doc:id="935046b5-c0de-4ed9-a876-1c5ff2cacc0c" name="sf-generate-uuid" />
-		<db:insert doc:name="Insert To Aux Db" doc:id="0eed0119-7c4a-4809-a9f4-8bc34cfc4e2e" config-ref="aux-db-config" target="response" >
-			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
-    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
-values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-			<db:input-parameters ><![CDATA[#[{
+		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="d2570bd4-ec25-459a-9c2c-be7f7454ca2f" message="Flow entered aux insert" />
+		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="0347eae4-b266-4c6a-9e98-1894e761c8f0" variableName="AuxDetails" />
+		<set-variable value="${auxDBColumns.XC_AQ_DEST_TYPE.email}" doc:name="XC_AQ_DEST_TYPE" doc:id="da273f15-2213-4bcd-b25b-db93eef047a4" variableName="XC_AQ_DEST_TYPE" />
+		<set-variable value="${auxDBColumns.XC_AQ_SOURCE_TYPE.email}" doc:name="XC_AQ_SOURCE_TYPE" doc:id="887010d2-0625-4178-a408-990aa22f2be1" variableName="XC_AQ_SOURCE_TYPE" />
+		<flow-ref doc:name="sf-generate-uuid" doc:id="87e2c588-592e-4537-ba80-d4bf9557c787" name="sf-generate-uuid" />
+		<logger level="INFO" doc:name="Log Info EmplID" doc:id="b17e32f7-c1ba-492a-8477-480a0dcb7f15" message='#[vars.AuxDetails."emplID"]' />
+		<ee:transform doc:name="DW Set Payload" doc:id="b38e5171-3e8d-48aa-91f0-49e731be0a5e" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="AuxDBInsert" ><![CDATA[%dw 2.0
+output application/json
+---
+{
 GUID: vars.uuid,
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: vars.AuxDetails.emplID,  
-XC_AQ_SOURCE_TYPE: vars.tuuid,
+XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
 XC_AQ_DESTINATION: '-',
 XC_AQ_DEST_ID: '-',
 XC_AQ_STATUS: 'In progress',
-DTTM_CREATED: now(),
-DTTM_MODIFIED: now(),
+DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 XC_AQ_METADATA: 'CS to SFDC',
-DESCR250: 'Data transfer from Campus Solution to SFDC'
-}]]]></db:input-parameters>
+DESCR250: 'Data transfer from Campus Solution to SFDC',
+XC_AQ_DEST_TYPE: vars.XC_AQ_DEST_TYPE
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert To Aux" doc:id="2ef8c921-127e-4736-a18f-8894c64d58e1" config-ref="aux-db-config" target="response" >
+			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+			<db:input-parameters ><![CDATA[#[vars.AuxDBInsert]]]></db:input-parameters>
 		</db:insert>
-		<logger level="INFO" doc:name="LOG INFO Dbase Results" doc:id="234f7b45-f2a6-4c1d-abb6-7b1afc14c51a" message="Result inserted: #[vars.response.affectedRows]" />
+		<logger level="INFO" doc:name="Log Info Dbase Results" doc:id="407d0cc8-161f-49f0-9cfc-9e860eeb1048" message="Result inserted: #[vars.response.affectedRows]" />
 	</sub-flow>
 </mule>

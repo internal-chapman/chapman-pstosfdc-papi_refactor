@@ -14,7 +14,6 @@
 		<flow-ref doc:name="Flow Ref To pf-non-spouses-contacts-sync" doc:id="fffa568f-2fc4-4006-ba82-0063468f8e93" name="pf-non-spouses-contacts-sync"/>
 		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process" doc:id="dde579ac-f455-404d-9d47-4100fca82680" name="pf-ext-accounts-sync-process" />
 		<flow-ref doc:name="Flow Ref to pf-ps-to-sfdc-phone-sync" doc:id="fdcaf501-fa3f-44fe-8f89-76ed196c2561" name="pf-ps-to-sfdc-phone-sync" />
-		<flow-ref doc:name="Flow Ref To ps-to-sfdc-email-sync" doc:id="64256ff8-403b-41b3-a51c-a7b44f54e9ea" name="ps-to-sfdc-email-sync" />
 		<flow-ref doc:name="Flow Ref To pf-student-interest" doc:id="730d6bc0-fb6f-4b2c-91de-253d9001c2a2" name="pf-student-interest" />
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education" doc:id="4066a968-b282-42f7-ac9b-a9df1be069ce" name="pf-ps-to-sfdc-education" />
 		<flow-ref doc:name="Flow Ref To pf-employment" doc:id="250fd1d5-c642-4d63-89f8-98ca9cc69394" name="pf-employment" />
@@ -27,5 +26,6 @@
 		</scheduler>
 		<flow-ref doc:name="Copy_of_Flow Ref To sf-correlationId" doc:id="b35b3ef7-01ec-4a9d-8505-7cda779b5f9b" name="sf-correlationId" />
 		<flow-ref doc:name="Flow Ref To ps-to-sfdc-address-sync" doc:id="01e3480e-d135-4a12-905a-f13b622c1710" name="ps-to-sfdc-address-sync" />
+		<flow-ref doc:name="Flow Ref To ps-to-sfdc-email-sync" doc:id="64256ff8-403b-41b3-a51c-a7b44f54e9ea" name="ps-to-sfdc-email-sync" />
 	</flow>
 </mule>
