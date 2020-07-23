@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sfdc-sapi-query-salesforce-flow" doc:id="1ad13386-e84d-422b-b3ac-f8f2adc800a0" >
+		<logger level="INFO" doc:name="LOG INFO Start of sfdc/query Flow" doc:id="4ac5c75b-45b4-4709-bfb7-96735ca75b48" message="Start of query salesforce flow" />
+		<foreach doc:name="For Each" doc:id="0fdbb0c2-ca4d-48f2-b109-453faa94e427">
+			<salesforce:query doc:name="Query for ContactId" doc:id="2964a49a-c71a-47db-9482-5bd1a221595a" target="contactid" config-ref="salesforce-config">
+				<salesforce:salesforce-query>select Id from Contact where AQB__ContactExternalID__c = ':id'</salesforce:salesforce-query>
+				<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"id" : "00" ++ payload.EMPLID
+}]]]></salesforce:parameters>
+			</salesforce:query>
+			<salesforce:query doc:name="Query PrimaryDegree" doc:id="8994d9c2-a11d-4515-b131-36c863ad04b0" config-ref="salesforce-config" target="degree">
+			<salesforce:salesforce-query>SELECT AQB__IsPrimaryDegree__c FROM AQB__Education__c WHERE AQB__Contact__c = ':id'</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"id" : vars.contactid[0].Id
+}]]]></salesforce:parameters>
+		</salesforce:query>
+			<ee:transform doc:name="EmpId value mapping" doc:id="bc6d03f4-87e0-4aca-bf18-27b5516f4b3e">
+			<ee:message>
+			</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="CSdata" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.CSdata default []) + ({"empid":payload.EMPLID} ++  payload mapObject (if(($$) ~= "EMPLID") (($$): vars.contactid[0].Id) else if(($$) ~= "XC_AQ_PRI_DEG") (if(sizeOf(vars.degree) > 0) (($$):"yes") else (($$):"no")) else ($$): $))]]></ee:set-variable>
+				</ee:variables>
+		
+</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Payload" doc:id="31d0865e-bc94-499f-ad6b-daa1247dbfff" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.CSdata]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of sfdc/query Flow" doc:id="bb86cf33-ef1f-4e83-8cb9-e73a57043088" message="LOG INFO End of sfdc/query Flow"/>
+	</sub-flow>
+</mule>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sfdc-sapi-student-interest-flow" doc:id="174781ad-9e07-40db-9085-e071acba0d6e" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="c3859b41-48f9-4649-b09d-a48434fbc624" message="Start of Student Interest sync flow" />
+		<ee:transform doc:name="DW convert payload into Java" doc:id="dfe46724-c10f-4a38-864f-22105d900cfa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="DW create student interest request" doc:id="33f45254-9a50-452d-93b8-acb949f3b94a">
+			<ee:message>
+				<ee:set-payload resource="dataweave/pStuIntPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="DW create request payload" doc:id="fdeef10d-f635-4759-ba57-33448e603408" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pStuIntReqFinalPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create Student Interest in Salesforce" doc:id="4cf79bc6-cf08-43b1-9530-38dacacfcf08" config-ref="salesforce-config" type="AQB__StudentInterest__c"/>
+		<salesforce:upsert type="AQB__StudentInterest__c" doc:name="Upsert Student Interest into Salesforce" doc:id="e3e35922-ae02-4457-a6c6-9803dc3d8439" config-ref="salesforce-config" externalIdFieldName="Emplid__c__c" />
+		<ee:transform doc:name="DW convert response payload into Json" doc:id="220d7774-3da0-4f84-8f4c-d125bd920ce2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="7c2205c3-f5ae-4dac-aa4c-b04a5d347c9d" message="End of Student Interest sync flow" />
+	</sub-flow>
+</mule>

@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 				<fixed-frequency frequency="1" timeUnit="SECONDS"/>
 			</scheduling-strategy>
 		</scheduler>
-		<logger level="INFO" doc:name="Log Start" doc:id="bde540b8-7d75-488f-880b-5e0d4e96967e" />
+		<logger level="INFO" doc:name="LOG START " doc:id="bde540b8-7d75-488f-880b-5e0d4e96967e" />
 		<flow-ref doc:name="Email API Invoke" doc:id="31aa6c6a-8819-4253-a693-f6d3d57998c8" name="ps-to-sfdc-report-email-api"/>
 	</flow>
 	<flow name="ps-to-sfdc-report-email-api" doc:id="e0ad022f-6168-4494-a8fb-d1d6cb1e1ac2" >

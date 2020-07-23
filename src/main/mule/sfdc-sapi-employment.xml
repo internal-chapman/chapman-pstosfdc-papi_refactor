@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="sfdc-sapi-employment-flow" doc:id="ec944b69-f99d-4ec1-a78a-fc1a3a753df9" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="39e1ee59-6810-4916-bb0e-d4645e119c99" message="Start of flow to upsert employments into Saleforce"/>
+		<ee:transform doc:name="DW create payload for upsert" doc:id="6b682a1a-928b-47f2-a7e4-864bec750541" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="DW create employment request" doc:id="286796c1-c945-4aaa-8c72-c088c53a027c">
+			<ee:message>
+				<ee:set-payload resource="dataweave/pUpsertEmplPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert type="AQB__Employment__c" doc:name="Upsert Employments into Salesforce" doc:id="44968d27-38cb-4d54-a5ef-4a7a78e0f55d" config-ref="salesforce-config" externalIdFieldName="AQB__EmploymentExternalID__c" />
+		<ee:transform doc:name="DW transform response into Json'" doc:id="ca537211-a876-4c14-ab4d-285e91fe4dcc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="6d08633d-5fb1-49e5-a8f3-148fe1fe8208" message="End of flow to upsert employments into Saleforce"/>
+	</sub-flow>
+</mule>

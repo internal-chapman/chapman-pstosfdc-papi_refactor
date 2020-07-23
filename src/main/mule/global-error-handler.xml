@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<error-handler name="global-error-handler-flow" doc:id="9d7cdc51-02cb-474e-a83b-e5992a1aa169" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="354a67a8-f043-4321-b82c-1cfeb362a2dc" >
+			<ee:transform doc:name="DW Set Email Payload" doc:id="edfcd5f5-2ecc-465c-bb8e-6793e027ded9" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"subject": "Error Occurred In " ++ flow.name,
+	"body": error.description,
+    "addresses":{
+    	"to": "test.account@test.com"
+    }
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="c1e792d5-9bc5-4c2e-8039-26533c6e56c5" name="cf-email-implementation"/>
+		</on-error-continue>
+	</error-handler>
+</mule>

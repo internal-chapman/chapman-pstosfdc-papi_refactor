@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="sfdc-ext-accounts-flow" doc:id="f9666cbe-70f5-4ab9-a514-5115b56129a3" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="4c9ce9b3-4c9d-475d-b6b4-d7a462702273" message="Start of Salesforce"/>
+		<set-variable value="#[payload.'AQC_Inst_ID__c']" doc:name="Set institutionId" doc:id="9b8dfaef-d898-4753-9ab0-a073a2e945ac" variableName="institutionId"/>
+		<ee:transform doc:name="DW Salesforce Request" doc:id="8f1147c2-d689-44db-9569-41ddcc3e04fd">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[payload]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Salesforce Request Payload" doc:id="7c556686-1b9a-486b-810e-3fa7f75ada58" message="Account record request : #[payload]" />
+		<salesforce:upsert doc:name="Upsert into Salesforce LL institution object" doc:id="f6830a1a-ace1-453c-94e4-c7cf3fc326b6" config-ref="salesforce-config" externalIdFieldName="#['AQC_Inst_ID__c']" type="#['AQB__LLEducationalInstitution__c']"/>
+		<ee:transform doc:name="DW Salesforce Response" doc:id="29a871cc-dfa9-4cec-9d9b-35475015f46e" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pSfExtAccRes.dwl" />
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="47e01acb-e904-4774-9366-e94371ab8d23" message="End of Salesforce ext account flow. Account record response : #[payload]"/>
+	</flow>
+</mule>

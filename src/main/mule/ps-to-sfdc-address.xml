@@ -7,12 +7,12 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
-	<flow name="ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
-		<logger level="INFO" doc:name=" Log Info for Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
+	<flow name="pf-ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
+		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
 			<db:sql>SELECT EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where EMPLID='0000002'</db:sql>
 		</db:select>
-		<ee:transform doc:name="Java to Json" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
+		<ee:transform doc:name="DW Java To JSON" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -20,11 +20,11 @@ output application/json
 vars.PSAddress]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG Info Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
-		<flow-ref doc:name="Refer to address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="address-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name="Set Payload" doc:id="d9338ea1-c9cc-46dc-a8e1-79cec28e1cf0" />
+		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
+		<flow-ref doc:name="Refer to pf-address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="pf-address-sync-process-batch" />
+		<set-payload value="#[output application/json --- payload]" doc:name="SET Payload" doc:id="d9338ea1-c9cc-46dc-a8e1-79cec28e1cf0" />
 	</flow>
-	 <flow name="address-sync-process-batch" doc:id="52784469-8dc5-444b-b271-e78deff56580" >
+	 <flow name="pf-address-sync-process-batch" doc:id="52784469-8dc5-444b-b271-e78deff56580" >
 		<batch:job jobName="address-sync-process" doc:id="b139b952-fa77-4e4e-8217-2bbcb2a0ac86" >
 			<batch:process-records >
 				<batch:step name="sync-ps-records-to-sfdc" doc:id="7bcdf9e4-b444-42fb-a8fd-cad7356d551a" >
@@ -45,28 +45,27 @@ output application/json
 ]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-					<logger level="INFO" doc:name="Log Info for tuuid" doc:id="d3843b07-7c88-4800-813f-8fd379c065dd" message="#[vars.tuuid]" />
-					<flow-ref doc:name="Refer to address-persistance-aux-insert-subFlow" doc:id="40c26836-b6ef-466b-bdd9-37727edf664d" name="address-persistance-aux-insert-subFlow" />
-					<http:request method="POST" doc:name="SFDC  System Api Call" doc:id="a32ac09f-03f7-45ba-98f0-ea9e612846a2" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" config-ref="sfdc-system-http-request-config">
+					<flow-ref doc:name="Flow Ref To sf-address-persistance-aux-insert" doc:id="40c26836-b6ef-466b-bdd9-37727edf664d" name="sf-address-persistance-aux-insert" />
+					<http:request method="POST" doc:name="POST Create Address" doc:id="a32ac09f-03f7-45ba-98f0-ea9e612846a2" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" config-ref="sfdc-system-http-request-config">
 						<http:query-params ><![CDATA[#[output application/java
 ---
 {
 	"ViewName" : "address"
 }]]]></http:query-params>
 					</http:request>
-					<logger level="INFO" doc:name=" Log Info for SFDC Results" doc:id="5af7cea9-b1b8-483c-a96f-98af6e5b7b31" message="#[vars.sdfc_address_result]" />
-					<flow-ref doc:name="Refer to address-persistance-aux-update-subflow" doc:id="ae2fb6e5-276c-4a75-ba7e-e39b5ad525a0" name="address-persistance-aux-update-subflow" />
-					<logger level="INFO" doc:name=" Log Info Payload" doc:id="a8d0ef5d-0969-4c52-ace6-a59f1b57f6be" message="#[payload]" />
+					<logger level="INFO" doc:name="LOG INFO  SFDC Results" doc:id="5af7cea9-b1b8-483c-a96f-98af6e5b7b31" message="#[vars.sdfc_address_result]" />
+					<flow-ref doc:name="Flow Ref To sf-address-persistance-aux-update" doc:id="ae2fb6e5-276c-4a75-ba7e-e39b5ad525a0" name="sf-address-persistance-aux-update" />
+					<logger level="INFO" doc:name="LOG INFO Payload" doc:id="a8d0ef5d-0969-4c52-ace6-a59f1b57f6be" message="#[payload]" />
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-				<logger level="INFO" doc:name="Info Log | Total Records" doc:id="100cee64-5580-43c1-b755-4ba088e0e3e1" message="#[payload]" />
+				<logger level="INFO" doc:name="LOG INFO Total Records" doc:id="100cee64-5580-43c1-b755-4ba088e0e3e1" message="#[payload]" />
 			</batch:on-complete>
 		</batch:job>
 	</flow>
-	<sub-flow name="address-persistance-aux-update-subflow" doc:id="6af92f1c-5466-408e-8b43-90abc388d36f" >
-		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="618ba661-4eff-4768-b251-5fa01f53b290" message="Flow entered aux insert #[payload]" />
-		<ee:transform doc:name="Payload To Update" doc:id="7648ea8c-713c-4adb-8f25-67677d195b38" >
+	<sub-flow name="sf-address-persistance-aux-update" doc:id="6af92f1c-5466-408e-8b43-90abc388d36f" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="618ba661-4eff-4768-b251-5fa01f53b290" message="Flow entered aux insert #[payload]" />
+		<ee:transform doc:name="DW Payload To Update" doc:id="7648ea8c-713c-4adb-8f25-67677d195b38" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
@@ -97,29 +96,15 @@ XC_AQ_SOURCE_TYPE = :sourceType
 where GUID= :tuuid</db:sql>
 			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
 		</db:update>
-		<logger level="INFO" doc:name=" Log Info Aux Dbase Updation Status" doc:id="2074f4ac-49e7-4e2b-abb8-7134adcd05c5" message="Updated AUX table" />
+		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="2074f4ac-49e7-4e2b-abb8-7134adcd05c5" message="Updated AUX table" />
 	</sub-flow>
-	<sub-flow name="address-getuuid-subflow" doc:id="c911ee83-0769-4b34-a693-1ac0cfcd0623" >
-		<set-variable value="#[uuid()]" doc:name="UUID" doc:id="2da27241-8df1-4110-953a-27dc88f77ec5" variableName="uuid" />
-		<ee:transform doc:name="Tuuid" doc:id="bcc6cf7d-2121-4e1b-887e-fbfb5998a414" >
-			<ee:message />
-			<ee:variables >
-				<ee:set-variable variableName="tuuid" ><![CDATA[%dw 2.0
-output application/json
----
-vars.uuid[0 to 7] ++ vars.uuid[9]
-]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="Log Info Variable Tuuid " doc:id="d5fa7504-01cf-4fb1-94aa-85a831a1b0ef" message="#[vars.tuuid]" />
-	</sub-flow>
-	<sub-flow name="address-persistance-aux-insert-subFlow" doc:id="4c080cc0-45dd-46d3-a74c-02eefece791f" >
+	<sub-flow name="sf-address-persistance-aux-insert" doc:id="4c080cc0-45dd-46d3-a74c-02eefece791f" >
 		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="c009f2ad-e881-49f9-85fe-7f671f8f3410" message="Flow entered aux insert" />
 		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="e440756a-5a11-4c3e-96c6-5ed15f951a98" variableName="AuxDetails" />
 		<set-variable value="${auxDBColumns.XC_AQ_DEST_TYPE.address}" doc:name="XC_AQ_DEST_TYPE" doc:id="8a4d7ea6-1df2-48dd-a537-54e9ad6f78cb" variableName="XC_AQ_DEST_TYPE"/>
 		<set-variable value="${auxDBColumns.XC_AQ_SOURCE_TYPE.address}" doc:name="XC_AQ_SOURCE_TYPE" doc:id="38988c10-1fe3-44de-866c-78a3bd6768e2" variableName="XC_AQ_SOURCE_TYPE"/>
-		<flow-ref doc:name="Refer to address-getuuid-subflow" doc:id="a1459c85-f348-4870-aa16-7c283278e29f" name="address-getuuid-subflow" />
-		<logger level="INFO" doc:name="Log Info EmplID" doc:id="2a1f3e29-c70e-44cc-8b3b-6f887c316df1" message='#[vars.AuxDetails."emplID"]' />
+		<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="a1459c85-f348-4870-aa16-7c283278e29f" name="cf-generate-uuid" />
+		<logger level="INFO" doc:name="LOG INFO EmplID" doc:id="2a1f3e29-c70e-44cc-8b3b-6f887c316df1" message='#[vars.AuxDetails."emplID"]' />
 		<ee:transform doc:name="DW Set Payload" doc:id="7c97b6d4-fd33-493d-9b6e-6ef6c898099e" >
 			<ee:message >
 			</ee:message>
@@ -128,7 +113,7 @@ vars.uuid[0 to 7] ++ vars.uuid[9]
 output application/json
 ---
 {
-GUID: vars.tuuid,
+GUID: vars.uuid,
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: vars.AuxDetails.emplID,  
 XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
@@ -143,13 +128,13 @@ XC_AQ_DEST_TYPE: vars.XC_AQ_DEST_TYPE
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<db:insert doc:name="Insert To Aux" doc:id="9f35cb68-af51-40df-b17d-c0c1a0665be8" target="response" config-ref="aux-db-config">
+		<db:insert doc:name="Insert To Aux Db" doc:id="9f35cb68-af51-40df-b17d-c0c1a0665be8" target="response" config-ref="aux-db-config">
 				<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 				<db:input-parameters><![CDATA[#[vars.AuxDBInsert]]]></db:input-parameters>
 			
 			</db:insert>
-		<logger level="INFO" doc:name="Log Info Dbase Results" doc:id="6aab04e2-b878-410e-b486-cd7a8d0ee21c" message="Result inserted: #[vars.response.affectedRows]" />
+		<logger level="INFO" doc:name="LOG INFO Dbase Results" doc:id="6aab04e2-b878-410e-b486-cd7a8d0ee21c" message="Result inserted: #[vars.response.affectedRows]" />
 	</sub-flow>
 </mule>

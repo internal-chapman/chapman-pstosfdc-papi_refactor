@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<sub-flow name="sfdc-sapi-education-update-sub-flow" doc:id="dba60664-e132-4276-a850-c5133f3d73e2" >
+	<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="0480ef18-234d-4041-9e96-bd31cdf3c656" message="Flow started for put:Education with payload: #[payload]" />
+		<ee:transform doc:name="DW create payload for update education" doc:id="8cc04ab0-bc5b-4227-802a-946d8cd59935" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pEduPayload.dwl" />
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform> 
+		<salesforce:update-single type="AQB__Education__c" doc:name="Update single Education in Salesforce" doc:id="606116fb-70f4-46b2-aa0e-1aa1d870f34d" config-ref="salesforce-config" />
+		<ee:transform doc:name="DW Grouping of status" doc:id="6fa19f29-8847-4bbf-b216-b81494d77899">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+				<ee:set-variable resource="dataweave/vEduStatus.dwl" variableName="status" />
+				</ee:variables>
+			</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="70724272-883c-4a7a-adc1-605dee3cd032" message="End of Flow for Record update for Education id: #[payload.id]" />
+    
+	</sub-flow>
+	<sub-flow name="sfdc-sapi-education-flow" doc:id="1f5c30ec-97e5-42d1-b18f-9d613acb7a78" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="cc80759c-ad00-416d-a1c0-e5a41c834253" message="Start of update or create education details flow"/>
+		<foreach doc:name="For Each" doc:id="101c2bd0-9b49-4b67-9f69-6a62c4b369fe" >
+			<salesforce:query doc:name="Query Salesforce to check records" doc:id="70d08b58-6a2c-4d4c-97a0-252b499cc15b" config-ref="salesforce-config" target="data">
+			<salesforce:salesforce-query>SELECT id,
+AQB__Contact__c,
+AQB__Institution__c,
+AQB__Campus__c,
+AQB__IsPrimaryDegree__c,
+AQB__HonoraryDegree__c,
+RecordTypeId,
+AQB__DegreeLevel__c,
+AQB__Graduation_Month__c,
+AQB__GraduationYear__c,
+AQB__DegreeDiploma__c,
+AQB__PreferredYear__c,
+AQB__FirstYearofAttendance__c,
+AQB__LastYearofAttendance__c,
+AQB__School__c,
+AQB__Department__c,
+CreatedById,
+CreatedDate,
+LastModifiedById,
+LastModifiedDate
+ FROM AQB__Education__c where AQB__Contact__c = ':emplId' AND AQB__DegreeLevel__c = ':degLevel'</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"emplId" : payload.AQB__Contact__c,
+	"degLevel" : payload.AQB__DegreeLevel__c
+}]]]></salesforce:parameters>
+		</salesforce:query>
+			<choice doc:name="Choice to check update or create" doc:id="15551eef-678b-4aa6-89e5-770e167d6465">
+			<when expression="#[sizeOf(vars.data) &gt; 0]">
+				<flow-ref doc:name="Flow Ref to sfdc-sapi-education-update-sub-flow" doc:id="368dceec-af80-42f3-8b4b-d76ffd55d683" name="sfdc-sapi-education-update-sub-flow" />
+			</when>
+			<otherwise>
+				<flow-ref doc:name="Flow ref to sfdc-sapi-education-create-sub-flow" doc:id="fbeb0d90-7e26-4fdb-9e76-0c930f47cac8" name="sfdc-sapi-education-create-sub-flow" />
+			</otherwise>
+		</choice>
+		</foreach>
+		<ee:transform doc:name="DW convert payload to Json" doc:id="d3aba0bd-994c-4201-88f1-bc5d424ec2ab">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.status]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="bba2ebc8-1edb-41b4-86df-ff0e03c5559b" message="End of update or create education details flow"/>
+	</sub-flow>
+	<sub-flow name="sfdc-sapi-education-create-sub-flow" doc:id="c5b5956e-6bbb-4d3a-9918-e798e136f0f7" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="28121a27-b709-4eeb-9019-077f912a84d1" message="Start of create single education flow with payload : #[output application/json --- payload]"/>
+		<ee:transform doc:name="DW create Payload for create education" doc:id="c602e50f-1109-47f3-a0f3-5810b4fad91a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-single doc:name="Create single Education into Salesforce" doc:id="db9b0455-d830-4aa7-b4b2-d9a51e4cd382" config-ref="salesforce-config" type="AQB__Education__c" />
+		<ee:transform doc:name="DW add incremental sfdc_result to list" doc:id="e1bcb8d8-f0e8-450d-9a96-e162c67583f6">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+				<ee:set-variable resource="dataweave/vCreateEduStatus.dwl" variableName="status" />
+				</ee:variables>
+			</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="f1efd7eb-6e57-43a0-bb9d-230f5524c45a" message="End of flow for post:Education. Education created with sfdc_ID #[payload.id] "/>
+	
+</sub-flow>
+</mule>

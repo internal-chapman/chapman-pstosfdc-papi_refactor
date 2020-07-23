@@ -1,12 +1,5 @@
 # All https proprties
 http:
-  # HTTPS Listener Configurations
-  listener:
-    host: "0.0.0.0"
-    port: "8081"
-    path: "/*"
-    consolePath: "/console/*" 
-        
   # HTTPS Request Configurations 
   request:
     # Process related Request configurations
@@ -35,6 +28,7 @@ http:
           extOrgAccounts: "ext-org-accounts"
           createEducation: "education"
           createRelationship: "relationship"
+          queryContact: "query"
 db:
   rpt:
     host: "psdb-cs92rpt.chapman.edu"

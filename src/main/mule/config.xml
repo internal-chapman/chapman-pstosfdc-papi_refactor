@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="sfdc-http-listener-config">
+         <http:listener-connection host="${secure::http.listener.host}" port="${secure::http.listener.port}" />
+    </http:listener-config>
+    <apikit:config name="sfdc-api-config" api="sfdc-sapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" raml="api/sfdc-sapi.raml" >
+		<apikit:flow-mappings >
+			<apikit:flow-mapping resource="/sfdc/student-interest" action="post" content-type="application/json" flow-ref="sfdc-sapi-student-interestSub_Flow" />
+		</apikit:flow-mappings>
+	</apikit:config>
+	 <salesforce:sfdc-config name="salesforce-config" doc:name="Salesforce Config" doc:id="e98a7939-18de-48b5-af74-cc5b5009f8da" >
+		<salesforce:basic-connection username="${secure::system.salesforce.user}" password="${secure::system.salesforce.password}" url="${secure::system.salesforce.authorizationUrl}" />
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="dc55d147-7d58-4d8e-b71c-53e27877f80d" file="properties\application-properties.yaml" />
+	<global-property doc:name="Global Property" doc:id="62431ff1-752d-4721-a93e-941ee02d7e33" name="mule.env" value="loc" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="323bc39f-dcf6-40be-9ac4-af6e588e18de" file="properties/chapman-salesforce-api-${mule.env}.yaml" key="${key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+
+	
+</mule>

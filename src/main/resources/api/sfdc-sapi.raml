@@ -1,0 +1,142 @@
+ #%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/2940a943-0f2b-469b-b5ef-a00426d151c5/ # 
+title: sfdc-sapi
+
+types:
+  sfdcAccounts: !include /libraries/dataTypes/sfdc-accounts.raml  
+  sfdcContacts: !include libraries/dataTypes/sfdc-contacts.raml
+  sfdcRelationship: !include /libraries/dataTypes/sfdc-relationship.raml
+  sfdcExtOrgAccount: !include /libraries/dataTypes/sfdc-ext-org-account.raml
+
+/sfdc/accounts:
+  description: Migrate accounts to Affinaquest
+  post:
+    body:
+      application/json:
+        type: sfdcAccounts[]
+        examples:
+          output: !include libraries/examples/sfdc-accounts-input.raml
+    responses:
+      200:
+        body:
+          application/json:
+           
+      201:
+        body:
+          application/json:
+            example:
+              message: No record inserted.
+  
+
+
+/sfdc/contacts:
+  description: Migrate contacts to Affinaquest
+  post:
+    body:
+      application/json:
+        type: sfdcContacts[]
+        examples:
+          output: !include libraries/examples/sfdc-contacts-input.raml
+    responses:
+      200:
+        body:
+          application/json:
+          
+      201:
+        body:
+          application/json:
+            example:
+              message: No record inserted.
+/sfdc:
+  /ext-org-accounts:
+    post:
+      body:
+        application/json:
+          type: sfdcExtOrgAccount
+          examples:
+            output: !include libraries/examples/sfdc-ext-org-account-input.raml
+      responses:
+        201:
+          body:
+            application/json:
+              #example: 
+              
+              
+ 
+  /alternate-channels:
+   description: Migrate addresses to Affinaquest
+   post:
+    body:
+      application/json:
+       
+        examples:
+          output: !include libraries/examples/sfdc-address-input.raml
+    responses:
+      200:
+        body:
+          application/json:
+            
+      
+/sfdc/employment:
+  description: Migrate Employment details to SF
+  post:
+    body:
+      application/json:
+    responses:
+      200:
+        body:
+          application/json:
+      201:
+        body:
+          application/json:
+
+/sfdc/relationship:
+  description: Migrate relationship to Affinaquest
+  post:
+    body:
+      application/json:
+        type: sfdcRelationship[]
+        examples:
+          output: !include libraries/examples/sfdc-relationship-input.raml
+    responses:
+      200:
+        body:
+          application/json:
+            
+      201:
+        body:
+          application/json:
+            example:
+              message: No record inserted.
+                        
+/sfdc/education:
+    post:
+      body:
+        application/json:
+          examples:
+            output: !include libraries/examples/sfdc-education.raml
+      responses:
+        201:
+          body:
+            application/json:
+          
+          
+/sfdc/student-interest:
+  description: Migrate Student Interest details to SF
+  post:
+    body:
+      application/json:
+    responses:
+      200:
+        body:
+          application/json:
+      201:
+        body:
+          application/json:
+/sfdc/query:
+  description: to run query and get the results from salesforce
+  post:
+    responses:
+      200:
+        body:
+          application/json:

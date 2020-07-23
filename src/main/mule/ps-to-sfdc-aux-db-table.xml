@@ -5,7 +5,7 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
-	<sub-flow name="sf-aux-insert" doc:id="371827f1-4087-435b-9972-abeb28b11f4f" >
+	<sub-flow name="sf-aux-insert-red" doc:id="371827f1-4087-435b-9972-abeb28b11f4f" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="405f4fae-f76b-4fe1-ac4f-9cc96f99ea1b" message="Flow entered aux insert" />
 		<set-variable value="#[output application/json --- payload map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="Set FV uuid" doc:id="09f9dbc5-047b-45ef-9536-3e597df9ec83" variableName="uuid" />
 		<ee:transform doc:name="DW Set Payload" doc:id="5ab50e71-8310-4674-bd5d-051b623f0774" >
@@ -58,7 +58,7 @@ output application/json
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
-	<sub-flow name="sf-aux-update" doc:id="4bad4660-dc9b-4501-be1f-1bdf949d3989" >
+	<sub-flow name="sf-aux-update-red" doc:id="4bad4660-dc9b-4501-be1f-1bdf949d3989" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="71ee8204-f214-43c1-aabf-23b4c1a52a1b" message="Flow entered aux update" />
 		<db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="9f7b93be-5d27-4519-a348-f7aa30e68e30" config-ref="aux-db-config">
 			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>

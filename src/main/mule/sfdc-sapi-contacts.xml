@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sfdc-sapi-contacts-create-flow" doc:id="ab005f7f-2ce4-4abc-98bd-6acbdfa18786" >
+	<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="4e5a204a-83f9-4416-bfbb-b9657a46c1b6" message="Start of create contacts flow payload : #[output application/json --- payload]"/>
+		<!-- <ee:transform doc:name="payload For Contact" doc:id="14485bd9-c0e9-4ed7-95d8-c1483de3ea3d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/java
+-&#45;&#45;
+payload map ((payload,index) ->
+	{
+		"AccountId": payload.AccountId,
+		"Salutation": payload.Salutation,
+		"FirstName": payload.FirstName,
+		"LastName": payload.LastName
+	}
+)]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="data" ><![CDATA[%dw 2.0
+output application/java
+-&#45;&#45;
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform> -->
+		<set-variable value="#[payload.AQB__ContactExternalID__c]" doc:name="Set Variable contacts external ID" doc:id="434b6171-9190-4f64-9940-72d39680b779" variableName="contactsExternalID"/>
+		<ee:transform doc:name="DW Request to Salesforce" doc:id="8559e654-f741-428f-a262-e1fd24db368d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert doc:name="Upsert into Salesforce Contact object" doc:id="cfbc5e65-e2ef-461e-8a04-afe600f735c3" config-ref="salesforce-config" externalIdFieldName="AQB__ContactExternalID__c" type="Contact"/>
+		<ee:transform doc:name="DW Salesforce Response" doc:id="ce5a23b3-d84e-4ce7-87fb-e982e679f0c4" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pSfContactResPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="35fbe3e6-b77b-47e4-9f69-2eebfd69e25b" message="End of flow for post:contacts: #[payload]" /> 
+    
+	</sub-flow>
+</mule>

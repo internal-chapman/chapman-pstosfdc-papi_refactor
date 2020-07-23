@@ -10,13 +10,13 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
-		<logger level="INFO" doc:name="Log At Start" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
+		<http:listener doc:name="Listener" doc:id="e0f7b0e6-89ef-4120-b9c9-86526dd81b88" config-ref="HTTP_Listener_config" path="/test"/>
+		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
 			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
 		</db:select>
-		<logger level="INFO" doc:name="Log payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
-		<flow-ref doc:name="Insert records to Aux DB" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="ext-accounts-ps-aux-sync-insert-sub-flow" target="vars.auxSyncPayload" />
-		<ee:transform doc:name="Sfdc message" doc:id="c70ab1a1-eefa-461c-bdb4-b95cd370543c">
+		<logger level="INFO" doc:name="LOG INFO payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
+		<ee:transform doc:name="DW Set Payload" doc:id="c70ab1a1-eefa-461c-bdb4-b95cd370543c">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -30,17 +30,17 @@ payload map(account, index) -> {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="4a60acd9-59fc-4a13-a5dd-01c6c1de3fad" message="Start of Batch step"/>
-		<flow-ref doc:name="Invoke Batch Process" doc:id="7ebe7664-257c-4ea0-a313-eee88a4872a6" name="ext-accounts-sync-process-batch"/>
-		<logger level="INFO" doc:name="Logger" doc:id="2f9086ac-1042-44a4-86ba-80a8428d6789" message="Ext Account flow completed"/>
+		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process-batch" doc:id="7ebe7664-257c-4ea0-a313-eee88a4872a6" name="pf-ext-accounts-sync-process-batch"/>
+		<logger level="INFO" doc:name="LOG END" doc:id="2f9086ac-1042-44a4-86ba-80a8428d6789" message="Ext Account flow completed"/>
 	</flow>
-	<flow name="ext-accounts-sync-process-batch" doc:id="bb7e26f4-b1bf-44c4-ac1a-5e54a57907d7" >
+	<flow name="pf-ext-accounts-sync-process-batch" doc:id="bb7e26f4-b1bf-44c4-ac1a-5e54a57907d7" >
 		<batch:job jobName="ext-accounts-sync-process" doc:id="3b3129ee-fb6a-4029-b284-59e19478e9fc" >
 			<batch:process-records >
 				<batch:step name="sync-ps-records-to-sfdc" doc:id="d7cd6edd-7998-4ba5-aff2-4d80cf8d08c8" >
-					<logger level="INFO" doc:name="Log request" doc:id="29a2b9f2-dbbc-44d1-b915-b88bf111b828" message="Account record request: #[payload]"/>
-					<http:request method="POST" doc:name="Call SFDC System Api" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}"/>
-					<ee:transform doc:name="Sfdc response" doc:id="fdb04c8e-be4f-49f4-9f60-19402a4a02ae">
+					<logger level="INFO" doc:name="LOG INFO" doc:id="29a2b9f2-dbbc-44d1-b915-b88bf111b828" message="Account record request: #[payload]"/>
+					<flow-ref doc:name="Flow Ref To sf-ext-accounts-aux-insert" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="sf-ext-accounts-aux-insert" target="vars.auxSyncPayload" />
+					<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}"/>
+					<ee:transform doc:name="DW JSON To Java" doc:id="fdb04c8e-be4f-49f4-9f60-19402a4a02ae">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -48,15 +48,12 @@ output application/java
 payload]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-					<logger level="INFO" doc:name="Log response" doc:id="464d1c0a-b9f2-43d8-8252-53ee477ca594" message="Account record response: #[payload]"/>
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="aca46e01-ae76-48d8-afb6-e6ef9b8e24f1" size="100">
-						<logger level="INFO" doc:name="Log size" doc:id="306c1d2b-f9f2-475a-93e9-50e2ca8d11ba" message="Batch aggregator size : #[sizeOf(payload)], #[payload]"/>
-						<flow-ref doc:name="Update records with Aux" doc:id="f3aaae58-bdfc-4664-8edb-c98c54f91398" name="ext-accounts-ps-aux-sync-update-sub-flow"/>
-					</batch:aggregator>
+					<logger level="INFO" doc:name="LOG INFO" doc:id="464d1c0a-b9f2-43d8-8252-53ee477ca594" message="Account record response: #[payload]"/>
+					<flow-ref doc:name="Flow Ref To sf-ext-accounts-aux-update" doc:id="f3aaae58-bdfc-4664-8edb-c98c54f91398" name="sf-ext-accounts-aux-update" />
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-				<ee:transform doc:name="Batch summary" doc:id="d0c8fd58-38e3-4620-b58c-2fbf0c92c884" >
+				<ee:transform doc:name="LOG INFO Batch summary" doc:id="d0c8fd58-38e3-4620-b58c-2fbf0c92c884" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
@@ -66,68 +63,61 @@ output application/json
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<logger level="INFO" doc:name="Log summary" doc:id="5e6834f4-6471-4919-93ec-a33469c72ccc" message="Batch Summary : #[payload]"/>
+				<logger level="INFO" doc:name="LOG INFO summary" doc:id="5e6834f4-6471-4919-93ec-a33469c72ccc" message="Batch Summary : #[payload]"/>
 			</batch:on-complete>
 		</batch:job>
 	</flow>
-	<sub-flow name="ext-accounts-ps-aux-sync-insert-sub-flow" doc:id="70a37f2f-ccca-455d-aedf-2f3753af196d" >
-		<logger level="INFO" doc:name="Log Payload Size" doc:id="64fd3734-395c-4368-9023-8353ddbedbeb" message="Account records bulk insert size : #[sizeOf(payload)]"/>
-		<flow-ref doc:name="sf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="sf-generate-uuid"/>
-		<set-variable value="${auxDBColumns.XC_AQ_DEST_TYPE.extAccounts}" doc:name="XC_AQ_DEST_TYPE" doc:id="e2540b73-2ad6-45a4-882b-fcf4139fdbff" variableName="XC_AQ_DEST_TYPE" />
-		<set-variable value="${auxDBColumns.XC_AQ_SOURCE_TYPE.extAccounts}" doc:name="XC_AQ_SOURCE_TYPE" doc:id="94c49be4-503f-4f20-b728-964536fc64ff" variableName="XC_AQ_SOURCE_TYPE" />
-		<ee:transform doc:name="PS to Aux message" doc:id="ec373f5d-2d5b-4da4-a3fc-84cc767017ce">
+	<sub-flow name="sf-ext-accounts-aux-insert" doc:id="70a37f2f-ccca-455d-aedf-2f3753af196d" >
+		<flow-ref doc:name="FLow Ref To cf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="cf-generate-uuid"/>
+		<ee:transform doc:name="DW Set  Aux Insert Variables" doc:id="ec373f5d-2d5b-4da4-a3fc-84cc767017ce">
 			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vAuxInsertPayload" ><![CDATA[%dw 2.0
 output application/json
-var sourceId = uuid()
 ---
-payload map (account, index) -> {
+{
 	GUID: vars.uuid,
 	XC_AQ_SOURCE: 'PS-CS',
 	XC_AQ_SOURCE_ID: vars.uuid as String,
-	XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
+	XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.extAccounts'),
 	XC_AQ_DESTINATION: "SFDC",
 	XC_AQ_DEST_ID: "-",
-	XC_AQ_DEST_TYPE: vars.XC_AQ_DEST_TYPE,
+	XC_AQ_DEST_TYPE: p('auxDBColumns.XC_AQ_DEST_TYPE.extAccounts'),
 	XC_AQ_STATUS: "In progress",
 	DTTM_CREATED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	DTTM_MODIFIED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	XC_AQ_METADATA: "CS to SFDC",
 	DESCR250: "Accounts: Data transfer from Campus Solution to SFDC"
-}]]></ee:set-payload>
-			</ee:message>
+}]]></ee:set-variable>
+				<ee:set-variable variableName="vAuxInsertQuery" ><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL
+ (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)"]]></ee:set-variable>
+			</ee:variables>
 		</ee:transform>
-		<db:bulk-insert doc:name="Invoke Aux DB" doc:id="89477600-a380-4db3-9962-1d625548c873" config-ref="aux-db-config" transactionalAction="NOT_SUPPORTED">
-			<reconnect />
-			<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
-    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
-values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-		</db:bulk-insert>
-		<logger level="INFO" doc:name="Log status" doc:id="1618614d-ae37-428f-aa99-3a1ec0f4a7ed" message="Bulk insert to Aux success!" />
+		<flow-ref doc:name="Flow Ref To cf-aux-insert" doc:id="f8963afb-5ad0-4e7d-aa92-1c49ede9bf87" name="cf-aux-insert"/>
 
 	</sub-flow>
-	<sub-flow name="ext-accounts-ps-aux-sync-update-sub-flow" doc:id="61026db1-5a18-406b-9e86-a75430b68bb7" >
-		<ee:transform doc:name="SF to Aux message" doc:id="4a978e46-10db-40fc-aec2-73daa719511a" >
+	<sub-flow name="sf-ext-accounts-aux-update" doc:id="61026db1-5a18-406b-9e86-a75430b68bb7" >
+		<ee:transform doc:name="DW Set  Aux Update Variables" doc:id="4a978e46-10db-40fc-aec2-73daa719511a" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
 output application/json
 ---
-payload map (account, index) -> {
-	GUID:vars.uuid,
-	XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
+{
+	GUID: vars.uuid,
+	XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.extAccounts'),
 	XC_AQ_DESTINATION: 'SFDC',
-	XC_AQ_DEST_ID: account.data[0].id,
-	XC_AQ_DEST_TYPE:vars.XC_AQ_DEST_TYPE,
+	XC_AQ_DEST_ID: payload.data[0].id,
+	XC_AQ_DEST_TYPE: p('auxDBColumns.XC_AQ_DEST_TYPE.extAccounts'),
 	DT_TIMESTAMP: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	XC_AQ_STATUS: 'Completed',
 	XC_AQ_METADATA: "Record inserted in SFDC",
 	DESCR250: "Record inserted in SFDC"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" doc:name="Log Size" doc:id="7fe3ab74-a9e6-4dec-8e80-79ccc31ed84e" message="Account records bulk update size : #[sizeOf(payload)]" />
-		<db:bulk-update doc:name="Bulk update to Aux" doc:id="3444448c-1652-4317-9084-3202e038a488" config-ref="aux-db-config" transactionalAction="NOT_SUPPORTED">
-			<db:sql >UPDATE SYSADM.PS_XC_AQ_AUX_TBL 
+}]]></ee:set-variable>
+				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["UPDATE SYSADM.PS_XC_AQ_AUX_TBL 
 set XC_AQ_DESTINATION = :XC_AQ_DESTINATION, 
 XC_AQ_DEST_ID = :XC_AQ_DEST_ID,
 XC_AQ_DEST_TYPE= :XC_AQ_DEST_TYPE,
@@ -136,8 +126,9 @@ XC_AQ_STATUS = :XC_AQ_STATUS,
 XC_AQ_METADATA = :XC_AQ_METADATA,
 DESCR250 = :DESCR250,
 XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE
-WHERE GUID= :GUID</db:sql>
-		</db:bulk-update>
-		<logger level="INFO" doc:name="Log status" doc:id="09235204-563b-4459-8f78-ab99bd85d9f2" message="Account records bulk update status : #[payload]" />
+WHERE GUID= :GUID"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Ref To cf-aux-update" doc:id="3f4bbfc8-493f-4e89-82f5-7e833169c4de" name="cf-aux-update"/>
 	</sub-flow>
 </mule>

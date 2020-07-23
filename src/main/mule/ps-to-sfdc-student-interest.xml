@@ -62,7 +62,7 @@ payload map(value, index) ->{
 }]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<flow-ref doc:name="Flow Ref sf-aux-insert" doc:id="14a9ea7c-1aae-44f7-b906-d272f80e42fc" name="sf-aux-insert"/>
+					<flow-ref doc:name="Flow Ref To sf-student-interest-aux-insert" doc:id="14a9ea7c-1aae-44f7-b906-d272f80e42fc" name="sf-student-interest-aux-insert"/>
 					<logger level="INFO" doc:name="LOG INFO" doc:id="2313b54f-2965-41e8-9365-1c743b621fc7" message="#[payload]" />
 					<try doc:name="Try" doc:id="4cb2d958-338f-4da3-b261-5cb080b083d0" >
 						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="12b1b85f-a3f0-4061-b09f-382b10662dc2" message='#["Sending request to system api to sync StudentInterest for batch: " ++ vars.counter]'/>
@@ -77,11 +77,6 @@ payload map(value, index) ->{
 }]" />
 							</when>
 						</choice>
-						<error-handler >
-							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7aba5190-eb7b-4844-b959-dc229e99e964" >
-								<logger level="INFO" doc:name="LOG INFO" doc:id="c6acf8d2-0893-4969-84cb-5fc33e172118" message="#[error]" />
-							</on-error-continue>
-						</error-handler>
 					</try>
 					<ee:transform doc:name="DW Set aux_data_update" doc:id="29575994-9dfa-4cfe-b4a7-e945a0426731" >
 						<ee:message >
@@ -90,7 +85,7 @@ payload map(value, index) ->{
 							<ee:set-variable resource="dataweave/vStudentIntrestAuxDataUpdate.dwl" variableName="aux_data_update" />
 						</ee:variables>
 					</ee:transform>
-					<flow-ref doc:name="Flow Ref sf-aux-update" doc:id="eca881ee-1e41-4a47-a94a-9d3a3cd05154" name="sf-aux-update"/>
+					<flow-ref doc:name="Flow ref To sf-student-interest-aux-update" doc:id="eca881ee-1e41-4a47-a94a-9d3a3cd05154" name="sf-student-interest-aux-update"/>
 					<logger level="INFO" doc:name="LOG INFO Batch End" doc:id="1c887553-f73c-454b-b386-38a0b74e7405" message='#["Data Insert/Update for Batch: " ++ vars.counter ++ "is completed"]' />
 				</foreach>
 			</when>
@@ -100,4 +95,73 @@ payload map(value, index) ->{
 		</choice>
 		<logger level="INFO" doc:name="LOG END" doc:id="a526224b-cf19-4d56-965c-9a478491e32a" message='#["StudentInterest Sync Completed from PS to SF at " ++ now()]'/>
 	</flow>
+	<sub-flow name="sf-student-interest-aux-update" doc:id="92aa0587-cc92-4245-ad03-3873851e8adf" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="54af3c70-6931-4d65-bafa-b69e0ba365f0" message="Flow entered aux update" />
+		<db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="f6e991e1-e877-49d8-bef8-187eab921fd9" config-ref="aux-db-config" >
+			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>
+			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'),
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = :metadata,
+DESCR250 = :description
+where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="dbb1722c-dace-4239-a6af-b027ff823ed8" message="Updated AUX table #[payload]" />
+	</sub-flow>
+	<sub-flow name="sf-student-interest-aux-insert" doc:id="906e49d7-89a4-4c5c-acfd-f591a4512781" >
+		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="7712f411-3ac9-4210-bd3a-f3df9e2b0a86" message="Flow entered aux insert" />
+		<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="1de15797-cd7b-4b2a-9bb2-d4146d6e531f" name="cf-generate-uuid" />
+		<ee:transform doc:name="DW Set Payload" doc:id="e1df3f9f-7d15-40a9-8ace-b58c9ceac87d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.aux_data_insert default []) map {
+GUID: vars.uuid[$$] default '',
+XC_AQ_SOURCE: $.source default '', 
+XC_AQ_SOURCE_ID: $.source_id default '',  
+XC_AQ_SOURCE_TYPE: vars.uuid[$$] default '',
+XC_AQ_DESTINATION: '-',
+XC_AQ_DEST_ID: '-',
+XC_AQ_STATUS: 'INPROGRESS',
+DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+XC_AQ_METADATA: $.metadata default '',
+DESCR250: $.description default ''
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk Insert Into Aux Db" doc:id="562138e2-167a-41cf-9d39-572b5cf71b3e" config-ref="aux-db-config" target="response" >
+			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="4c7fda3a-522f-4de9-821d-29a552999b97" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
+		<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="d8da2b01-2682-49e9-86f9-18229ea586f7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.originalPayload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="aux_insert_response" ><![CDATA[%dw 2.0
+output application/json
+---
+(vars.aux_data_insert default []) map(value, index) ->{
+	"uuid": vars.uuid[index],
+	"source_id": value.source_id default ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
 </mule>

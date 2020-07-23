@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-	<sub-flow name="sf-correlationId" doc:id="6bbce4c0-9827-4df3-a454-644b373cc55b" >
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<sub-flow name="cf-correlationId" doc:id="6bbce4c0-9827-4df3-a454-644b373cc55b" >
 		<ee:transform doc:name="DW Set CorrelationId" doc:id="d95389b6-4b59-4e2c-bd72-5c01163c9e46" >
 			<ee:message >
 			</ee:message>
@@ -14,7 +16,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
-	<sub-flow name="sf-generate-uuid" doc:id="dc62faf0-693f-4eab-9dc9-c0822bf5478b" >
+	<sub-flow name="cf-generate-uuid" doc:id="dc62faf0-693f-4eab-9dc9-c0822bf5478b" >
 		<ee:transform doc:name="DW Generate UUID" doc:id="0cfba8b3-a194-483c-815f-fee319d5d258" >
 			<ee:message >
 			</ee:message>
@@ -23,4 +25,94 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
+	<flow name="cf-aux-insert" doc:id="a3fed5fd-de84-4f90-b905-c2adedf43b51" >
+		<logger level="INFO" doc:name="LOG INFO Start Aux Insert" doc:id="5c9a6c98-42dc-4e42-b227-8027dddee1ed" message="Starting Aux DB Insert || CorrelationId: #[vars.correlationId]" />
+		<db:insert doc:name="Insert Into Aux DB " doc:id="fd41cae8-d720-4d2e-abfc-07c222bc353f" config-ref="aux-db-config">
+			<db:sql >#[vars.vAuxInsertQuery]</db:sql>
+			<db:input-parameters ><![CDATA[#[vars.vAuxInsertPayload]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="LOG INFO End Aux Insert" doc:id="bb4040e7-5b35-4b19-91ef-2d7e11efba53" message="Completed Aux DB Insert Successfully  || CorrelationId : #[vars.correlationId]" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a807c305-54fb-4651-bde2-6ff501465fc0" >
+				<ee:transform doc:name="DW Set Email Payload" doc:id="48e6ec4f-9afe-4bb8-a598-d55b92f7bd01" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"subject": "Error Occurred In " ++ flow.name,
+	"body": error.description,
+    "addresses":{
+    	"to": "test.account@test.com"
+    }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="30a0daaa-b248-4d6c-aa95-a6dd925c2996" name="cf-email-implementation"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="cf-aux-update" doc:id="5e23aa53-93cf-4716-9f81-6fddfc243502" >
+		<logger level="INFO" doc:name="LOG INFO Start Aux Update " doc:id="de121b62-6491-4ae1-82cb-933390c5a006" message="Starting Aux DB Update || CorrelationId : #[vars.correlationId]" />
+		<db:insert doc:name="Update Status Into Aux DB" doc:id="e2d5f59c-8901-4060-8bff-ac71bb9cfb57" config-ref="aux-db-config">
+			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
+			<db:input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="LOG INFO End Aux DB Update " doc:id="7f4bb01d-3c91-4a9f-b72b-3399a6af179c" message="Completed Aux DB Update Successfully || CorrelationId : #[vars.correlationId]" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8c58d331-4334-4a4b-a5f5-95ad6132cd2f" >
+				<ee:transform doc:name="DW Set Email Payload" doc:id="549acc23-75ba-441c-9021-d8aeb11809ec" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"subject": "Error Occurred In " ++ flow.name,
+	"body": error.description,
+    "addresses":{
+    	"to": "test.account@test.com"
+    }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="ffc12fd8-e3fd-4676-98ef-552cad267d22" name="cf-email-implementation" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="cf-email-implementation" doc:id="32d23233-9dbb-458f-86a1-24bf853e4ba5" >
+		<choice doc:name="Choice" doc:id="ea8fcc44-f389-4a14-9802-e9136b0474c2" >
+			<when expression="#[payload.attachments != null and sizeOf(payload.attachments)&gt;0]" >
+				<logger level="INFO" doc:name="LOG INFO" doc:id="ad81d626-429c-45d4-86ee-5f165afaa40e" message='#["Message contains attachments"]' />
+				<set-variable value="#[%dw 2.0
+output application/json
+---
+{(
+payload.attachments map ((item, index) -&gt; 
+    
+         (item.name) :fromBase64(item.contents)
+     
+)
+)}]" doc:name="Set FV attachments" doc:id="aef4ac46-d7ff-431b-8985-bf8e98deb5c1" variableName="attachments" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG INFO" doc:id="2423e25e-11d0-4581-9418-746eca651204" message='#["Message does not contain attachments"]' />
+			</otherwise>
+		</choice>
+		<set-variable value="#[payload.body]" doc:name="Set FV body" doc:id="66b259e6-584d-4817-8d0f-683d3d44ce60" variableName="body" />
+		<email:send doc:id="b9e24655-1c31-41d3-9074-fdf37765763a" config-ref="Email_SMTP" subject="#[%dw 2.0
+output application/json
+---
+payload.subject]" toAddresses='#[payload.addresses.to splitBy(",") default []]' ccAddresses='#[payload.addresses.cc splitBy(",") default []]' bccAddresses='#[payload.addresses.bcc splitBy(",") default []]' replyToAddresses="#[payload.addresses.reply_to]" doc:name="Send Email" >
+			<email:attachments ><![CDATA[#[vars.attachments]]]></email:attachments>
+		</email:send>
+		<set-payload value='#[output application/json
+---
+{  
+  "timestamp": now() as String,
+  "transactionId": vars.transactionId,
+  "type": "SUCCESSFUL",
+  "summary": "The transaction record was posted successfully"
+}]' doc:name="Set Payload" doc:id="87479bfd-fbc2-4ffc-8345-8b0fda5bee64" />
+		<logger level="INFO" doc:name="LOG INFO" doc:id="a94f3bad-1785-441a-95b0-7cbb4e8ca4ca" message="Email sent successfully" />
+	</flow>
 </mule>

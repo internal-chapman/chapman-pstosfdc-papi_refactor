@@ -1,0 +1,10 @@
+Alternate channel object
+
+Unique key to upsert
+
+Remove leading zeroes for emp Id
+Append while querying sf
+
+1)Pass emplId TO Account get salesforce Id  
+
+2)CSTU in emailview in sf not

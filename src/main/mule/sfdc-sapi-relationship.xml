@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sfdc-sapi-relationship-create-flow" doc:id="b6a24e71-4d35-451a-b9c5-f5b90d724577" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="6782f03b-89b3-4dcb-b2fa-34e73e0e7c05" message="Start of create relationship flow with payload : #[payload]" />
+		<ee:transform doc:name="DW transform DbConData to RelDetails" doc:id="739fa405-5286-4088-b342-0fc090b8b1e7" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pCreateRlspReqPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set Variable relationship to SFDC" doc:id="50df2b9a-e17c-4173-b65b-9dbb768c2133" variableName="relationshipToSFDC" />
+		<ee:transform doc:name="DW Initialize Response Variable" doc:id="cae28c55-f9a7-494b-8a18-dd4fc2560d96" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="sfdcRelationshipResponseInitial" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="1bd3f7e3-28ed-4b47-a644-290273e133dc" collection="#[vars.relationshipToSFDC]" >
+			<salesforce:create type="AQB__RelationshipContact__c" doc:name="Create relationship contact in Salesforce" doc:id="b10a7cd6-9ce6-42d3-9645-606bd9ac6a4e" config-ref="salesforce-config" target="sfdcRelationResponse" >
+				<salesforce:records ><![CDATA[#[[payload]]]]></salesforce:records>
+			</salesforce:create>
+			<logger level="INFO" doc:name="LOG Payload" doc:id="1a9eda7e-9aaa-490b-975a-60f5b019f712" message="#[output application/json --- payload]" />
+			<ee:transform doc:name="DW Add incremental sfdc_result to list" doc:id="6acd9db2-e49d-494c-949c-9bc4b8a045e0" >
+				<ee:message />
+				<ee:variables >
+					<ee:set-variable resource="dataweave/vSfdcRelationshipResponseInitial.dwl" variableName="sfdcRelationshipResponseInitial" />
+				</ee:variables>
+			</ee:transform>
+			<logger level="INFO" doc:name="LOG INFO Create Relationship" doc:id="e08b75c2-cf01-4a6e-880f-da4ab2adc7e9" message="contact created with sfdc_ID #[vars.sfdcRelationResponse.id] " />
+		</foreach>
+		<ee:transform doc:name="DW convert payload to Json" doc:id="f3f70479-266d-4b13-9c48-7e7125023421" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pCreateRlspResPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="2e15b283-952b-4e22-8d92-361a3e6733b3" message="End of create relationship flow" />
+	</sub-flow>
+</mule>

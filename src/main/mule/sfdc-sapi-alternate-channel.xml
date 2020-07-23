@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sfdc-sapi-alternate-channel-update-sub-flow" doc:id="a7459733-c058-4cca-8ae3-8c00532399fa" >
+	<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="4350f154-6c69-4c6e-914f-7f73a44aba89" message="Start of Update Address Flow for put:aqb__addresses with initial payload : #[output application/json --- payload]"/>
+		<ee:transform doc:name="DW Payload for  Alternate Channel Record Update" doc:id="773a8db9-0220-413b-86e5-9da28363598e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/vSapiAltChnInitialiseStatus.dwl" variableName="status" />
+				<ee:set-variable resource="dataweave/vAddrRecordUpdate.dwl" variableName="varAddrRecordUpdate" />
+			
+</ee:variables>
+		</ee:transform>
+		<salesforce:update doc:name="Update Alter Channel Record in Salesforce" doc:id="40af0dd6-c645-45da-8f6f-7cc2b3b99c76" config-ref="salesforce-config" type="AQB__AQAddress__c" target="varUpdateResponse" targetValue="#[output application/json --- payload]">
+			<salesforce:records ><![CDATA[#[vars.varAddrRecordUpdate]]]></salesforce:records>
+		</salesforce:update>
+		<ee:transform doc:name="DW Salesforce Record Update Staus" doc:id="fdfd19ec-ad9a-45f9-b9b7-e621ff3eb36c">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="status"><![CDATA[%dw 2.0
+output application/json
+---
+vars.varUpdateResponse]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="8686efb6-017c-4122-9ebe-32aed1b396ac" message="End of update account flow. update response from salesforce : #[vars.status]" />
+	</sub-flow>
+	<sub-flow name="sfdc-sapi-alternate-channel-create-sub-flow" doc:id="5d9d6553-f2a4-4a77-8914-647055fa2393" >
+	<!-- <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="95c4c273-80b1-4d72-9bd5-e995a5b07f8f">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+-&#45;&#45;
+[
+  {
+    src_id: "1st-PS-CS_ID",
+    affinaquest_id: "1st-Generated_UUID"
+  }, 
+  {
+    src_id: "2nd-PS-CS_ID",
+    affinaquest_id: "2nd-Generated_UUID"
+  }, 
+  {
+    src_id: "3rd-PS-CS_ID",
+    affinaquest_id: "3rd-Generated_UUID"
+  }
+]]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+ -->		<logger level="INFO" doc:name="LOG  INFO Start of Flow" doc:id="cf7e7611-ddd3-450a-8551-6163697d4058" message="Start of Create Address Flow for post:aqb_addresses with initial payload: #[payload]"/>
+		<ee:transform doc:name="DW Create Payload For Alternate Channel Record" doc:id="575ce77d-ca68-498d-8113-afdd3a2dd17d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/vInitialiseData.dwl" variableName="data" />
+				<ee:set-variable resource="dataweave/vAddrRecord.dwl" variableName="varAddrRecord" />
+			
+</ee:variables>
+		</ee:transform>
+		<salesforce:create doc:name="Create Alternate Channel Record in Salesforce" doc:id="d54fdfb5-20ae-4e67-a986-451867e6daa1" config-ref="salesforce-config" type="AQB__AQAddress__c" target="varCreateResponse" targetValue="#[output application/json --- payload]">
+			<salesforce:records ><![CDATA[#[vars.varAddrRecord]]]></salesforce:records>
+		</salesforce:create>
+		<ee:transform doc:name="DW Salesforce Record Creation Status" doc:id="796dd1f2-b2af-4652-941f-b6e9212df1dd" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="status" ><![CDATA[%dw 2.0
+output application/json
+---
+ vars.varCreateResponse]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="07817cf3-1bc6-466b-8ea9-cad60d446656" message="End of Create Address Flow. Response from Salesforce: #[vars.status]" />
+	
+	</sub-flow>
+	   <!-- <sub-flow name="sfdc-sapi-addresses-query-contactid-subflow" doc:id="d4545947-a9cd-4c3e-8c3b-b71d28f7ae40" >
+		<logger level="INFO" doc:name="LOG Info Into Get Contact Id Flow" doc:id="a744d824-2792-4ac6-82a7-45c19a9e03d9" message="Before For-Each with EmpId: #[payload.AQB__Contact__c]"/>
+		<flow-ref doc:name="Refer to sfdc-sapi-addresses-query-contactid-subflow" doc:id="822fc809-ca4f-41d4-9e50-7db7ee883a3d" name="sfdc-sapi-addresses-query-contactid-subflow" />
+		<salesforce:query doc:name="Query contactId" doc:id="0e932711-3835-4731-b879-28efec5d9f88" config-ref="salesforce-config" target="IdVar">
+				<salesforce:salesforce-query>SELECT Id FROM Contact WHERE AQB__ContactExternalID__c = ':EmplId'</salesforce:salesforce-query>
+				<salesforce:parameters><![CDATA[#[output application/java
+
+{
+	EmplId : vars.varCreateRecords."EMPLID"
+}]]]></salesforce:parameters>
+			</salesforce:query>
+		<set-variable value="#[output application/json  vars.IdVar[0].Id]" doc:name="ContactId" doc:id="6c8e64eb-948c-4af9-a63a-7d3062ef627b" variableName="Id" />
+		<logger level="INFO" doc:name="LOG ContactId" doc:id="251fa1fb-1723-412d-8b37-2161d0111bf4" message="#[vars.Id]" />
+	</sub-flow>   -->
+	<sub-flow name="sfdc-sapi-alternate-channel-flow" doc:id="66fd47a8-f5ed-47c9-b8a0-dfe9c0498148" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="2dda02ea-da08-491f-b7a9-317e9d4f7d87" message="Start of update/insert into Salesforce flow."/>
+		<choice doc:name="Check If Record for Email / Address / Phone" doc:id="0c92268f-8ab0-4a17-80be-748f92fc24be" >
+			<when expression='#[attributes.queryParams.ViewName ~= "address"]'>
+				<ee:transform doc:name="DW Create Payload for Address" doc:id="b2ebe931-ccf0-43d3-a6a9-ec9153e529ed">
+			<ee:message>
+						<ee:set-payload resource="dataweave/pAddrPayload.dwl" />
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[attributes.queryParams.ViewName ~= "email"]'>
+				<ee:transform doc:name="DW Create Payload for Email" doc:id="8ab5228e-7daf-4eef-a930-62d68528e5f6" >
+					<ee:message >
+						<ee:set-payload resource="dataweave/pEmailPayload.dwl" />
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression='#[attributes.queryParams.ViewName ~= "phone"]'>
+				<ee:transform doc:name="DW Create Payload for Phone" doc:id="2f6755ca-8c4c-4d63-a894-271c108357a9">
+					<ee:message>
+						<ee:set-payload resource="dataweave/pPhonePayload.dwl" />
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="DW Default Payload" doc:id="db212326-0d48-4d0e-87d2-7ddcba835267">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<salesforce:query doc:name="Query Salesforce for Record Type" doc:id="08aa80c2-b42d-4b1a-9126-dc4475b5cbc2" config-ref="salesforce-config" target="varRecordTypeId" targetValue="#[output application/json --- payload]">
+			<salesforce:salesforce-query >SELECT Id,Name FROM RecordType WHERE Name = ':RecordType'</salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	RecordType : attributes.queryParams.ViewName
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<set-variable value='#[vars.varRecordTypeId."Id"[0] default ""]' doc:name="Set Variable Record Type" doc:id="28e7e7df-2e7d-4f76-b0c6-81f531d72e98" variableName="RecordType"/>
+		<salesforce:query doc:name="Query Salesforce for Alternate Channel" doc:id="e47d6fdb-1905-425e-9d29-70dafbc268c0" config-ref="salesforce-config" target="varGetAddressRecords">
+				<salesforce:salesforce-query>SELECT AQB__AccountExternalIDLinkField__c,AQB__Type__c,Id FROM AQB__AQAddress__c
+ WHERE AQB__AccountExternalIDLinkField__c = ':EMPID' AND AQB__Type__c = ':ADDRTYPE'</salesforce:salesforce-query>
+				<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	EMPID : payload."EMPLID"[0],
+	ADDRTYPE : payload."ADDRESS_TYPE"[0]
+}]]]></salesforce:parameters>
+			</salesforce:query>
+		
+			<ee:transform doc:name="DW Resonse Salesforce Records" doc:id="4dcf397d-d534-4a0c-af98-8c4d4aa93fb7" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="varChoice" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.varGetAddressRecords]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<choice doc:name="Check If Alternate Channel Records not empty" doc:id="9746be41-8283-428b-9a9d-a3ddf59b2a79" >
+				<when expression="#[sizeOf(vars.varChoice) &gt; 0 and vars.varChoice != null]">
+					<logger level="INFO" doc:name="LOG INFO Record to be Updated" doc:id="4bc9f26b-0207-4447-99f0-9032c0801c03" message="Record exists in Salesforce. Record to be updated."/>
+					<set-variable value='#[payload[0] ++ {"Id" : vars.varChoice."Id"[0] default ""}]' doc:name="Set Variable for Records to Update" doc:id="0a6bdb7e-0768-4942-aaa7-5206a88cab64" variableName="varUpdateRecords" />
+				<flow-ref doc:name="Refer to sfdc-sapi-alternate-channel-update-sub-flow" doc:id="8c302f90-ee96-4f15-a55b-645e23316036" name="sfdc-sapi-alternate-channel-update-sub-flow"/>
+				</when>
+				<otherwise >
+					<logger level="INFO" doc:name="LOG INFO Record to be Created" doc:id="1503559a-e089-487e-b208-c2d33a0b6329" message="No mathcing record found in Salesforce . Record to be Inserted."/>
+					<set-variable value="#[payload[0]]" doc:name="Set Variable for Records to Create" doc:id="7212fbed-a998-42fd-98e6-d2ad13babd78" variableName="varCreateRecords" />
+				<flow-ref doc:name="Refer to sfdc-sapi-alternate-channel-create-sub-flow" doc:id="5e478f33-51eb-4f3a-aac7-6263c881f0ca" name="sfdc-sapi-alternate-channel-create-sub-flow"/>
+				</otherwise>
+			</choice>
+			<logger level="INFO" doc:name="LOG INFO Salesforce Response" doc:id="76dbca51-0961-4bee-8540-52e77ec226e2" message='#[vars.status."id"]'/>
+		
+		<set-payload value="#[vars.status]" doc:name="Set Payload Salesforce Response" doc:id="3818ba71-ebd9-45af-b862-9ff2efe488b3" />
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="76454e31-682f-42db-a0f6-eddef3673c9d" message="End of update/insert in to Salesforce flow."/>
+	</sub-flow>
+	
+</mule>

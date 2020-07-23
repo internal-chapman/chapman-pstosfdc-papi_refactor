@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sfdc-sapi-accounts-create-flow" doc:id="bbea5a34-a9f3-45ee-802b-31b8ab0f2be5" >
+		<logger level="INFO" doc:name="LOG INFO Start of Flow" doc:id="97460fcc-5dec-4f31-8b1e-50670379f4ec" message="Start of create sapi account flow with initial payload : #[output application/json --- payload]"/>
+		<set-variable value="#[payload.AQB__AccountExternalID__c]" doc:name="Set Account External ID" doc:id="2af3283c-7415-4ea8-872b-a071fb9f84d2" variableName="accountExternalID" />
+		<ee:transform doc:name="DW Request to Salesforce" doc:id="7342a0e7-435f-44ca-af2b-31799e315de8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert type="Account" doc:name="Upsert into Salesforce Account Object" doc:id="351910b4-a832-4f40-8722-a51b1d97692d" config-ref="salesforce-config" externalIdFieldName="AQB__AccountExternalID__c"/>
+		<ee:transform doc:name="DW Salesforce Response" doc:id="b1e93474-c1e7-46d3-95fa-480997358964" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pSfSapiAccRes.dwl" />
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG INFO End of Flow" doc:id="e070d6b8-ca33-4eac-9170-bf849a24f538" message="End of create account flow for post:accounts: #[payload]"/>
+	
+</sub-flow>
+</mule>
