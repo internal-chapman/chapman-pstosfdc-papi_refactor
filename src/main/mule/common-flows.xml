@@ -54,10 +54,10 @@ output application/json
 	</flow>
 	<flow name="cf-aux-update" doc:id="5e23aa53-93cf-4716-9f81-6fddfc243502" >
 		<logger level="INFO" doc:name="LOG INFO Start Aux Update " doc:id="de121b62-6491-4ae1-82cb-933390c5a006" message="Starting Aux DB Update || CorrelationId : #[vars.correlationId]" />
-		<db:insert doc:name="Update Status Into Aux DB" doc:id="e2d5f59c-8901-4060-8bff-ac71bb9cfb57" config-ref="aux-db-config">
+		<db:update doc:name="Update Status Into Aux DB" doc:id="e9ad5c85-fb5a-468d-80d6-ef9cbd299025" config-ref="aux-db-config">
 			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
 			<db:input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:input-parameters>
-		</db:insert>
+		</db:update>
 		<logger level="INFO" doc:name="LOG INFO End Aux DB Update " doc:id="7f4bb01d-3c91-4a9f-b72b-3399a6af179c" message="Completed Aux DB Update Successfully || CorrelationId : #[vars.correlationId]" />
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8c58d331-4334-4a4b-a5f5-95ad6132cd2f" >

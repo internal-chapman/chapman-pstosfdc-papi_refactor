@@ -8,7 +8,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e72323c9-61fc-4151-ad37-5855d46b1fd3" >
-		<http:listener-connection host="0.0.0.0" port="6666" />
+		<http:listener-connection host="0.0.0.0" port="6668" />
 	</http:listener-config>
 	<flow name="pf-ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
@@ -50,6 +50,7 @@ output application/json
 ]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
+					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="87e2c588-592e-4537-ba80-d4bf9557c787" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-insert" doc:id="8a3bcd68-9cce-402f-bb51-37f36c341ac0" name="sf-email-persistance-aux-insert" />
 					<http:request method="POST" doc:name="POST Create Address" doc:id="0a1fe3d9-2c08-4193-b357-c9afb7688d3a" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
 						<http:query-params ><![CDATA[#[output application/java
@@ -59,6 +60,7 @@ output application/json
 }]]]></http:query-params>
 					</http:request>
 					<logger level="INFO" doc:name="LOG INFO SFDC Results" doc:id="101ee594-0db7-4a77-97ff-ed3e5fa08844" message="#[vars.sdfc_address_result]" />
+					<set-variable value="#[vars.uuid]" doc:name="Set Variable id" doc:id="4afa5219-cfef-4ecc-a59b-8a4bb2f221c9" variableName="id" />
 					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-update" doc:id="c87011b4-4db8-4ea0-9b3e-bdcc26ce7b14" name="sf-email-persistance-aux-update" />
 					<logger level="INFO" doc:name="LOG INFO Payload" doc:id="0bf6a02c-d54d-4429-abb8-5ced99653704" message="#[payload]" />
 				</batch:step>
@@ -73,14 +75,7 @@ output application/json
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id,
-XC_AQ_DEST_TYPE=:destType,
-DT_TIMESTAMP = :now,
-XC_AQ_STATUS = :status,
-XC_AQ_METADATA = :metadata,
-DESCR250 = :description,
-XC_AQ_SOURCE_TYPE = :sourceType
-where GUID= :tuuid"]]></ee:set-variable>
+				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC',XC_AQ_DEST_ID = :id,XC_AQ_DEST_TYPE=:destType,DT_TIMESTAMP = :now,XC_AQ_STATUS = :status,XC_AQ_METADATA = :metadata,DESCR250 = :description,XC_AQ_SOURCE_TYPE = :sourceType where GUID= :tuuid"]]></ee:set-variable>
 				<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
 output application/json
 ---
@@ -88,7 +83,7 @@ output application/json
 	"id": vars.sdfc_address_result.id[0] default'NA',
 	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.email'),
 	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.email'),
-	"tuuid": vars.uuid,
+	"tuuid": vars.id,
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 	"status": if(vars.sdfc_address_result.success[0] == true) "COMPLETED" else "ERROR",
 	"metadata": if(vars.sdfc_address_result.success[0] == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
@@ -101,7 +96,6 @@ output application/json
 </sub-flow>
 	<sub-flow name="sf-email-persistance-aux-insert" doc:id="378aca4c-bf6f-45a5-8ff6-02d9ffac43ef" >
 		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="SET FV AuxDetails" doc:id="0347eae4-b266-4c6a-9e98-1894e761c8f0" variableName="AuxDetails" />
-		<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="87e2c588-592e-4537-ba80-d4bf9557c787" name="cf-generate-uuid" />
 		<ee:transform doc:name="DW Set Aux DB Insert Variables" doc:id="b38e5171-3e8d-48aa-91f0-49e731be0a5e" >
 			<ee:message />
 			<ee:variables >

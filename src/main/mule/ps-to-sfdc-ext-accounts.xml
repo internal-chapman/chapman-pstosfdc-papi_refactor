@@ -10,7 +10,6 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
-		<http:listener doc:name="Listener" doc:id="e0f7b0e6-89ef-4120-b9c9-86526dd81b88" config-ref="HTTP_Listener_config" path="/test"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
 			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
