@@ -71,19 +71,24 @@ output application/json
 		</batch:job>
 	</flow>
 	<sub-flow name="ext-accounts-ps-aux-sync-insert-sub-flow" doc:id="70a37f2f-ccca-455d-aedf-2f3753af196d" >
-		<ee:transform doc:name="PS to Aux message" doc:id="ec373f5d-2d5b-4da4-a3fc-84cc767017ce" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<logger level="INFO" doc:name="Log Payload Size" doc:id="64fd3734-395c-4368-9023-8353ddbedbeb" message="Account records bulk insert size : #[sizeOf(payload)]"/>
+		<flow-ref doc:name="sf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="sf-generate-uuid"/>
+		<set-variable value="${auxDBColumns.XC_AQ_DEST_TYPE.extAccounts}" doc:name="XC_AQ_DEST_TYPE" doc:id="e2540b73-2ad6-45a4-882b-fcf4139fdbff" variableName="XC_AQ_DEST_TYPE" />
+		<set-variable value="${auxDBColumns.XC_AQ_SOURCE_TYPE.extAccounts}" doc:name="XC_AQ_SOURCE_TYPE" doc:id="94c49be4-503f-4f20-b728-964536fc64ff" variableName="XC_AQ_SOURCE_TYPE" />
+		<ee:transform doc:name="PS to Aux message" doc:id="ec373f5d-2d5b-4da4-a3fc-84cc767017ce">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 var sourceId = uuid()
 ---
 payload map (account, index) -> {
-	GUID: account.'EXT_ORG_ID',
+	GUID: vars.uuid,
 	XC_AQ_SOURCE: 'PS-CS',
-	XC_AQ_SOURCE_ID: uuid()[0 to 7] ++ uuid()[9] as String,
-	XC_AQ_SOURCE_TYPE: account.'EXT_ORG_ID',
+	XC_AQ_SOURCE_ID: vars.uuid as String,
+	XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
 	XC_AQ_DESTINATION: "SFDC",
 	XC_AQ_DEST_ID: "-",
+	XC_AQ_DEST_TYPE: vars.XC_AQ_DEST_TYPE,
 	XC_AQ_STATUS: "In progress",
 	DTTM_CREATED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	DTTM_MODIFIED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
@@ -92,11 +97,11 @@ payload map (account, index) -> {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Log Payload Size" doc:id="64fd3734-395c-4368-9023-8353ddbedbeb" message="Account records bulk insert size : #[sizeOf(payload)]"/>
 		<db:bulk-insert doc:name="Invoke Aux DB" doc:id="89477600-a380-4db3-9962-1d625548c873" config-ref="aux-db-config" transactionalAction="NOT_SUPPORTED">
 			<reconnect />
-			<db:sql>INSERT INTO SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
-VALUES (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
+			<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL
+    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
+values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 		</db:bulk-insert>
 		<logger level="INFO" doc:name="Log status" doc:id="1618614d-ae37-428f-aa99-3a1ec0f4a7ed" message="Bulk insert to Aux success!" />
 
@@ -108,9 +113,11 @@ VALUES (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTI
 output application/json
 ---
 payload map (account, index) -> {
-	XC_AQ_SOURCE_TYPE: account.id,
+	GUID:vars.uuid,
+	XC_AQ_SOURCE_TYPE: vars.XC_AQ_SOURCE_TYPE,
 	XC_AQ_DESTINATION: 'SFDC',
 	XC_AQ_DEST_ID: account.data[0].id,
+	XC_AQ_DEST_TYPE:vars.XC_AQ_DEST_TYPE,
 	DT_TIMESTAMP: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	XC_AQ_STATUS: 'Completed',
 	XC_AQ_METADATA: "Record inserted in SFDC",
@@ -123,11 +130,13 @@ payload map (account, index) -> {
 			<db:sql >UPDATE SYSADM.PS_XC_AQ_AUX_TBL 
 set XC_AQ_DESTINATION = :XC_AQ_DESTINATION, 
 XC_AQ_DEST_ID = :XC_AQ_DEST_ID,
+XC_AQ_DEST_TYPE= :XC_AQ_DEST_TYPE,
 DT_TIMESTAMP = :DT_TIMESTAMP,
 XC_AQ_STATUS = :XC_AQ_STATUS,
 XC_AQ_METADATA = :XC_AQ_METADATA,
-DESCR250 = :DESCR250
-WHERE XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE</db:sql>
+DESCR250 = :DESCR250,
+XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE
+WHERE GUID= :GUID</db:sql>
 		</db:bulk-update>
 		<logger level="INFO" doc:name="Log status" doc:id="09235204-563b-4459-8f78-ab99bd85d9f2" message="Account records bulk update status : #[payload]" />
 	</sub-flow>
