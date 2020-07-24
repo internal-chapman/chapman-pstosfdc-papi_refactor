@@ -14,6 +14,9 @@
     },
     "649536a2-6b46-4f65-af87-b115f208c63c": {
       "vars-DBConData": "sample_data/list_json_1.json"
+    },
+    "9c01ec80-d797-417e-a5f3-201f1b5904b1": {
+      "payload": "sample_data/list_object.dwl"
     }
   }
 }

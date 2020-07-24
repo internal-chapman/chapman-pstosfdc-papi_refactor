@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<flow name="pf-employment" doc:id="992a184e-00b8-499f-b02a-b29f96f99876">
 		<logger level="INFO" doc:name="LOG START" doc:id="f3b2041d-719f-46c9-aa2c-f4a7ae584faa" message='#["Employment sync started from PS to SFDC at " ++ now()]'/>
 		<os:retrieve doc:name="os retrieve empl_lastProcessedTime" doc:id="2564cdca-a454-4c64-bf5e-9e4e644bce9a" key="lastProcessedTime" target="lastProcessedTime" objectStore="Object_store">
-			<os:default-value ><![CDATA[2020-07-09 00:43:45]]></os:default-value>
+			<os:default-value ><![CDATA[#["2020-07-09 00:43:45"]]]></os:default-value>
 		</os:retrieve>
 		<db:select doc:name="Fetch Count from PS db" doc:id="4fcafee7-5de6-41ff-a30d-fd2146c78b37" config-ref="rpt-db-config">
 			<db:sql >#[p('db.rpt.query.employmentCount')]</db:sql>
@@ -62,7 +62,53 @@ payload map(value, index) ->{
 }]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<flow-ref doc:name="Flow Ref To sf-employment-aux-insert" doc:id="7c082f78-90c0-4acd-a169-fe3c04cc2700" name="sf-employment-aux-insert"/>
+					<ee:transform doc:name="DW Set vAuxInsertQuery and vAuxInsertPayload" doc:id="ff885228-4ff7-4b4d-aceb-3b093437a2aa">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="originalPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+							<ee:set-variable variableName="vAuxInsertPayload" ><![CDATA[%dw 2.0
+output application/json
+fun gui() = using(id = uuid())(id[0 to 7] ++  id[9]) 
+---
+(vars.aux_data_insert default []) map {
+GUID: gui() default '',
+XC_AQ_SOURCE: $.source default '', 
+XC_AQ_SOURCE_ID: $.source_id default '',  
+XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.employment') default '',
+XC_AQ_DESTINATION: '-',
+XC_AQ_DEST_ID: '-',
+XC_AQ_DEST_TYPE:p('auxDBColumns.XC_AQ_DEST_TYPE.employment') default '',
+XC_AQ_STATUS: 'INPROGRESS',
+DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+XC_AQ_METADATA: $.metadata default '',
+DESCR250: $.description default ''
+}]]></ee:set-variable>
+							<ee:set-variable variableName="vAuxInsertQuery" ><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+					<flow-ref doc:name="Flow Ref To cf-aux-insert-bulk" doc:id="7c082f78-90c0-4acd-a169-fe3c04cc2700" name="cf-aux-insert-bulk"/>
+					<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="11f5a35d-d8ec-40d7-946c-64d76bab8f73">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.originalPayload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="aux_insert_response"><![CDATA[%dw 2.0
+output application/json
+---
+(vars.aux_data_insert default []) map(value, index) ->{
+	"uuid": vars.uuid[index],
+	"source_id": value.source_id default ''
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 					<logger level="INFO" doc:name="LOG INFO" doc:id="ecad219f-1355-4a33-b86c-347517cc271d" message="#[payload]"/>
 					<try doc:name="Try" doc:id="84482ab2-853c-4b50-a808-cb042b2b4d4d" >
 						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="5fe624c7-b9a2-453d-9fb1-dd8d97b5ef05" message='#["Sending request to system api to sync Employments for batch: " ++ vars.counter]'/>
@@ -78,14 +124,16 @@ payload map(value, index) ->{
 							</when>
 						</choice>
 					</try>
-					<ee:transform doc:name="DW Set aux_data_update" doc:id="90c44c43-61f2-4004-848e-4b022a1589ff">
+					<ee:transform doc:name="DW Set vAuxUpdateQuery and vAuxUpdatePayload" doc:id="90c44c43-61f2-4004-848e-4b022a1589ff">
 							<ee:message>
 							</ee:message>
 							<ee:variables>
-							<ee:set-variable resource="dataweave/vEmploymentAuxDataUpdate.dwl" variableName="aux_data_update" />
+							<ee:set-variable resource="dataweave/vEmploymentAuxDataUpdate.dwl" variableName="vAuxUpdatePayload" />
+							<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, XC_AQ_DEST_TYPE = :destType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+where GUID = :tuuid"]]></ee:set-variable>
 							</ee:variables>
 						</ee:transform>
-					<flow-ref doc:name="Flow Ref To sf-employment-aux-update" doc:id="39f48edb-5bb7-4371-abdb-27aa1b3da47a" name="sf-employment-aux-update"/>
+					<flow-ref doc:name="Flow Ref To cf-aux-update-bulk" doc:id="39f48edb-5bb7-4371-abdb-27aa1b3da47a" name="cf-aux-update-bulk"/>
 					<os:store doc:name="os store empl_lastProcessedTime" doc:id="5c51c9cf-975d-45f2-88fa-31ed148bd7b8" key="lastProcessedTime" objectStore="Object_store">
 						<os:value ><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
 					</os:store>
@@ -116,55 +164,11 @@ where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
 	</sub-flow>
 	<sub-flow name="sf-employment-aux-insert" doc:id="59779259-5a6a-4f5d-a1bb-69b01c8b214c" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="99c3538f-25a5-48d6-9157-b592eac41a1a" message="Flow entered aux insert" />
-		<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="ce8d0d73-7619-4883-8c1e-c5d6b8914865" name="cf-generate-uuid" />
-		<ee:transform doc:name="DW Set Payload" doc:id="ff885228-4ff7-4b4d-aceb-3b093437a2aa" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-(vars.aux_data_insert default []) map {
-GUID: vars.uuid[$$] default '',
-XC_AQ_SOURCE: $.source default '', 
-XC_AQ_SOURCE_ID: $.source_id default '',  
-XC_AQ_SOURCE_TYPE: vars.uuid[$$] default '',
-XC_AQ_DESTINATION: '-',
-XC_AQ_DEST_ID: '-',
-XC_AQ_STATUS: 'INPROGRESS',
-DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-XC_AQ_METADATA: $.metadata default '',
-DESCR250: $.description default ''
-}]]></ee:set-payload>
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
 		<db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="6c74c6c4-4cea-4bde-9ef9-495c9539e98b" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 		</db:bulk-insert>
 		<logger level="INFO" doc:name="LOG INFO" doc:id="fbd6999e-9895-468f-a866-1e32c64838d0" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
-		<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="11f5a35d-d8ec-40d7-946c-64d76bab8f73" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-vars.originalPayload]]></ee:set-payload>
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="aux_insert_response" ><![CDATA[%dw 2.0
-output application/json
----
-(vars.aux_data_insert default []) map(value, index) ->{
-	"uuid": vars.uuid[index],
-	"source_id": value.source_id default ''
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
 	</sub-flow>
 </mule>
