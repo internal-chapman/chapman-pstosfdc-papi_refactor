@@ -16,7 +16,7 @@
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education" doc:id="4066a968-b282-42f7-ac9b-a9df1be069ce" name="pf-ps-to-sfdc-education" />
 		<flow-ref doc:name="Flow Ref To pf-employment" doc:id="250fd1d5-c642-4d63-89f8-98ca9cc69394" name="pf-employment" />
 	</flow>
-	<flow name="mf-ps-to-sfdc-extAcc-address-email-scheduler" doc:id="d27e477c-2b5f-4040-b1bd-f5350b4d6ec9" initialState="started" maxConcurrency="1">
+	<flow name="mf-ps-to-sfdc-extAcc-address-email-scheduler" doc:id="d27e477c-2b5f-4040-b1bd-f5350b4d6ec9" initialState="stopped" maxConcurrency="1">
 		<scheduler doc:name="Scheduler" doc:id="d88f2c98-bb45-4830-af4a-569907f3a570" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>

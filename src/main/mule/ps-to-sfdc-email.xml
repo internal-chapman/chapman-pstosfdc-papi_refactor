@@ -52,7 +52,8 @@ output application/json
 					</ee:transform>
 					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="87e2c588-592e-4537-ba80-d4bf9557c787" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-insert" doc:id="8a3bcd68-9cce-402f-bb51-37f36c341ac0" name="sf-email-persistance-aux-insert" />
-					<http:request method="POST" doc:name="POST Create Address" doc:id="0a1fe3d9-2c08-4193-b357-c9afb7688d3a" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
+					<http:request method="POST" doc:name="POST Create Address" doc:id="27a66c5f-3435-4c7b-a28c-757d12331ea6" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
+						<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
 						<http:query-params ><![CDATA[#[output application/java
 ---
 {
@@ -60,7 +61,7 @@ output application/json
 }]]]></http:query-params>
 					</http:request>
 					<logger level="INFO" doc:name="LOG INFO SFDC Results" doc:id="101ee594-0db7-4a77-97ff-ed3e5fa08844" message="#[vars.sdfc_address_result]" />
-					<set-variable value="#[vars.uuid]" doc:name="Set Variable id" doc:id="4afa5219-cfef-4ecc-a59b-8a4bb2f221c9" variableName="id" />
+					<set-variable value="#[vars.uuid]" doc:name="Set FV id" doc:id="4afa5219-cfef-4ecc-a59b-8a4bb2f221c9" variableName="id" />
 					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-update" doc:id="c87011b4-4db8-4ea0-9b3e-bdcc26ce7b14" name="sf-email-persistance-aux-update" />
 					<logger level="INFO" doc:name="LOG INFO Payload" doc:id="0bf6a02c-d54d-4429-abb8-5ced99653704" message="#[payload]" />
 				</batch:step>

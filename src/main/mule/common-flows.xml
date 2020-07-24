@@ -6,7 +6,7 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
-	<sub-flow name="cf-correlationId" doc:id="6bbce4c0-9827-4df3-a454-644b373cc55b" >
+	<flow name="cf-correlationId" doc:id="6bbce4c0-9827-4df3-a454-644b373cc55b" >
 		<ee:transform doc:name="DW Set CorrelationId" doc:id="d95389b6-4b59-4e2c-bd72-5c01163c9e46" >
 			<ee:message >
 			</ee:message>
@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 				<ee:set-variable resource="dataweave/correlationId.dwl" variableName="correlationId" />
 			</ee:variables>
 		</ee:transform>
-	</sub-flow>
+	</flow>
 	<sub-flow name="cf-generate-uuid" doc:id="dc62faf0-693f-4eab-9dc9-c0822bf5478b" >
 		<ee:transform doc:name="DW Generate UUID" doc:id="0cfba8b3-a194-483c-815f-fee319d5d258" >
 			<ee:message >
@@ -27,7 +27,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 	</sub-flow>
 	<flow name="cf-aux-insert" doc:id="a3fed5fd-de84-4f90-b905-c2adedf43b51" >
 		<logger level="INFO" doc:name="LOG INFO Start Aux Insert" doc:id="5c9a6c98-42dc-4e42-b227-8027dddee1ed" message="Starting Aux DB Insert || CorrelationId: #[vars.correlationId]" />
-		<db:insert doc:name="Insert Into Aux DB " doc:id="fd41cae8-d720-4d2e-abfc-07c222bc353f" config-ref="aux-db-config">
+		<db:insert doc:name="Insert Into Aux DB " doc:id="fd41cae8-d720-4d2e-abfc-07c222bc353f" config-ref="aux-db-config" target="vAuxInsertResult">
 			<db:sql >#[vars.vAuxInsertQuery]</db:sql>
 			<db:input-parameters ><![CDATA[#[vars.vAuxInsertPayload]]]></db:input-parameters>
 		</db:insert>
@@ -54,7 +54,7 @@ output application/json
 	</flow>
 	<flow name="cf-aux-update" doc:id="5e23aa53-93cf-4716-9f81-6fddfc243502" >
 		<logger level="INFO" doc:name="LOG INFO Start Aux Update " doc:id="de121b62-6491-4ae1-82cb-933390c5a006" message="Starting Aux DB Update || CorrelationId : #[vars.correlationId]" />
-		<db:update doc:name="Update Status Into Aux DB" doc:id="e9ad5c85-fb5a-468d-80d6-ef9cbd299025" config-ref="aux-db-config">
+		<db:update doc:name="Update Status Into Aux DB" doc:id="e9ad5c85-fb5a-468d-80d6-ef9cbd299025" config-ref="aux-db-config" target="vAuxUpdateResult">
 			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
 			<db:input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:input-parameters>
 		</db:update>
@@ -78,6 +78,22 @@ output application/json
 				<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="ffc12fd8-e3fd-4676-98ef-552cad267d22" name="cf-email-implementation" />
 			</on-error-propagate>
 		</error-handler>
+	</flow>
+	<flow name="cf-aux-insert-bulk" doc:id="686bfced-cab4-4ff5-a80d-503ed1f33319" >
+		<logger level="INFO" doc:name="LOG INFO" doc:id="5eb206e1-6866-4128-ba95-96c26f27fd0b" message="Starting Bulk Insert Into Aux Db"/>
+		<db:bulk-insert doc:name="Bulk insert into Aux Db" doc:id="05e3cd6d-8bed-4aea-9fc8-b50eb7abe784" config-ref="aux-db-config" target="vAuxInsertResult">
+			<db:bulk-input-parameters ><![CDATA[#[vars.vAuxInsertPayload]]]></db:bulk-input-parameters>
+			<db:sql >#[vars.vAuxInsertQuery]</db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="069001bc-633d-49b2-8d8a-0067e2f883a7" message="Completed Bulk Insert Into Aux Db Successfully"/>
+	</flow>
+	<flow name="cf-aux-update-bulk" doc:id="768060a3-5ef4-48f8-8e39-a6a665fc0dde" >
+		<logger level="INFO" doc:name="LOG INFO" doc:id="35160906-b2f8-4ffa-93cd-0ef8e46226f2" message="Staring Bulk Update Into Aux Db"/>
+		<db:bulk-update doc:name="Bulk update into Aux Db" doc:id="2cbd448d-d7ff-4af6-9f36-3e97028b41d9" config-ref="aux-db-config" target="vAuxUpdateResult">
+			<db:bulk-input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:bulk-input-parameters>
+			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
+		</db:bulk-update>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="4bea36ab-9186-4b65-8149-68506a32b35b" />
 	</flow>
 	<flow name="cf-email-implementation" doc:id="32d23233-9dbb-458f-86a1-24bf853e4ba5" >
 		<choice doc:name="Choice" doc:id="ea8fcc44-f389-4a14-9802-e9136b0474c2" >

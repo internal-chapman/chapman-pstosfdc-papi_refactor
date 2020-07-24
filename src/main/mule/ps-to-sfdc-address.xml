@@ -66,8 +66,7 @@ output application/json
 		</batch:job>
 	</flow>
 	<sub-flow name="sf-address-persistance-aux-update" doc:id="6af92f1c-5466-408e-8b43-90abc388d36f" >
-		<logger level="INFO" doc:name="LOG INFO Aux Update" doc:id="618ba661-4eff-4768-b251-5fa01f53b290" message="Flow entered aux Update #[payload]" />
-		<ee:transform doc:name="DW Payload To Update" doc:id="7648ea8c-713c-4adb-8f25-67677d195b38" >
+		<ee:transform doc:name="DW Set Aux Db Update Variables" doc:id="7648ea8c-713c-4adb-8f25-67677d195b38" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
@@ -90,10 +89,8 @@ output application/json
 		<flow-ref doc:name="Flow Ref To cf-aux-update" doc:id="19519a54-7ea3-46c9-827b-503b3dc858a0" name="cf-aux-update"/>
 	</sub-flow>
 	<sub-flow name="sf-address-persistance-aux-insert" doc:id="4c080cc0-45dd-46d3-a74c-02eefece791f" >
-		<logger level="INFO" doc:name="LOG Info Aux Insert" doc:id="c009f2ad-e881-49f9-85fe-7f671f8f3410" message="Flow entered aux insert" />
-		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="AuxDetails" doc:id="e440756a-5a11-4c3e-96c6-5ed15f951a98" variableName="AuxDetails" />
-		<logger level="INFO" doc:name="LOG INFO EmplID" doc:id="2a1f3e29-c70e-44cc-8b3b-6f887c316df1" message='#[vars.AuxDetails."emplID"]' />
-		<ee:transform doc:name="DW Set Payload" doc:id="7c97b6d4-fd33-493d-9b6e-6ef6c898099e" >
+		<set-variable value="#[vars.varRecordToAuxDbase]" doc:name="Set FV AuxDetails" doc:id="e440756a-5a11-4c3e-96c6-5ed15f951a98" variableName="AuxDetails" />
+		<ee:transform doc:name="DW Set Aux Db Insert Variables" doc:id="7c97b6d4-fd33-493d-9b6e-6ef6c898099e" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >

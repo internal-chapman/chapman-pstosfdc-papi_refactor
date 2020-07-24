@@ -10,6 +10,7 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
+		<http:listener doc:name="Listener" doc:id="66685438-94a0-4604-96c3-2166674a95b0" config-ref="HTTP_Listener_config" path="/test"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
 			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
@@ -37,6 +38,7 @@ payload map(account, index) -> {
 			<batch:process-records >
 				<batch:step name="sync-ps-records-to-sfdc" doc:id="d7cd6edd-7998-4ba5-aff2-4d80cf8d08c8" >
 					<logger level="INFO" doc:name="LOG INFO" doc:id="29a2b9f2-dbbc-44d1-b915-b88bf111b828" message="Account record request: #[payload]"/>
+					<flow-ref doc:name="FLow Ref To cf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-ext-accounts-aux-insert" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="sf-ext-accounts-aux-insert" target="vars.auxSyncPayload" />
 					<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}"/>
 					<ee:transform doc:name="DW JSON To Java" doc:id="fdb04c8e-be4f-49f4-9f60-19402a4a02ae">
@@ -67,7 +69,6 @@ output application/json
 		</batch:job>
 	</flow>
 	<sub-flow name="sf-ext-accounts-aux-insert" doc:id="70a37f2f-ccca-455d-aedf-2f3753af196d" >
-		<flow-ref doc:name="FLow Ref To cf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="cf-generate-uuid"/>
 		<ee:transform doc:name="DW Set  Aux Insert Variables" doc:id="ec373f5d-2d5b-4da4-a3fc-84cc767017ce">
 			<ee:message>
 			</ee:message>
@@ -78,7 +79,7 @@ output application/json
 {
 	GUID: vars.uuid,
 	XC_AQ_SOURCE: 'PS-CS',
-	XC_AQ_SOURCE_ID: vars.uuid as String,
+	XC_AQ_SOURCE_ID: payload.AQC_Inst_ID__c,
 	XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.extAccounts'),
 	XC_AQ_DESTINATION: "SFDC",
 	XC_AQ_DEST_ID: "-",

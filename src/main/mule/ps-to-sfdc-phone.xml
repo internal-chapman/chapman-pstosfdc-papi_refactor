@@ -48,11 +48,12 @@ output application/json
 					</ee:transform>
 					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="5e731984-9ea1-4304-a326-2f696ab912dd" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-insert" doc:id="e833c480-1f80-44e4-bed5-d8f5d29a50aa" name="sf-phone-persistance-aux-insert" />
-					<http:request method="POST" doc:name="POST Create Address" doc:id="9824460e-7b23-428d-a21b-2ddf37578420" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" >
+					<http:request method="POST" doc:name="POST Create Address" doc:id="36cd069a-b9b5-4df5-b101-5f24c53f4367" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
+						<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
 						<http:query-params ><![CDATA[#[output application/java
 ---
 {
-	"ViewName" : "Phone"
+	"ViewName" : "phone"
 }]]]></http:query-params>
 					</http:request>
 					<logger level="INFO" doc:name="LOG INFO for SFDC Results" doc:id="28ef80cb-2713-4fed-805c-c0f8be5d95fc" message="#[vars.sdfc_address_result]" />
