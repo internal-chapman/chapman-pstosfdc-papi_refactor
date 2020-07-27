@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-scheduler-test-suite.xml" />
+	<munit:test name="ps-to-sfdc-scheduler-test-suite-mf-ps-to-sfdc-account-schedulerTest" doc:id="aaf5d32c-ba6e-47bb-8cce-cdb318bfbcb0" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="7374a5bf-c0bc-42ef-9d43-37c4dbdad666" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-spouses-contacts-sync" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="e8540fd1-2ff6-4aaa-b1bb-63204ca17d05" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-non-spouses-contacts-sync" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="97488829-d83e-4a56-852e-d57130110a8c" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-ps-to-sfdc-address-sync" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="2d5e9231-f4ca-4f90-b5a9-c9045c8b202e" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-ps-to-sfdc-email-sync" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="21414ef1-be66-46e0-9576-0e8187b292a0" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref to pf-ps-to-sfdc-phone-sync" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="29337184-bb42-4d03-8c45-0d2fdd475991" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-ps-to-sfdc-education" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="acb21147-3d19-451d-ad7b-0a1329676400" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-student-interest" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="8bf5e8f0-8304-46c7-b10d-8d9f9b522022" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-employment" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to mf-ps-to-sfdc-account-scheduler" doc:id="b0d18108-2faa-435d-b32a-3dbd602e83b3" name="mf-ps-to-sfdc-account-scheduler"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that correlation id" doc:id="a5b7fd7a-2885-4307-a632-426341558d2f" expression="#[vars.correlationId]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-scheduler-mf-ps-to-sfdc-extAcc-address-email-schedulerTest" doc:id="b311ea50-f66c-4d11-8fdd-1dd3ce790cb7" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="3983c862-48d6-439f-905c-c4844a5571d9" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-ext-accounts-sync-process" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow Ref to mf-ps-to-sfdc-extAcc-address-email-scheduler" doc:id="c6e7c70d-65e3-4fbb-a173-b848ca55071a" name="mf-ps-to-sfdc-extAcc-address-email-scheduler"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that correlation id" doc:id="bc81b826-08ce-4815-b797-9d367c37c5c6" expression="#[vars.correlationId]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

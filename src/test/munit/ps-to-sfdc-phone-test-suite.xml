@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-phone-test-suite.xml" />
+	<munit:test name="ps-to-sfdc-phone-test-suite-pf-ps-to-sfdc-phone-syncTest" doc:id="66b35e58-b7db-485f-885a-36469e6c525a" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="68bb1841-2512-45be-8aef-98d808dc27ca" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select Phone from PS DB" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="a5c64de3-5015-436e-b5c1-50438d801643" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-phone-sync-process-batch" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to pf-ps-to-sfdc-phone-sync" doc:id="60a3f0e6-2d2c-43de-8942-5a42f32c6be7" name="pf-ps-to-sfdc-phone-sync"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="9c19b219-1aec-45f9-9b45-196f838d84f0" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO Transformed Resultset" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-phone-test-suite-sf-phone-persistance-aux-updateTest" doc:id="f8c3a2e9-f7a8-417b-b2bc-7e12fbd965fb" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="3c124f1c-7334-402a-8f83-6449846002f2" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-update" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sf-phone-persistance-aux-update" doc:id="2aff8166-ca8b-4f7c-9268-31c3ef5ebedb" name="sf-phone-persistance-aux-update"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="dedac388-1b8a-4669-a43b-a2d725d4a7c7" is="#[MunitTools::notNullValue()]" expression="#[vars.vAuxUpdateQuery]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-phone-test-suite-sf-phone-persistance-aux-insertTest" doc:id="2f07de8c-e758-4ee6-bdaa-4a5731e0c63d" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="f591db42-dbc8-4ac8-807d-773f8a65fff9" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-insert" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sf-phone-persistance-aux-insert" doc:id="0dbc1309-2ab8-4636-9c33-15be3a015bb6" name="sf-phone-persistance-aux-insert"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="ce7dc754-cbc0-4a9a-a633-224dd6f9cbaa" is="#[MunitTools::notNullValue()]" expression="#[vars.vAuxInsertQuery]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

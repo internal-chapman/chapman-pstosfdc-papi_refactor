@@ -1,0 +1,66 @@
+[{
+                    "ext_org_id": "0016638",
+                    "account_name": "Univ Sydney Australia",
+                    "addressline": "SYDNEY NSW 2006 ",
+                    "city": "Sydney",
+                    "county": " ",
+                    "state": "NSW",
+                    "state_descr": "New South Wales",
+                    "postal": " ",
+                    "country_cd": "AUS",
+                    "country_nm": "Australia",
+                    "ext_org_type": "SCHL",
+                    "last_updt_dttm": "15-JAN-16 06.24.21.000000000 PM"
+                }, {
+                    "ext_org_id": "0016639",
+                    "account_name": "John Abbott College",
+                    "addressline": "ACAD ADV PO BOX 2000 ",
+                    "city": "Sainte-Anne-De-Bellevue",
+                    "county": " ",
+                    "state": "QC",
+                    "state_descr": "Quebec",
+                    "postal": " ",
+                    "country_cd": "CAN",
+                    "country_nm": "Canada",
+                    "ext_org_type": "SCHL",
+                    "last_updt_dttm": "15-JAN-16 06.24.21.000000000 PM"
+                }, {
+                    "ext_org_id": "0016640",
+                    "account_name": "Trinity Western University",
+                    "addressline": "7600 GLOVER ROAD ",
+                    "city": "Langley",
+                    "county": " ",
+                    "state": "BC",
+                    "state_descr": "British Columbia",
+                    "postal": " ",
+                    "country_cd": "CAN",
+                    "country_nm": "Canada",
+                    "ext_org_type": "SCHL",
+                    "last_updt_dttm": "15-JAN-16 06.24.21.000000000 PM"
+                }, {
+                    "ext_org_id": "0016641",
+                    "account_name": "University of Stirling",
+                    "addressline": "ADMISSIONS OFFICE STIRLING FK9 4LA ",
+                    "city": "Stirling",
+                    "county": " ",
+                    "state": " ",
+                    "postal": " ",
+                    "country_cd": "GBR",
+                    "country_nm": "United Kingdom",
+                    "ext_org_type": "SCHL",
+                    "last_updt_dttm": "15-JAN-16 06.24.21.000000000 PM"
+                }, {
+                    "ext_org_id": "0016642",
+                    "account_name": "Memorial Univ Newfoundland",
+                    "addressline": "Elizabeth Avenue ",
+                    "city": "St Johns",
+                    "county": " ",
+                    "state": "NL",
+                    "state_descr": "Newfoundland (NL)",
+                    "postal": "A1C 5S7",
+                    "country_cd": "CAN",
+                    "country_nm": "Canada",
+                    "ext_org_type": "SCHL",
+                    "last_updt_dttm": "15-JAN-16 06.24.22.000000000 PM"
+                }
+            ]

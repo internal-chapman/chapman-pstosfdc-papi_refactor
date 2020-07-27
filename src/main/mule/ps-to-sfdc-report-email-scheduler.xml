@@ -10,21 +10,21 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<http:request-config name="Email_Report_HTTPRequest_Config" doc:name="HTTP Request configuration" doc:id="172f506b-2515-4e59-9396-96b0a61afd52" >
 		<http:request-connection host="s-email-api-dev.us-w2.cloudhub.io" port="80" />
 	</http:request-config>
-	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="stopped">
-		<scheduler doc:name="Report Scheduler" doc:id="e047b950-cbb3-456a-ba2e-9583ece7c672" >
+	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="started">
+		<scheduler doc:name="Scheduler" doc:id="1d06e247-93b4-409c-8b12-46e92c2e2518" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="1" timeUnit="SECONDS"/>
+				<fixed-frequency frequency="1" startDelay="2" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="LOG START " doc:id="bde540b8-7d75-488f-880b-5e0d4e96967e" />
-		<flow-ref doc:name="Email API Invoke" doc:id="31aa6c6a-8819-4253-a693-f6d3d57998c8" name="ps-to-sfdc-report-email-api"/>
+		<flow-ref doc:name="Flow Ref To ps-to-sfdc-report-email-api " doc:id="31aa6c6a-8819-4253-a693-f6d3d57998c8" name="ps-to-sfdc-report-email-api"/>
 	</flow>
 	<flow name="ps-to-sfdc-report-email-api" doc:id="e0ad022f-6168-4494-a8fb-d1d6cb1e1ac2" >
-		<logger level="INFO" doc:name="Log Query Start Time" doc:id="c3551c22-a8fe-498e-bbb6-6f97039baa56" message='#["Query execution started:" ++ now()]'/>
-		<os:retrieve doc:name="os timeStampKey Retrieve" doc:id="311b7fb7-f6e7-412e-a1a8-97bb366211be" key="timeStampKey">
+		<logger level="INFO" doc:name="LOG INFO Query Start Time" doc:id="c3551c22-a8fe-498e-bbb6-6f97039baa56" message='#["Query execution started:" ++ now()]'/>
+		<os:retrieve doc:name="os timeStampKey Retrieve" doc:id="311b7fb7-f6e7-412e-a1a8-97bb366211be" key="timeStampKey" objectStore="Object_store">
 			<os:default-value ><![CDATA[#[(now() - (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator')))]]]></os:default-value>
 		</os:retrieve>
-		<ee:transform doc:name="set Variables" doc:id="b995798a-8002-4a89-926c-1cb256afeed4" >
+		<ee:transform doc:name="DW Set Variables" doc:id="b995798a-8002-4a89-926c-1cb256afeed4" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
@@ -34,30 +34,71 @@ output application/java
 payload as LocalDateTime {format: "yyyy-MM-dd HH:mm:ss"} as String {format: "yyyy-MM-dd HH:mm:ss"}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<db:select doc:name="Get Error Records of One hour" doc:id="91ea2d1d-d6df-4b25-b0e6-95447526a532" config-ref="aux-db-config">
-			<db:sql >select * from SYSADM.PS_XC_AQ_AUX_TBL where 
-DTTM_MODIFIED &gt;= :queryTime
-and xc_aq_status='ERROR'</db:sql>
+		<db:select doc:name="Retrive  Error Records Last One hour" doc:id="91ea2d1d-d6df-4b25-b0e6-95447526a532" config-ref="aux-db-config" target="vErrorRecords">
+			<db:sql >Select GUID ,XC_AQ_SOURCE ,XC_AQ_SOURCE_ID ,XC_AQ_SOURCE_TYPE ,XC_AQ_DESTINATION ,XC_AQ_DEST_ID ,XC_AQ_DEST_TYPE ,XC_AQ_STATUS ,CAST(DTTM_CREATED AS DATE),CAST(DTTM_MODIFIED AS DATE) ,CAST(DT_TIMESTAMP AS DATE) ,XC_AQ_METADATA ,DESCR250 FROM SYSADM.PS_XC_AQ_AUX_TBL</db:sql>
 			<db:input-parameters ><![CDATA[#['queryTime': vars.queryStartDateTime]]]></db:input-parameters>
 		</db:select>
-		<ee:transform doc:name="Email Report Request" doc:id="6d4f803a-44d2-43ad-96a2-4d9832e8012a">
+		<ee:transform doc:name="DW Set Payload and  Attachment" doc:id="6d4f803a-44d2-43ad-96a2-4d9832e8012a">
 					<ee:message>
 						<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-    "subject": "Test subject",
-    "body": if(sizeOf(payload)>0) payload else "There are no error records in last one hour",
-    "addresses":{
-        "to": "chaitanya.chimakurthi@apisero.com"
-    }
+	'errorRecordCount' : (sizeOf(vars.vErrorRecords)) as String
 }]]></ee:set-payload>
 					</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vEmailSubject" ><![CDATA['Hourly Error Report']]></ee:set-variable>
+				<ee:set-variable variableName="vAttachment" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error_Report.csv" : write(vars.vErrorRecords[1 to 50] map {
+		'GUID' : $.GUID,
+		'XC_AQ_SOURCE' : $.XC_AQ_SOURCE,
+		'XC_AQ_SOURCE_ID' : $.XC_AQ_SOURCE_ID,
+		'XC_AQ_SOURCE_TYPE' : $.XC_AQ_SOURCE_TYPE,
+		'XC_AQ_DESTINATION' : $.XC_AQ_DESTINATION,
+		'XC_AQ_DEST_ID' : $.XC_AQ_DEST_ID,
+		'XC_AQ_DEST_TYPE' : $.XC_AQ_DEST_TYPE,
+		'XC_AQ_STATUS' : $.XC_AQ_STATUS,
+		'DTTM_CREATED' : $.DTTM_CREATED,
+		'DTTM_MODIFIED' : $.DTTM_MODIFIED,
+		'DT_TIMESTAMP' : $.DT_TIMESTAMP,
+		'XC_AQ_METADATA' : $.XC_AQ_METADATA,
+		'DESCR250' :$.DESCR250
+	},'application/csv')
+}]]></ee:set-variable>
+			</ee:variables>
 				</ee:transform>
-		<http:request method="POST" doc:name="Email Report Invoke" doc:id="db498f28-17e2-443f-9156-0a231d3451c0" path="/api/email" config-ref="Email_Report_HTTPRequest_Config"/>
-		<logger level="INFO" doc:name="Email Report Response" doc:id="1e44cc52-d554-4b00-9d88-b0b792bfc294" message='"Response from Email Application: " #[payload]'/>
+		<ee:transform doc:name="DW Set Parse Template Variables" doc:id="4a9da96d-ab97-49ff-974c-5ca0b0795689" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="keySet" ><![CDATA[%dw 2.0
+import keySet from dw::core::Objects
+output application/json
+---
+keySet(payload)]]></ee:set-variable>
+				<ee:set-variable variableName="valueSet" ><![CDATA[%dw 2.0
+import valueSet from dw::core::Objects
+output application/json
+---
+valueSet(payload)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template doc:name="Parse Template Error Report" doc:id="05920f65-f8a3-43f7-ad1e-344dba7b3137" location="html\errorReport.html"/>
+		<ee:transform doc:name="DW Set vEmailBody" doc:id="b07fa79a-14bf-4ee2-9274-dff26705ad0b">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vEmailBody" ><![CDATA[(((payload as String ) replace /[\\"\n,"\r,"\t]/ with '') replace '[' with '') replace ']' with '']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="7c0f6ee7-0b3e-4672-b1c4-926c174de934" name="cf-email-implementation"/>
+		<logger level="INFO" doc:name="LOG INFO Email Report Response" doc:id="1e44cc52-d554-4b00-9d88-b0b792bfc294" message='"Response from Email Application: " #[payload]'/>
 		<os:store doc:name="OS Update timeStapmKey" doc:id="e8119ed8-4ce7-4a15-b6a7-12626b782891" key="timeStampKey" objectStore="Object_store">
-			<os:value ><![CDATA[#[if(payload."type" == "SUCCESSFUL") (vars.queryStartDateTime + (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator'))) else vars.queryStartDateTime]]]></os:value>
+			<os:value ><![CDATA[#[if(!(error?) ) (vars.queryStartDateTime + (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator'))) else vars.queryStartDateTime]]]></os:value>
 		</os:store>
 		<logger level="INFO" doc:name="Email Report Completed" doc:id="cd141e59-0372-470f-9f19-19ecf1952d9e" />
 		<error-handler >

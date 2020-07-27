@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC >
+<HTML>
+	<HEAD><META HTTP-EQUIV="Content-Type" VALUE="text/html;charset=UTF-8">
+		<TITLE></TITLE>
+		<style>
+			H2 {color: darkblue;}
+			H3 {color: red; line-height: 100%;}
+			ul {list-style-type:disk;line-height: 100%;}
+			li {line-height: 100%;}
+			</style>
+	</HEAD>
+
+<BODY>
+<P>
+<H2>Application Error Information</H2>
+<B>Application Name</B> : #[output application/java ---  	(payload.apiName default "")]<BR>
+
+<B>Exception Caught in API Environment</B> :  #[output application/java ---  	(payload.environment default "")]<BR>
+<B>Date/Time</B> :  #[output application/java ---  (payload.createdAt default "") ]<BR>
+<B>Session ID/correlation ID</B> : #[output application/java ---  (payload.corrlationId default "")]<BR>
+<B>Source System</B> :  #[output application/java ---  	(payload.sourceSystem default "")]<BR>
+<B>Target System</B> :  #[output application/java ---  	(payload.targetSystem default "")]<BR>
+<B>Error Message</B> :  #[output application/java ---  	(payload.errorMessage default "")]<BR>
+</P>
+<BR>
+
+
+<H3>Error Details</H3>
+<B>Error Message</B> : <BR>
+#[output application/java ---  (payload.errorMessage default "")]<BR>
+<BR>
+<B>Error Type</B> : <BR> #[output application/java ---  
+(payload.errorType default "")]<BR>
+<BR>
+<B>Additional Error Details</B> : #[output application/java ---   (payload.errorMessageDetails.errorMessage default "")]<BR>
+<B>Error Stack</B> :
+<ul>
+<li> #[output application/java ---   (payload.errorStack default "")] </li>
+</ul>
+
+<BR>
+<BR>
+
+<B> Additional Information</B> : <BR>  
+
+#[output application/java ---  payload.additionalInfo map (
+"<B>" ++($.name default "") ++ "</B> : " ++ ($.value default "")++ "<BR>"
+) ]<BR>
+
+
+</P>
+</BODY></HTML>

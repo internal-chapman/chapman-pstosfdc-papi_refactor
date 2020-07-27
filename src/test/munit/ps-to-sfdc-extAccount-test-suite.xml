@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-extAccount-test-suite.xml" />
+	<munit:test name="ps-to-sfdc-extAccount-test-suite-pf-ext-accounts-sync-processTest" doc:id="86aa1c45-e465-403d-99e3-14b92d55744d" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="b463c9fa-1177-483e-8e16-578c4a9816d7" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select accounts data from PS db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/extAccSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="62b9255a-b0ba-4169-9ac3-50d874a009a4" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-ext-accounts-sync-process-batch" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to pf-ext-accounts-sync-process" doc:id="8754024f-f277-4e3c-b376-1c7de7f4ea84" name="pf-ext-accounts-sync-process"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="bae35883-7135-4fc9-9a1b-005e086874bd" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO payload size" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-extAccount-test-suite-sf-ext-accounts-aux-insertTest" doc:id="2dd9b221-fe7f-4a2c-a831-b4a3544d9d13" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="6f6437ea-6205-4d02-9dbd-1a992c82b3e5" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-insert" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='#[output application/json --- {"AQC_Inst_ID__c" : "data1234"}]' doc:name="Set Payload" doc:id="ffd180ad-6f94-4dca-98c4-7d7717e47edf" />
+			<flow-ref doc:name="Flow-ref to sf-ext-accounts-aux-insert" doc:id="c15d31f2-4e12-48a0-8402-456f34d8cc13" name="sf-ext-accounts-aux-insert"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="8a196b49-2f5b-4505-b12a-6e1e786d8f57" expression="#[vars.vAuxInsertQuery]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-extAccount-test-suite-sf-ext-accounts-aux-updateTest" doc:id="8c69bbf9-c391-41e3-8620-9a18ded9e018" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="36c10087-8f18-43d1-a810-b075e18501e7" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-update" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='#[output application/json --- {"data" : [{"id" : "data1234"}]}]' doc:name="Set Payload" doc:id="040687ac-98a6-41f4-bf9d-a9a5000f7afe" />
+			<flow-ref doc:name="Flow-ref to sf-ext-accounts-aux-update" doc:id="f499b0dd-edc2-4002-8f16-e8a973d3cc47" name="sf-ext-accounts-aux-update"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="0a4285ab-1f8d-40da-b182-0a22290172da" expression="#[vars.vAuxUpdateQuery]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

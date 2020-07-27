@@ -45,6 +45,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 			</email:properties>
 		</email:smtp-connection>
 	</email:smtp-config>
+	<configuration doc:name="Configuration" doc:id="1ee55f49-ccd1-4a95-a85a-e350ea6c4193" defaultErrorHandler-ref="global-error-handler-flow" />
 <!--  <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="7a941cbe-4279-4e3b-bd79-959ca0298d44" file="properties\chapman-pstosfdc-papi-${mule.env}.yaml" key="${key}" >
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>  

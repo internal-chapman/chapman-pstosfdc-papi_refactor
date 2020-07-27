@@ -12,7 +12,7 @@
     <properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <app.runtime>4.2.2</app.runtime>
+        <app.runtime>4.2.2-hf2</app.runtime>
 		<mule.maven.plugin.version>3.3.5</mule.maven.plugin.version>
 		<munit.version>2.2.4</munit.version>
 	</properties>
@@ -58,11 +58,12 @@
 						<formats>
 							<format>html</format>
 						</formats>
-						<ignoreFiles>
-	  						<ignoreFile>common-flows.xml</ignoreFile>
- 						</ignoreFiles>
- 						<ignoreFlows>
- 						  	<ignoreFlow>pf-cfdataload-impl</ignoreFlow> 
+						<ignoreFlows>
+ 						  	<ignoreFlow>pf-address-sync-process-batch</ignoreFlow>
+                            <ignoreFlow>pf-ps-to-sfdc-education-batch</ignoreFlow>
+							<ignoreFlow>pf-email-sync-process-batch</ignoreFlow>
+							<ignoreFlow>pf-ext-accounts-sync-process-batch</ignoreFlow>
+							<ignoreFlow>pf-phone-sync-process-batch</ignoreFlow>
 	  					</ignoreFlows>
 					</coverage>
 				</configuration>
@@ -110,6 +111,25 @@
             <groupId>org.mule.connectors</groupId>
             <artifactId>mule-email-connector</artifactId>
             <version>1.2.1</version>
+            <classifier>mule-plugin</classifier>
+        </dependency>
+    	<dependency>
+            <groupId>com.mulesoft.munit</groupId>
+            <artifactId>munit-runner</artifactId>
+            <version>2.2.4</version>
+            <classifier>mule-plugin</classifier>
+            <scope>test</scope>
+        </dependency>	<dependency>
+            <groupId>com.mulesoft.munit</groupId>
+            <artifactId>munit-tools</artifactId>
+            <version>2.2.4</version>
+            <classifier>mule-plugin</classifier>
+            <scope>test</scope>
+        </dependency>
+    	<dependency>
+            <groupId>com.mulesoft.connectors</groupId>
+            <artifactId>mule-netsuite-connector</artifactId>
+            <version>9.1.2</version>
             <classifier>mule-plugin</classifier>
         </dependency>
     </dependencies>

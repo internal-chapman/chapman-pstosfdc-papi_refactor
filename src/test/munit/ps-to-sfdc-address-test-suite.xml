@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="new-test-suite.xml" />
+	<munit:test name="new-test-suite-pf-ps-to-sfdc-address-syncTest" doc:id="de9ba204-5db2-405f-a48e-b9b0a5b65ce6" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="8f499a5d-2993-4d80-8063-4fd9d9b2c44f" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select Addresses from PS DB" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="PSAddress" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/addressSELECT.json')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="f92dec0d-ea20-4a9f-8e19-508fcf1a6f00" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Refer to pf-address-sync-process-batch" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to pf-ps-to-sfdc-address-sync" doc:id="731ef465-fe05-461b-812b-8e540cdf0472" name="pf-ps-to-sfdc-address-sync"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert Payload" doc:id="72db9748-6fb2-4974-9dd5-df5b9ef3c810" expression="#[payload]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="new-test-suite-sf-address-persistance-aux-updateTest" doc:id="2544a8c2-13e4-4211-9fad-c37bb1c51eed" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="c36bf5e6-6d93-4142-a353-63103de44b82" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-update" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sf-address-persistance-aux-update" doc:id="df6803ba-7334-46fd-9481-a667d554d621" name="sf-address-persistance-aux-update"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="55b6c875-676d-4625-b82b-d1e7da40c2e4" expression="#[vars.vAuxUpdateQuery]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="new-test-suite-sf-address-persistance-aux-insertTest" doc:id="c1691134-8ae7-458c-a918-452f2d9efc36" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow ref" doc:id="5a5c432f-68b5-40e8-ab23-e7b21376cd21" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-insert" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sf-address-persistance-aux-insert" doc:id="d298a06c-59d6-4453-a7f7-7e32176a4c5c" name="sf-address-persistance-aux-insert"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="b0f7e73a-63e0-4d58-b878-7f6be6c0cf94" expression="#[vars.vAuxInsertQuery]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

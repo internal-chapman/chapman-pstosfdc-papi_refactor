@@ -1,0 +1,36 @@
+[{
+                    "emplid": "0000002",
+                    "address_type": "MAIL",
+                    "addr_type_short": "Mail",
+                    "addresslong": "6102 Darlington Ave ",
+                    "address1": "6102 Darlington Ave",
+                    "address2": " ",
+                    "addresslong3": "   ",
+                    "city": "Buena Park",
+                    "county": " ",
+                    "state": "CA",
+                    "state_descr": "California",
+                    "country_cd": "USA",
+                    "country_nm": "United States",
+                    "postal": "90621-2404",
+                    "last_updt_dttm": "12-JUN-16",
+                    "addressline": "6102 Darlington Ave Buena Park, CA 90621-2404 "
+                }, {
+                    "emplid": "0000002",
+                    "address_type": "PERM",
+                    "addr_type_short": "Permanent",
+                    "addresslong": "6102 Darlington Ave ",
+                    "address1": "6102 Darlington Ave",
+                    "address2": " ",
+                    "addresslong3": "   ",
+                    "city": "Buena Park",
+                    "county": " ",
+                    "state": "CA",
+                    "state_descr": "California",
+                    "country_cd": "USA",
+                    "country_nm": "United States",
+                    "postal": "90621-2404",
+                    "last_updt_dttm": "26-AUG-15",
+                    "addressline": "6102 Darlington Ave Buena Park, CA 90621-2404 "
+                }
+            ]

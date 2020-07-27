@@ -6,19 +6,68 @@
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<error-handler name="global-error-handler-flow" doc:id="9d7cdc51-02cb-474e-a83b-e5992a1aa169" >
 		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="354a67a8-f043-4321-b82c-1cfeb362a2dc" >
-			<ee:transform doc:name="DW Set Email Payload" doc:id="edfcd5f5-2ecc-465c-bb8e-6793e027ded9" >
+			<ee:transform doc:name="DW Set Error Payload" doc:id="33a43a33-6193-4014-9cb9-f65f3f0ed40b" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	"subject": "Error Occurred In " ++ flow.name,
-	"body": error.description,
-    "addresses":{
-    	"to": "test.account@test.com"
-    }
-}]]></ee:set-payload>
+	"environment": p('mule.env'),
+	"apiName": "chapman-ps-to-sfdc-prc",
+	"errorMessage" : error.detailedDescription,
+	"errorType": error.errorType,
+	"corrlationId" : vars.correlationId,
+	"sourceSystem": "PS CS",
+	"targetSystem": "SFDC",
+	"createdAt": now(),
+	
+	  "errorMessageDetails": [
+		{
+		  "errorMessage": error.errorMessage
+		}
+	  ],
+	  "additionalInfo": [{
+	  	"name" : "payload",
+	  	"value" : error.errorMessage.payload
+	  },
+	  {
+	  	"name" : "attributes",
+	  	"value" : error.errorMessage.attributes
+	  	}
+	  ],
+	  "errorStack": error.cause.stackTrace
+}
+
+]]></ee:set-payload>
 				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="vAttachment" ><![CDATA[null]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<ee:transform doc:name="DW Set Template Variabels" doc:id="540e1ba5-0d50-47a4-a708-39271e2d9630" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="valueSet" ><![CDATA[%dw 2.0
+import valueSet from dw::core::Objects
+output application/json
+---
+valueSet(payload)]]></ee:set-variable>
+					<ee:set-variable variableName="keySet" ><![CDATA[%dw 2.0
+import keySet from dw::core::Objects
+output application/json
+---
+keySet(payload)]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<parse-template doc:name="Parse Template Common Error Handler" doc:id="9c189520-666e-4b6e-b2af-da55383fdaad" location="html\commonErrorHandling.html"/>
+			<ee:transform doc:name="DW Set Email Variables" doc:id="aa72c38b-ae7f-4452-8f71-d5143208e3dc" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="vEmailBody" ><![CDATA[(((payload as String ) replace /[\\"\n,"\r,"\t]/ with '') replace '[' with '') replace ']' with '']]></ee:set-variable>
+					<ee:set-variable variableName="vEmailSubject" ><![CDATA['Error Occurred In ' ++ 'chapman-ps-to-sfdc-prc' ++ ' api in ' ++ p('mule.env')]]></ee:set-variable>
+				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="c1e792d5-9bc5-4c2e-8039-26533c6e56c5" name="cf-email-implementation"/>
 		</on-error-continue>
