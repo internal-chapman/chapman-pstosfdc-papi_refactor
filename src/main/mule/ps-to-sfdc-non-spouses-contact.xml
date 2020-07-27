@@ -158,12 +158,16 @@ vars.originalPayload]]></ee:set-payload>
 		<set-variable value="#[output application/json --- vars.AuxDataInsert map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="SET FV uuid" doc:id="36326e84-dff4-4ae4-8db0-aab88021c655" variableName="uuid" />
 		<ee:transform doc:name="DW Set Payload" doc:id="fe13dda1-33ae-46f5-a94a-e6e13732f0f0" >
 			<ee:message >
-				<ee:set-payload resource="dataweave/pNSCAuxDbInsert.dwl" />
 			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/pNSCAuxDbInsert.dwl" variableName="vars.vAuxInsertPayload" />
+				<ee:set-variable resource="dataweave/vAuxInsertQueryNSpouse.dwl" variableName="vAuxInsertQuery" />
+			</ee:variables>
 		</ee:transform>
-		<db:bulk-insert doc:name="Bulk Insert Into AUX db" doc:id="a54569e7-4ff7-43a6-8e16-0b335fe0980d" config-ref="aux-db-config" target="response" >
+		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="4b2d9c66-32f6-4873-ac58-8dc3e16c19fd" name="cf-aux-insert-bulk" target="response" targetValue="#[vars.vAuxInsertResult]"/>
+		<!-- <db:bulk-insert doc:name="Bulk Insert Into AUX db" doc:id="a54569e7-4ff7-43a6-8e16-0b335fe0980d" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-		</db:bulk-insert>
+		</db:bulk-insert> -->
 		<logger level="INFO" doc:name="LOG INFO" doc:id="96847c92-8ac7-438a-94b2-240ab19d90ef" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
 	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
@@ -171,11 +175,15 @@ vars.originalPayload]]></ee:set-payload>
 		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response]" />
 		<ee:transform doc:name="DW Set Payload" doc:id="78312f16-3cea-407c-8b37-22e5f5b432c3" >
 			<ee:message >
-				<ee:set-payload resource="dataweave/pNSCAuxDbUpdate.dwl" />
 			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/vAuxUpdateQueryNSpouse.dwl" variableName="vAuxUpdateQuery" />
+				<ee:set-variable resource="dataweave/pNSCAuxDbUpdate.dwl" variableName="vars.vAuxUpdatePayload" />
+			</ee:variables>
 		</ee:transform>
-		<db:bulk-update doc:name="Bulk Update Into AUX db" doc:id="ecb57b98-3a66-4f24-aa54-d65f49564cbb" config-ref="aux-db-config" target="response" >
+		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="fecb6d7d-437f-4816-a3ae-fb467ace6849" name="cf-aux-update-bulk" target="response" targetValue="#[vars.vAuxUpdateResult]"/>
+		<!-- <db:bulk-update doc:name="Bulk Update Into AUX db" doc:id="ecb57b98-3a66-4f24-aa54-d65f49564cbb" config-ref="aux-db-config" target="response" >
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC',XC_AQ_DEST_ID = :id,XC_AQ_DEST_TYPE=:destType,DT_TIMESTAMP = :now,XC_AQ_STATUS = :status,XC_AQ_METADATA = :metadata,DESCR250 = :description,XC_AQ_SOURCE_TYPE = :sourceType where GUID= :tuuid</db:sql>
-		</db:bulk-update>
+		</db:bulk-update> -->
 	</sub-flow>
 </mule>
