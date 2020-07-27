@@ -302,35 +302,22 @@ payload]]></ee:set-payload>
 		<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="c2bc5884-e799-4e7a-85b4-a6e939c440a2" name="cf-generate-uuid"/>
 		<ee:transform doc:name="DW Set Payload" doc:id="fa173c43-9b5d-4beb-b225-f91b448c6cb9" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-(vars.aux_data_insert default []) map {
-GUID: vars.uuid[$$] default '',
-XC_AQ_SOURCE: $.source default '', 
-XC_AQ_SOURCE_ID: $.source_id default '',  
-XC_AQ_SOURCE_TYPE: vars.uuid[$$] default '',
-XC_AQ_DESTINATION: '-',
-XC_AQ_DEST_ID: '-',
-XC_AQ_STATUS: 'INPROGRESS',
-DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-XC_AQ_METADATA: $.metadata default '',
-DESCR250: $.description default ''
-}]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
 				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
 output application/json
 ---
 payload]]></ee:set-variable>
+				<ee:set-variable resource="dataweave/vAuxInsertPayloadEdu.dwl" variableName="vAuxInsertPayload" />
+				<ee:set-variable resource="dataweave/vAuxInsertQueryEdu.dwl" variableName="vAuxInsertQuery" />
 			</ee:variables>
 		</ee:transform>
-		<db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="8ace0984-cfc7-4782-8fe0-f665240550a1" config-ref="aux-db-config" target="response" >
+		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="cc9012cb-c6df-4ecf-ab81-f91c14c67fea" name="cf-aux-insert-bulk" target="response" targetValue="#[vars.vAuxInsertResult]"/>
+		<!-- <db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="8ace0984-cfc7-4782-8fe0-f665240550a1" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-		</db:bulk-insert>
+		</db:bulk-insert> -->
 		<logger level="INFO" doc:name="LOG INFO" doc:id="a7bc1c5b-8cb9-4018-8177-bedd7b9f1c07" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
 		<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="548dc848-c726-4d58-a7b5-247ad86a1df8" >
 			<ee:message >
@@ -352,7 +339,9 @@ output application/json
 	</sub-flow>
 	<sub-flow name="sf-education-aux-update" doc:id="adfba826-5d6b-48ca-89ee-b9eba0aaf6e2" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="dd89356f-91f4-4bbb-887e-31da957aabaa" message="Flow entered aux update" />
-		<db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="211bd59b-0c56-4819-88c1-7b09a16b42b8" config-ref="aux-db-config" >
+		<set-variable value="#[vars.aux_data_update]" doc:name="Set Var vAuxUpdatePayload" doc:id="49f6931a-1f84-4c78-95cb-0e28e1cfae63" variableName="vAuxUpdatePayload"/>
+		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="81db4bbc-526e-496a-8f4f-f12b361d837d" name="cf-aux-update-bulk"/>
+		<!-- <db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="211bd59b-0c56-4819-88c1-7b09a16b42b8" config-ref="aux-db-config" >
 			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
 set 
@@ -363,7 +352,7 @@ XC_AQ_STATUS = :status,
 XC_AQ_METADATA = :metadata,
 DESCR250 = :description
 where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
-		</db:bulk-update>
+		</db:bulk-update> -->
 		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="28b80d12-9f8a-4752-84c4-3ced68fa6c68" message="Updated AUX table #[payload]" />
 	</sub-flow>
 </mule>
