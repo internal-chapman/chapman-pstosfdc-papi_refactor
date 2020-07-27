@@ -146,7 +146,7 @@ where GUID = :tuuid"]]></ee:set-variable>
 			</otherwise>
 		</choice>
 	</flow>
-	<sub-flow name="sf-employment-aux-update" doc:id="190b49a4-f131-4e3a-969d-2aa6dd78e505" >
+	<!-- <sub-flow name="sf-employment-aux-update" doc:id="190b49a4-f131-4e3a-969d-2aa6dd78e505" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="9aa77e35-b4ad-489c-9490-d2522340bd67" message="Flow entered aux update" />
 		<db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="8d381df7-5fcb-4392-a710-7590f66d66c5" config-ref="aux-db-config" >
 			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>
@@ -161,14 +161,14 @@ DESCR250 = :description
 where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
 		</db:bulk-update>
 		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="cf77fb22-cd15-4022-9272-aa97636c644e" message="Updated AUX table #[payload]" />
-	</sub-flow>
-	<sub-flow name="sf-employment-aux-insert" doc:id="59779259-5a6a-4f5d-a1bb-69b01c8b214c" >
+	</sub-flow> -->
+	<!-- <sub-flow name="sf-employment-aux-insert" doc:id="59779259-5a6a-4f5d-a1bb-69b01c8b214c" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="99c3538f-25a5-48d6-9157-b592eac41a1a" message="Flow entered aux insert" />
 		<db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="6c74c6c4-4cea-4bde-9ef9-495c9539e98b" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 		</db:bulk-insert>
-		<logger level="INFO" doc:name="LOG INFO" doc:id="fbd6999e-9895-468f-a866-1e32c64838d0" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
-	</sub-flow>
+		<logger level="INFO" doc:name="LOG INFO" doc:id="fbd6999e-9895-468f-a866-1e32c64838d0" message="Status of Bulk Insert: #[output application/json -&#45;&#45; vars.response]" />
+	</sub-flow> -->
 </mule>
