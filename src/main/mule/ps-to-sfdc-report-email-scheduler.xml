@@ -35,7 +35,8 @@ payload as LocalDateTime {format: "yyyy-MM-dd HH:mm:ss"} as String {format: "yyy
 			</ee:variables>
 		</ee:transform>
 		<db:select doc:name="Retrive  Error Records Last One hour" doc:id="91ea2d1d-d6df-4b25-b0e6-95447526a532" config-ref="aux-db-config" target="vErrorRecords">
-			<db:sql >Select GUID ,XC_AQ_SOURCE ,XC_AQ_SOURCE_ID ,XC_AQ_SOURCE_TYPE ,XC_AQ_DESTINATION ,XC_AQ_DEST_ID ,XC_AQ_DEST_TYPE ,XC_AQ_STATUS ,CAST(DTTM_CREATED AS DATE),CAST(DTTM_MODIFIED AS DATE) ,CAST(DT_TIMESTAMP AS DATE) ,XC_AQ_METADATA ,DESCR250 FROM SYSADM.PS_XC_AQ_AUX_TBL</db:sql>
+			<db:sql >Select GUID ,XC_AQ_SOURCE ,XC_AQ_SOURCE_ID ,XC_AQ_SOURCE_TYPE ,XC_AQ_DESTINATION ,XC_AQ_DEST_ID ,XC_AQ_DEST_TYPE ,XC_AQ_STATUS ,CAST(DTTM_CREATED AS DATE),CAST(DTTM_MODIFIED AS DATE) ,CAST(DT_TIMESTAMP AS DATE) ,XC_AQ_METADATA ,DESCR250 FROM SYSADM.PS_XC_AQ_AUX_TBL
+WHERE DTTM_MODIFIED &gt;= :queryTime AND XC_AQ_STATUS = 'Error'</db:sql>
 			<db:input-parameters ><![CDATA[#['queryTime': vars.queryStartDateTime]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="DW Set Payload and  Attachment" doc:id="6d4f803a-44d2-43ad-96a2-4d9832e8012a">
