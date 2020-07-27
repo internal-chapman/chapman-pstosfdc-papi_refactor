@@ -104,6 +104,8 @@ values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTI
 			<ee:variables >
 				<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
 output application/json
+
+
 ---
 {
 	GUID: vars.uuid,
@@ -112,7 +114,7 @@ output application/json
 	XC_AQ_DEST_ID: payload.data[0].id,
 	XC_AQ_DEST_TYPE: p('auxDBColumns.XC_AQ_DEST_TYPE.extAccounts'),
 	DT_TIMESTAMP: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
-	XC_AQ_STATUS: 'Completed',
+	XC_AQ_STATUS: if(payload.data[0].success == true) "Completed" else "Error",
 	XC_AQ_METADATA: "Record inserted in SFDC",
 	DESCR250: "Record inserted in SFDC"
 }]]></ee:set-variable>
