@@ -339,7 +339,14 @@ output application/json
 	</sub-flow>
 	<sub-flow name="sf-education-aux-update" doc:id="adfba826-5d6b-48ca-89ee-b9eba0aaf6e2" >
 		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="dd89356f-91f4-4bbb-887e-31da957aabaa" message="Flow entered aux update" />
-		<set-variable value="#[vars.aux_data_update]" doc:name="Set Var vAuxUpdatePayload" doc:id="49f6931a-1f84-4c78-95cb-0e28e1cfae63" variableName="vAuxUpdatePayload"/>
+		<ee:transform doc:name="Create Update DB vars" doc:id="8a214c6f-62a1-44e6-bc42-53543645856d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dataweave/vAuxUpdatePayloadEdu.dwl" variableName="vAuxUpdatePayload" />
+				<ee:set-variable resource="dataweave/vAuxUpdateQueryEdu.dwl" variableName="vAuxUpdateQuery" />
+			</ee:variables>
+		</ee:transform>
 		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="81db4bbc-526e-496a-8f4f-f12b361d837d" name="cf-aux-update-bulk"/>
 		<!-- <db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="211bd59b-0c56-4819-88c1-7b09a16b42b8" config-ref="aux-db-config" >
 			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>

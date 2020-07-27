@@ -58,7 +58,7 @@ output application/json
 					</http:request>
 					<logger level="INFO" doc:name="LOG INFO for SFDC Results" doc:id="28ef80cb-2713-4fed-805c-c0f8be5d95fc" message="#[vars.sdfc_address_result]" />
 					<set-variable value="#[vars.uuid]" doc:name="Set Variable id" doc:id="d727e7f2-b0cb-4572-8cd2-ab1f77cafb47" variableName="id" />
-					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-insert" doc:id="3b1da5d8-21d6-40eb-b53d-7aa903d3fd3b" name="sf-phone-persistance-aux-update" />
+					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-update" doc:id="3b1da5d8-21d6-40eb-b53d-7aa903d3fd3b" name="sf-phone-persistance-aux-update" />
 					<logger level="INFO" doc:name="LOG INFO Payload" doc:id="743c3951-8bc7-4aa6-af30-bca4367098d8" message="#[payload]" />
 				</batch:step>
 			</batch:process-records>
