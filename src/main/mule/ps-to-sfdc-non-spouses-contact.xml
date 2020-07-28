@@ -160,8 +160,8 @@ vars.originalPayload]]></ee:set-payload>
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable resource="dataweave/pNSCAuxDbInsert.dwl" variableName="vars.vAuxInsertPayload" />
 				<ee:set-variable resource="dataweave/vAuxInsertQueryNSpouse.dwl" variableName="vAuxInsertQuery" />
+				<ee:set-variable resource="dataweave/pNSCAuxDbInsert.dwl" variableName="vAuxInsertPayload" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="4b2d9c66-32f6-4873-ac58-8dc3e16c19fd" name="cf-aux-insert-bulk" target="response" targetValue="#[vars.vAuxInsertResult]"/>
@@ -177,7 +177,7 @@ vars.originalPayload]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
 				<ee:set-variable resource="dataweave/vAuxUpdateQueryNSpouse.dwl" variableName="vAuxUpdateQuery" />
-				<ee:set-variable resource="dataweave/pNSCAuxDbUpdate.dwl" variableName="vars.vAuxUpdatePayload" />
+				<ee:set-variable resource="dataweave/pNSCAuxDbUpdate.dwl" variableName="vAuxUpdatePayload" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="fecb6d7d-437f-4816-a3ae-fb467ace6849" name="cf-aux-update-bulk" target="response" targetValue="#[vars.vAuxUpdateResult]"/>

@@ -355,8 +355,8 @@ output application/json
 			<ee:message>
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable resource="dataweave/pSCAuxDbInsert.dwl" variableName="vars.vAuxInsertPayload" />
 				<ee:set-variable resource="dataweave/vAuxInsertQuerySpouseInsert.dwl" variableName="vAuxInsertQuery" />
+				<ee:set-variable resource="dataweave/pSCAuxDbInsert.dwl" variableName="vAuxInsertPayload" />
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="db2c04e4-4771-43f3-8ba2-4ae1247e144e" target="response" name="cf-aux-insert-bulk" targetValue="#[vars.vAuxInsertResult]"/>
