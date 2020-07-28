@@ -11,9 +11,9 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="pf-employment" doc:id="992a184e-00b8-499f-b02a-b29f96f99876">
 		<logger level="INFO" doc:name="LOG START" doc:id="f3b2041d-719f-46c9-aa2c-f4a7ae584faa" message='#["Employment sync started from PS to SFDC at " ++ now()]'/>
-		<os:retrieve doc:name="os retrieve empl_lastProcessedTime" doc:id="2564cdca-a454-4c64-bf5e-9e4e644bce9a" key="lastProcessedTime" target="lastProcessedTime" objectStore="Object_store">
+		<!-- <os:retrieve doc:name="os retrieve empl_lastProcessedTime" doc:id="2564cdca-a454-4c64-bf5e-9e4e644bce9a" key="lastProcessedTime" target="lastProcessedTime" objectStore="Object_store">
 			<os:default-value ><![CDATA[#["2020-07-09 00:43:45"]]]></os:default-value>
-		</os:retrieve>
+		</os:retrieve> -->
 		<db:select doc:name="Fetch Count from PS db" doc:id="4fcafee7-5de6-41ff-a30d-fd2146c78b37" config-ref="rpt-db-config">
 			<db:sql >#[p('db.rpt.query.employmentCount')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
@@ -134,9 +134,9 @@ where GUID = :tuuid"]]></ee:set-variable>
 							</ee:variables>
 						</ee:transform>
 					<flow-ref doc:name="Flow Ref To cf-aux-update-bulk" doc:id="39f48edb-5bb7-4371-abdb-27aa1b3da47a" name="cf-aux-update-bulk"/>
-					<os:store doc:name="os store empl_lastProcessedTime" doc:id="5c51c9cf-975d-45f2-88fa-31ed148bd7b8" key="lastProcessedTime" objectStore="Object_store">
+					<!-- <os:store doc:name="os store empl_lastProcessedTime" doc:id="5c51c9cf-975d-45f2-88fa-31ed148bd7b8" key="lastProcessedTime" objectStore="Object_store">
 						<os:value ><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
-					</os:store>
+					</os:store> -->
 					<logger level="INFO" doc:name="LOG END Batch" doc:id="44b1f452-a4c6-40ad-973b-ecbd3919ec34" message='#["Data Insert/Update for Batch: " ++ vars.counter ++ "is completed"]'/>
 				</foreach>
 				<logger level="INFO" doc:name="LOG END" doc:id="a12e9c39-326f-4708-b227-7bc3b23a6e83" message='#["Employments Sync Completed from PS to SF at " ++ now()]'/>
