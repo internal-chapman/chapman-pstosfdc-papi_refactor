@@ -88,3 +88,7 @@ auxDBColumns:
     employment: "Employment"
     education: "Education"
     studentInterest: "AQB_StudentInterest__c"
+    
+email:
+  error:
+    sendNotification: "true"

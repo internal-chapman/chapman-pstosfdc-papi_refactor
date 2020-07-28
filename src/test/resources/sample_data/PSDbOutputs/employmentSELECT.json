@@ -1,0 +1,17 @@
+[
+  {
+    "ROLLUP_NAME": null,
+    "CAST(START_DTASDATE)": "1996-03-22T00:00:00",
+    "XC_AQ_STARTED": "On",
+    "CAST(END_DTASDATE)": "2013-07-31T00:00:00",
+    "DEPTID": "3820",
+    "REPORTS_TO_DEPT": "365I",
+    "SCC_STATUS_DESCR": "No longer at this position",
+    "XC_AQ_ENDED": "On",
+    "BUSINESS_TITLE": "Chief Information Officer",
+    "DEPTNAME": "Language & International Study",
+    "EMPLID": "0000002",
+    "EMPLOYER": "Chapman University",
+    "CAST(LAST_UPDT_DTTMASDATE)": "2020-07-27T09:10:40"
+  }
+]

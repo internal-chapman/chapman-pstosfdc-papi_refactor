@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-spouses-test-suite.xml" />
+	<munit:test name="ps-to-sfdc-spouses-test-suite-pf-spouses-contacts-syncTest" doc:id="738fb56b-30c3-401e-9295-0029d95be2eb" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="996f9934-10cd-485d-aaf2-7d69c39a6775" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select spouses Contacts data from PS db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="DbConData" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/spousesSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="a1e5422f-df51-407f-91ec-2d031991a77a" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST Create Accounts" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="sfdcAccountsResponse" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/spousesAccountRes.json')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="6d53b90f-44ed-489f-8a64-d113a9d87b5d" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST  Create Primary Spouse Contact" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="sfdcPrimaryContactsResponse" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/spousesPriContactRes.json')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http request" doc:id="3d718fa1-8a17-474f-a90f-cc7f122763d5" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST  Create Secondary Spouse Contact" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="sfdcSecondaryContactsResponse" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/spousesSecContactRes.json')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="f66fd28b-e05c-4af5-8c9d-8d3fabaf71cb" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST Account Update" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="28335711-bc14-4283-a224-83ecdfd42f9f" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref to cf-aux-insert-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="095adfe7-a12e-49fb-aa1d-b2ace12ee246" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref to cf-aux-update-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to pf-spouses-contacts-sync" doc:id="ec34c28e-710d-447a-9ea3-1df8b41c7188" name="pf-spouses-contacts-sync"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG END  Spouses End" doc:id="e631257c-9ad1-40f5-9e2e-9a62fff7c4d2" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG END  Spouses End" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

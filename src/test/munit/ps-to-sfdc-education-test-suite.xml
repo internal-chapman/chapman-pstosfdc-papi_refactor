@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-education-test-suite.xml" />
+	<munit:test name="ps-to-sfdc-education-test-suite-pf-ps-to-sfdc-educationTest" doc:id="92e40f9c-fc95-418a-9168-6ed5b890b4fc" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="6dcc5f25-1fe8-4168-81ed-1571319de1e9" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Select Education From Aux Db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="PSEducation" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/educationSELECT.json')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="2def646c-9926-470a-b104-67400ff4e004" processor="http:request">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="GET Contact From Salesforce" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="fde926f3-27e0-4cbd-8493-806242857839" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To pf-ps-to-sfdc-education-batch" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to pf-ps-to-sfdc-education" doc:id="9e335f8f-2355-41f8-b6f2-b2852500a4a7" name="pf-ps-to-sfdc-education"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG INFO payload" doc:id="12af14d8-3401-4693-b4d6-05f9e6c434fe" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO payload" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-education-test-suite-sf-education-aux-insertTest" doc:id="bff79520-feb2-433f-8aed-2a32442136fe" description="Test">
+		<munit:behavior>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="ec60391e-f355-485e-ad89-61c3204c7848" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref to cf-aux-insert-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sf-education-aux-insert" doc:id="e8051a22-4b6b-435d-ac2d-43e789b9cc5a" name="sf-education-aux-insert"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG INFO" doc:id="d3083bc1-3a70-4358-b277-ec23121d78f8" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-education-test-suite-sf-education-aux-updateTest" doc:id="30cd6a59-7e25-4bc1-8d4d-dd91fb66b2d0" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock whenflow-ref" doc:id="72d1ecd6-17fc-4226-90f7-0122474b2d87" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref to cf-aux-update-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to sf-education-aux-update" doc:id="3e315859-0fff-4bef-9580-30ba7fd5288f" name="sf-education-aux-update"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG INFO Aux Dbase Updation Status" doc:id="32d907ff-c7cb-489d-9e99-53f0e8d7b3f7" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG INFO Aux Dbase Updation Status" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

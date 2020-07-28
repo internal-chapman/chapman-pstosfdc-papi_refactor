@@ -9,52 +9,6 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
-	<sub-flow name="sf-contacts-spouses" doc:id="63c77740-4f43-41bc-b44d-7d12fa162d98" >
-		<logger level="INFO" doc:name="LOG START" doc:id="37e1536d-0b54-49c0-818d-e7627efd81a8" message="SpousesContacts record request: #[payload]" />
-		<ee:transform doc:name="DW Set Variables AuxDataInsert and originalPayload" doc:id="799ff089-8182-413f-bac9-8bc2211e5583" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-variable>
-				<ee:set-variable variableName="AuxDataInsert" ><![CDATA[%dw 2.0
-output application/json
----
-[vars.AuxDetails[(vars.counter default 0)-1]]]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-insert" doc:id="a9d2e1ed-74ac-4f71-be99-d7a039f7576a" name="sf-spouses-contacts-ps-aux-sync-insert" />
-		<ee:transform doc:name="DW Set Payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
-						<ee:message>
-				<ee:set-payload resource="dataweave/pSCCreateAccRequest.dwl" />
-						</ee:message>
-					</ee:transform>
-		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
-		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
-		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="Spouses Account creation completed!" />
-		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
-						<ee:message>
-				<ee:set-payload resource="dataweave/pSCCreatePrimarySCRequest.dwl" />
-						</ee:message>
-					</ee:transform>
-		<http:request method="POST" doc:name="POST  Create Primary Spouse Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcPrimaryContactsResponse" config-ref="sfdc-system-http-request-config" />
-		<ee:transform doc:name="DW Set Payload" doc:id="b2626fc0-2594-47a1-976f-821fc05d23a9" >
-			<ee:message >
-				<ee:set-payload resource="dataweave/pSCCreateSecSCRequest.dwl" />
-			</ee:message>
-		</ee:transform>
-		<http:request method="POST" doc:name="POST  Create Secondary Spouse Contact" doc:id="31dffc46-4757-4651-889f-c79ae48ec5ef" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcSecondaryContactsResponse" />
-		<ee:transform doc:name="DW Set Payload" doc:id="8fdb3823-a6f7-4aeb-853c-a968a8f90866">
-						<ee:message>
-				<ee:set-payload resource="dataweave/pSCAccUpdateRequest.dwl" />
-						</ee:message>
-						<ee:variables />
-					</ee:transform>
-		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
-		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
-	</sub-flow>
 	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61"> 
 		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Spouses sync batch"]' />
 		<db:select doc:name="Select spouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
@@ -330,16 +284,16 @@ vars.DBConData]]></ee:set-payload>
 		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
 			<ee:message>
 			</ee:message>
-			<ee:variables >
+			<ee:variables>
 				<ee:set-variable resource="dataweave/vSCAuxDetails.dwl" variableName="AuxDetails" />
 			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="3422a71e-fb54-423c-9b1f-a01421ef5a00" message="#[output application/json --- payload]" />
 		<logger level="INFO" doc:name="LOG INFO payload size" doc:id="99cab1f6-4811-4ac8-a98c-7d99b0c0ee63" message="SpousesContacts records size from PS db : #[sizeOf(payload)]" />
 		<foreach doc:name="For Each" doc:id="222cf17f-1d1b-4ac4-afdc-8277891e5c44" collection="#[payload]">
-			<ee:transform doc:name="DW Set Payload as an Array" doc:id="6d9c4a2b-bd75-4196-bcd6-2a7331bc8873" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
+			<ee:transform doc:name="DW Set Payload as an Array" doc:id="6d9c4a2b-bd75-4196-bcd6-2a7331bc8873">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 [payload]]]></ee:set-payload>
@@ -348,8 +302,54 @@ output application/java
 			<flow-ref doc:name="Flow Ref sf-contacts-spouses" doc:id="32b84162-fed1-4e33-8991-b4f3f44a9c5f" name="sf-contacts-spouses" />
 		</foreach>
 	</flow>
+	<sub-flow name="sf-contacts-spouses" doc:id="63c77740-4f43-41bc-b44d-7d12fa162d98" >
+		<logger level="INFO" doc:name="LOG START" doc:id="37e1536d-0b54-49c0-818d-e7627efd81a8" message="SpousesContacts record request: #[payload]" />
+		<ee:transform doc:name="DW Set Variables AuxDataInsert and originalPayload" doc:id="799ff089-8182-413f-bac9-8bc2211e5583" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="AuxDataInsert" ><![CDATA[%dw 2.0
+output application/json
+---
+[vars.AuxDetails[(vars.counter default 0)-1]]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-insert" doc:id="a9d2e1ed-74ac-4f71-be99-d7a039f7576a" name="sf-spouses-contacts-ps-aux-sync-insert" />
+		<ee:transform doc:name="DW Set Payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pSCCreateAccRequest.dwl" />
+						</ee:message>
+					</ee:transform>
+		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
+		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
+		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="Spouses Account creation completed!" />
+		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pSCCreatePrimarySCRequest.dwl" />
+						</ee:message>
+					</ee:transform>
+		<http:request method="POST" doc:name="POST  Create Primary Spouse Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcPrimaryContactsResponse" config-ref="sfdc-system-http-request-config" />
+		<ee:transform doc:name="DW Set Payload" doc:id="b2626fc0-2594-47a1-976f-821fc05d23a9" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/pSCCreateSecSCRequest.dwl" />
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="POST  Create Secondary Spouse Contact" doc:id="31dffc46-4757-4651-889f-c79ae48ec5ef" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcSecondaryContactsResponse" />
+		<ee:transform doc:name="DW Set Payload" doc:id="8fdb3823-a6f7-4aeb-853c-a968a8f90866">
+						<ee:message>
+				<ee:set-payload resource="dataweave/pSCAccUpdateRequest.dwl" />
+						</ee:message>
+						<ee:variables />
+					</ee:transform>
+		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
+		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
+		<logger level="INFO" doc:name="LOG END  Spouses End" doc:id="9a832b6a-224f-4b68-9856-4b2e7b7bf0f2" message="Spouses Conatct Sync Completed Successfully."/>
+	</sub-flow>
 	<sub-flow name="sf-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >
-		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="bf800ce0-587f-438d-a203-952063d25dae" message="Flow entered aux insert" />
 		<set-variable value="#[output application/json --- vars.AuxDataInsert map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="SET FV uuid" doc:id="36326e84-dff4-4ae4-8db0-aab88021c655" variableName="uuid" />
 		<ee:transform doc:name="DW Set Payload" doc:id="9e197ea2-866c-474d-95ab-90464f84bb87">
 			<ee:message>
@@ -366,7 +366,6 @@ output application/java
 		<logger level="INFO" doc:name="LOG INFO" doc:id="96847c92-8ac7-438a-94b2-240ab19d90ef" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
 	</sub-flow>
 	<sub-flow name="sf-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
-		<logger level="INFO" doc:name="LOG INFO  Aux Update" doc:id="642913c5-5497-43eb-ad11-58ee6d62d6ad" message="Flow entered aux update" />
 		<ee:transform doc:name="DW Set Payload" doc:id="9303c14c-5689-4ad4-a234-7f86fe19e4d0" >
 			<ee:message >
 			</ee:message>

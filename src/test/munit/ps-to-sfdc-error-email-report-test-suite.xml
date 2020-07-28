@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-error-email-report-test-suite.xml" />
+	<munit:test name="new-test-suite-ps-to-sfdc-report-email-schedulerFlowTest" doc:id="cd6a5597-442a-49ac-bd9a-9b283c6734b4" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when os:retrieve" doc:id="ef22249c-235e-4012-a4c2-79d083ca3ce9" processor="os:retrieve">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="os timeStampKey Retrieve" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[now()]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="fdcf9fcd-9dbe-4bd0-8d30-79354a11f135" processor="db:select">
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="vErrorRecords" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/errorRecordsSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="481a6110-7544-4043-8da8-9fe3ad978037" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-email-implementation" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to ps-to-sfdc-report-email-schedulerFlow" doc:id="c3f04d79-4d28-40db-9e3c-e5f75204eb8c" name="ps-to-sfdc-report-email-schedulerFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG END Email Report Completed" doc:id="92fe3711-267b-4e9d-a92d-43dabd58af05" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG END Email Report Completed" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

@@ -67,7 +67,7 @@ payload map(value, index) ->{
 						<http:request method="POST" doc:name="POST Student Interest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest"/>
 						<logger level="INFO" doc:name="LOG INFO Sync End" doc:id="453bdb98-49be-4058-b7e0-3cbefcdc25d4" message="#[payload]" />
 						<choice doc:name="Check Error Records" doc:id="e2fdcb4b-82b6-4991-b4ac-cb3a728eb692" >
-							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]) &gt; 0]" >
+							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]  default []) &gt; 0]" >
 								<logger level="ERROR" doc:name="LOG INFO Errored Records" doc:id="51cb97e8-2c45-4984-b5d5-c7c2f949a06d" message="#[output application/json
 ---
 (payload[?(sizeOf($.errors default [])&gt;0)]) map(value, index) -&gt;{

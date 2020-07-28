@@ -44,32 +44,39 @@ output application/json
 					<ee:set-variable variableName="vAttachment" ><![CDATA[null]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<ee:transform doc:name="DW Set Template Variabels" doc:id="540e1ba5-0d50-47a4-a708-39271e2d9630" >
-				<ee:message >
+			<choice doc:name="Choice" doc:id="76cad9cc-64bb-4e17-b212-105fb90099b8" >
+				<when expression="#[p('email.error.sendNotification' == 'true')]">
+					<ee:transform doc:name="DW Set Template Variabels" doc:id="540e1ba5-0d50-47a4-a708-39271e2d9630">
+				<ee:message>
 				</ee:message>
-				<ee:variables >
-					<ee:set-variable variableName="valueSet" ><![CDATA[%dw 2.0
+				<ee:variables>
+					<ee:set-variable variableName="valueSet"><![CDATA[%dw 2.0
 import valueSet from dw::core::Objects
 output application/json
 ---
 valueSet(payload)]]></ee:set-variable>
-					<ee:set-variable variableName="keySet" ><![CDATA[%dw 2.0
+					<ee:set-variable variableName="keySet"><![CDATA[%dw 2.0
 import keySet from dw::core::Objects
 output application/json
 ---
 keySet(payload)]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<parse-template doc:name="Parse Template Common Error Handler" doc:id="9c189520-666e-4b6e-b2af-da55383fdaad" location="html\commonErrorHandling.html"/>
-			<ee:transform doc:name="DW Set Email Variables" doc:id="aa72c38b-ae7f-4452-8f71-d5143208e3dc" >
-				<ee:message >
+					<parse-template doc:name="Parse Template Common Error Handler" doc:id="9c189520-666e-4b6e-b2af-da55383fdaad" location="html\commonErrorHandling.html" />
+					<ee:transform doc:name="DW Set Email Variables" doc:id="aa72c38b-ae7f-4452-8f71-d5143208e3dc">
+				<ee:message>
 				</ee:message>
-				<ee:variables >
-					<ee:set-variable variableName="vEmailBody" ><![CDATA[(((payload as String ) replace /[\\"\n,"\r,"\t]/ with '') replace '[' with '') replace ']' with '']]></ee:set-variable>
-					<ee:set-variable variableName="vEmailSubject" ><![CDATA['Error Occurred In ' ++ 'chapman-ps-to-sfdc-prc' ++ ' api in ' ++ p('mule.env')]]></ee:set-variable>
+				<ee:variables>
+					<ee:set-variable variableName="vEmailBody"><![CDATA[(((payload as String ) replace /[\\"\n,"\r,"\t]/ with '') replace '[' with '') replace ']' with '']]></ee:set-variable>
+					<ee:set-variable variableName="vEmailSubject"><![CDATA['Error Occurred In ' ++ 'chapman-ps-to-sfdc-prc' ++ ' api in ' ++ p('mule.env')]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="c1e792d5-9bc5-4c2e-8039-26533c6e56c5" name="cf-email-implementation"/>
+					<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="c1e792d5-9bc5-4c2e-8039-26533c6e56c5" name="cf-email-implementation" />
+				</when>
+				<otherwise >
+					<logger level="ERROR" doc:name="LOG ERROR" doc:id="e0912223-fbfe-4b6a-8237-369f020a6069" message="#[payload]"/>
+				</otherwise>
+			</choice>
 		</on-error-continue>
 	</error-handler>
 </mule>

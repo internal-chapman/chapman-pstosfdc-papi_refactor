@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="ps-to-sfdc-employment-test-suite.xml" />
+	<munit:test name="ps-to-sfdc-employment-test-suite-pf-employmentTest" doc:id="3a8c2a98-f172-4c37-9195-1d85e1146fe8" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when os:retrieve" doc:id="4308ae79-382c-4dba-b448-05ad146b3b19" processor="os:retrieve">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="os retrieve empl_lastProcessedTime" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="c0c074d0-80f2-4dc2-a6a4-6f9b35040251" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Fetch Count from PS db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/stdInterestCount.json')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when FV" doc:id="5fed29fa-866a-417a-897f-bd25576c310c" processor="set-variable">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="SET FV batch_list" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="a1845707-cbff-4877-ba29-3859a201f48e" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Fetch Batch Data From PeopleSoft db" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/employmentSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="19b2b815-399f-4d1d-a6fd-4bec4764cc15" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST Employments Upsert" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/emplymentSFDCRes.json')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="c7f0ed97-180d-492b-aaa1-9f3999e20bf9" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-insert-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="d82d2f19-ce49-4700-9ad9-65dd0eaeac33" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-update-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-variable value="#[(1 to 1)]" doc:name="Set Variable batch_list" doc:id="1c37fe45-208d-4c4a-8b72-ed05a0a0c100" variableName="batch_list"/>
+			<flow-ref doc:name="Flow-ref to pf-employment" doc:id="cde7fa8a-b119-411d-b650-00f46e418759" name="pf-employment"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG END" doc:id="f8a8306a-b1cf-4d2c-81c0-6ae91585df62" atLeast="1" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG END" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

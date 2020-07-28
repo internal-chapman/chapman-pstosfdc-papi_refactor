@@ -115,7 +115,7 @@ output application/json
 						<http:request method="POST" doc:name="POST Employments Upsert" doc:id="57b15b36-231c-4ecb-ad14-af976d3870b7" config-ref="sfdc-system-http-request-config" path="/employment"/>
 						<logger level="INFO" doc:name="LOG INFO response" doc:id="97893dbb-815e-4b2b-8a84-98763429e369" message="#[payload]"/>
 						<choice doc:name="Check Errors" doc:id="cb9b6adc-efb8-4873-8c02-476c56ae5b6b" >
-							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]) &gt; 0]">
+							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)] default []) &gt; 0]">
 								<logger level="ERROR" doc:name="Errored Records" doc:id="7d0b7bf5-8d31-439e-bf99-4c08d674de4c" message="#[output application/json
 ---
 (payload[?(sizeOf($.errors default [])&gt;0)]) map(value, index) -&gt;{
@@ -139,7 +139,7 @@ where GUID = :tuuid"]]></ee:set-variable>
 					</os:store>
 					<logger level="INFO" doc:name="LOG END Batch" doc:id="44b1f452-a4c6-40ad-973b-ecbd3919ec34" message='#["Data Insert/Update for Batch: " ++ vars.counter ++ "is completed"]'/>
 				</foreach>
-				<logger level="INFO" doc:name="END Logger" doc:id="a12e9c39-326f-4708-b227-7bc3b23a6e83" message='#["Employments Sync Completed from PS to SF at " ++ now()]'/>
+				<logger level="INFO" doc:name="LOG END" doc:id="a12e9c39-326f-4708-b227-7bc3b23a6e83" message='#["Employments Sync Completed from PS to SF at " ++ now()]'/>
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="LOG INFO" doc:id="3fc767d3-3718-43fa-8676-86f9d7612a6a" message="No records available!!"/>

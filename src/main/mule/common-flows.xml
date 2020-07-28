@@ -66,7 +66,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 			<email:body contentType="text/html" encoding="UTF-8">
 				<email:content ><![CDATA[#[vars.vEmailBody]]]></email:content>
 			</email:body>
-			<email:attachments ><![CDATA[#[if(vars.vAttachment != null or sizeOf(vars.vAttachment) != 0 )(vars.vAttachment) else null]]]></email:attachments>
+			<email:attachments ><![CDATA[#[if(vars.vAttachment != null)(vars.vAttachment) else null]]]></email:attachments>
 		</email:send>
 		<logger level="INFO" doc:name="LOG INFO End Email Send" doc:id="a94f3bad-1785-441a-95b0-7cbb4e8ca4ca" message="Email sent successfully" />
 	</flow>

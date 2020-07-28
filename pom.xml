@@ -58,6 +58,9 @@
 						<formats>
 							<format>html</format>
 						</formats>
+						<ignoreFiles>
+							<ignoreFile>global-error-handler.xml</ignoreFile>
+						</ignoreFiles>
 						<ignoreFlows>
  						  	<ignoreFlow>pf-address-sync-process-batch</ignoreFlow>
                             <ignoreFlow>pf-ps-to-sfdc-education-batch</ignoreFlow>

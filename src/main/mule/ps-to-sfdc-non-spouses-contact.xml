@@ -152,9 +152,9 @@ vars.originalPayload]]></ee:set-payload>
 					</ee:transform>
 		<http:request method="POST" doc:name="POST Create Relationship" doc:id="24b2323b-26dc-48d5-94aa-394ad3253551" path="${http.request.system.sfdc.path.createRelationship}" config-ref="sfdc-system-http-request-config" />
 		<flow-ref doc:name="Flow Ref sf-non-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-non-spouses-contacts-ps-aux-sync-update" />
+		<logger level="INFO" doc:name="LOG END" doc:id="883ddefa-58f5-41d1-94da-05006dd0358f" message="Non Spouses Sync Completed Successfully."/>
 	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >
-		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="bf800ce0-587f-438d-a203-952063d25dae" message="Flow entered aux insert" />
 		<set-variable value="#[output application/json --- vars.AuxDataInsert map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="SET FV uuid" doc:id="36326e84-dff4-4ae4-8db0-aab88021c655" variableName="uuid" />
 		<ee:transform doc:name="DW Set Payload" doc:id="fe13dda1-33ae-46f5-a94a-e6e13732f0f0" >
 			<ee:message >
@@ -171,7 +171,6 @@ vars.originalPayload]]></ee:set-payload>
 		<logger level="INFO" doc:name="LOG INFO" doc:id="96847c92-8ac7-438a-94b2-240ab19d90ef" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
 	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
-		<logger level="INFO" doc:name="LOG INFO  Aux Update" doc:id="642913c5-5497-43eb-ad11-58ee6d62d6ad" message="Flow entered aux update" />
 		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response]" />
 		<ee:transform doc:name="DW Set Payload" doc:id="78312f16-3cea-407c-8b37-22e5f5b432c3" >
 			<ee:message >

@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
-	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0" initialState="stopped">
+	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0">
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="92039aee-053d-49a3-9401-9d99612bff22" message="Trigger entered for create Education " />
 		<flow-ref doc:name="Flow Ref To  sf-persistance-education" doc:id="8e5603c7-8e86-4ef2-b374-c08dfe3b9572" name="sf-persistance-education"/>
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education-batch" doc:id="e2b1fc57-64b3-4840-b8c8-68158b0b0240" name="pf-ps-to-sfdc-education-batch"/>
