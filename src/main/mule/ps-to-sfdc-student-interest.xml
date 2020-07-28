@@ -33,9 +33,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 						<db:sql >SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,LAST_UPDT_DTTM FROM (
   SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,LAST_UPDT_DTTM, RANK() OVER (ORDER BY EMPLID , LAST_UPDT_DTTM) as my_rank
   FROM sysadm.PS_XC_AQ_STUINT_VW  )
-WHERE my_rank &gt;= :start_offset AND my_rank &lt;= :end_offset FETCH FIRST 10 ROWS ONLY</db:sql>
+WHERE my_rank &gt;= :start_offset AND my_rank &lt;= :end_offset and CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') FETCH FIRST 10 ROWS ONLY</db:sql>
 						<db:input-parameters ><![CDATA[#[{
-	//"LAST_UPDT_DTTM": vars.lastProcessedTime,
+	"LAST_UPDT_DTTM": vars.lastProcessedTime,
 	"start_offset": ((vars.counter-1)* vars.batch_size) + 1,
 	"end_offset": ((vars.counter-1) * vars.batch_size) + vars.batch_size
 }]]]></db:input-parameters>

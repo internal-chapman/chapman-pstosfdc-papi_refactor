@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="mf-ps-to-sfdc-account-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa" maxConcurrency="1" initialState="started">
 		<scheduler doc:name="Scheduler" doc:id="480c13ca-afb3-41e3-8bfd-108ce00b00cd" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
+		<os:retrieve doc:name="Retrieve Last Processed Time from Object Store" doc:id="e8983c52-8b0d-40e4-a1a6-94fc48ea9d8a" key="lastProcessedTime" objectStore="Object_store"/>
 		<flow-ref doc:name="Flow Ref To cf-correlationId" doc:id="4addab4c-70d5-4f1e-ac4d-1d5525119b69" name="cf-correlationId"/>
 		<flow-ref doc:name="Flow Ref To pf-spouses-contacts-sync" doc:id="893b5f3b-8547-41b5-8b7e-6b48073cd9eb" name="pf-spouses-contacts-sync" />
 		<flow-ref doc:name="Flow Ref To pf-non-spouses-contacts-sync" doc:id="fffa568f-2fc4-4006-ba82-0063468f8e93" name="pf-non-spouses-contacts-sync" />
@@ -18,6 +20,9 @@
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education" doc:id="4066a968-b282-42f7-ac9b-a9df1be069ce" name="pf-ps-to-sfdc-education" />
 		<flow-ref doc:name="Flow Ref To pf-student-interest" doc:id="730d6bc0-fb6f-4b2c-91de-253d9001c2a2" name="pf-student-interest" />
 		<flow-ref doc:name="Flow Ref To pf-employment" doc:id="250fd1d5-c642-4d63-89f8-98ca9cc69394" name="pf-employment" />
+		<os:store doc:name="Store Last Processed Time to Object Store" doc:id="4f0eaafb-11c2-466c-a62c-c73cd31357b4" objectStore="Object_store" key="lastProcessedTime">
+			<os:value ><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
+		</os:store>
 	</flow>
 	<flow name="mf-ps-to-sfdc-extAcc-address-email-scheduler" doc:id="d27e477c-2b5f-4040-b1bd-f5350b4d6ec9" initialState="started" maxConcurrency="1">
 		<scheduler doc:name="Scheduler" doc:id="d88f2c98-bb45-4830-af4a-569907f3a570" >

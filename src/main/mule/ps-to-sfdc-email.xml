@@ -13,8 +13,11 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="pf-ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
-			<db:sql>SELECT EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID='0000002'
+			<db:sql>SELECT EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID='0000002' and CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 </db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
 			
 		
 </db:select>
@@ -25,6 +28,9 @@ output application/json
 ---
 vars.PSEmail]]></ee:set-payload>
 			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSEmail.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEmail)-1]]]></ee:set-variable>
+			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[payload]" />
 		<flow-ref doc:name="Flow Ref To pf-email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="pf-email-sync-process-batch" />

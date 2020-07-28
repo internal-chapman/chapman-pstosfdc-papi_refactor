@@ -10,7 +10,10 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 	<flow name="pf-ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
-			<db:sql>SELECT EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where EMPLID='0000002'</db:sql>
+			<db:sql>SELECT EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where EMPLID='0000002' and CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') </db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="DW Java To JSON" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
 			<ee:message>
@@ -19,6 +22,9 @@ output application/json
 ---
 vars.PSAddress]]></ee:set-payload>
 			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSAddress.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSAddress)-1]]]></ee:set-variable>
+			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
 		<flow-ref doc:name="Refer to pf-address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="pf-address-sync-process-batch" />
