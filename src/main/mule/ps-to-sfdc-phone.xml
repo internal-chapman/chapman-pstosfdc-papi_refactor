@@ -11,6 +11,9 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<logger level="INFO" doc:name="LOG START  Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Phone from PS DB" doc:id="9d5426fb-de36-4dfb-a999-b57539db6277" config-ref="rpt-db-config" target="PSPhone">
 			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
 			
 		
 </db:select>
@@ -21,6 +24,9 @@ output application/json
 ---
 vars.PSPhone]]></ee:set-payload>
 			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSPhone.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSPhone)-1]]]></ee:set-variable>
+			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message='#[payload]' />
 		<flow-ref doc:name="Flow Ref To pf-phone-sync-process-batch" doc:id="17aac280-2952-4de4-b59f-ac9e46530d5a" name="pf-phone-sync-process-batch" />

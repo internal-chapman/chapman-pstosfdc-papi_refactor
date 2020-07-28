@@ -61,7 +61,10 @@ LEFT JOIN sysadm.PS_XC_AQ_INRELA_VW r ON a.emplid = r.emplid
 LEFT JOIN sysadm.PS_XC_AQ_AFL_VW af ON a.emplid = af.emplid
 where r.RELATION_DESCR != 'Spouse'
 and af.scc_afl_descrshort in ('Alumni', 'Friend', 'Employee', 'Parent', 'Student')
-and a.EMPLID in ('0916425','1960382','0000002', '0000023')</db:sql>
+and a.EMPLID in ('0916425','1960382','0000002', '0000023') and CAST(a.LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="DW Java To JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
 			<ee:message>
@@ -70,7 +73,9 @@ output application/json
 ---
 vars.DBConData]]></ee:set-payload>
 			</ee:message>
-			<ee:variables />
+			<ee:variables >
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.DBConData.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.DBConData)-1]]]></ee:set-variable>
+			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
 			<ee:message>

@@ -270,7 +270,10 @@ ORDER BY &quot;SFDCAccountName&quot;
 WHERE (SUBSTR(T.&quot;SFDCAccountName&quot;,1,INSTR(&quot;SFDCAccountName&quot;,' and ')-1)) = 
 (CASE WHEN T.&quot;MiddleName&quot; = ' '
        THEN T.&quot;FirstName&quot; || ' ' || T.&quot;LastName&quot;
-       ELSE T.&quot;FirstName&quot; || ' ' || SUBSTR(T.&quot;MiddleName&quot;,1,1) || ' ' || T.&quot;LastName&quot; End)</db:sql>
+       ELSE T.&quot;FirstName&quot; || ' ' || SUBSTR(T.&quot;MiddleName&quot;,1,1) || ' ' || T.&quot;LastName&quot; End) and CAST(T.LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="DW Java to JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
 			<ee:message>
@@ -279,7 +282,9 @@ output application/json
 ---
 vars.DBConData]]></ee:set-payload>
 			</ee:message>
-			<ee:variables />
+			<ee:variables >
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.DBConData.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.DBConData)-1]]]></ee:set-variable>
+			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
 			<ee:message>
