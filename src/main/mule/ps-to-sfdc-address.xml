@@ -10,7 +10,8 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 	<flow name="pf-ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
-			<db:sql>SELECT EMPLID,ADDRESS_TYPE,ADDR_TYPE_SHORT,ADDRESSLONG,ADDRESS1,ADDRESS2,ADDRESSLONG3,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where EMPLID='0000002' and CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') </db:sql>
+			<reconnect frequency="10000" count="3" />
+			<db:sql>SELECT EMPLID,ADDR_TYPE_SHORT,ADDRESSLONG,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,XC_AQ_STATUS,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') </db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -54,6 +55,7 @@ output application/json
 					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="a1459c85-f348-4870-aa16-7c283278e29f" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-address-persistance-aux-insert" doc:id="40c26836-b6ef-466b-bdd9-37727edf664d" name="sf-address-persistance-aux-insert" />
 					<http:request method="POST" doc:name="POST Create Address" doc:id="a32ac09f-03f7-45ba-98f0-ea9e612846a2" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" config-ref="sfdc-system-http-request-config">
+						<reconnect frequency="10000" count="3" />
 						<http:query-params ><![CDATA[#[output application/java
 ---
 {
