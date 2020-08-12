@@ -10,6 +10,11 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
 	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0">
+		<scheduler doc:name="Scheduler" doc:id="ecacb353-fe15-44cc-8042-89f700004c5c" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="3" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="92039aee-053d-49a3-9401-9d99612bff22" message="Trigger entered for create Education " />
 		<flow-ref doc:name="Flow Ref To  sf-persistance-education" doc:id="8e5603c7-8e86-4ef2-b374-c08dfe3b9572" name="sf-persistance-education"/>
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education-batch" doc:id="e2b1fc57-64b3-4840-b8c8-68158b0b0240" name="pf-ps-to-sfdc-education-batch"/>
@@ -217,7 +222,7 @@ payload map
   "AQB__PreferredYear__c": $.REUNION_YR as String default '',
   "AQB__FirstYearofAttendance__c": $.START_DT_YEAR as String default '',
   "AQB__LastYearofAttendance__c": $.END_DT_YEAR as String default '',
-  //"AQB__Type__c": $.ACAD_PLAN_TYPE default '',
+  "AQB__Type__c": $.ACAD_PLAN_TYPE default '',
   "AQB__Status__c": if(status contains $.XC_AQ_PROG_STATUS) $.XC_AQ_PROG_STATUS as String else "",
   "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
   "AQB__School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else "",
@@ -285,11 +290,6 @@ output application/json
 		<set-variable value="#[(vars.PSEducation.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEducation)-1]]" doc:name="Set Last update time variable" doc:id="a319553c-ac94-49d7-b961-ccc5562b6c07" variableName="max_LAST_UPDT_DTTM"/>
 		<http:request method="POST" doc:name="GET Contact From Salesforce" doc:id="1a7512a8-d3b7-4f7e-a923-6edfb27b6cdf" config-ref="sfdc-system-http-request-config" path="/${http.request.system.sfdc.path.queryContact}">
 				<http:body ><![CDATA[#[output application/json --- vars.PSEducation]]]></http:body>
-			<http:headers ><![CDATA[#[output application/java
----
-{
-	"query" : "SELECT Id from Contact where AQB__ContactExternalID__c =" ++  "00" ++ payload.EMPLID
-}]]]></http:headers>
 			</http:request>
 		<ee:transform doc:name="DW JSON To Java" doc:id="c78a6736-d0c4-459a-941f-7ad974ba8da7" >
 			<ee:message >
@@ -316,13 +316,13 @@ payload]]></ee:set-variable>
 				<ee:set-variable resource="dataweave/vAuxInsertQueryEdu.dwl" variableName="vAuxInsertQuery" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="cc9012cb-c6df-4ecf-ab81-f91c14c67fea" name="cf-aux-insert-bulk" target="response" targetValue="#[vars.vAuxInsertResult]"/>
+		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="cc9012cb-c6df-4ecf-ab81-f91c14c67fea" name="cf-aux-insert-bulk"/>
 		<!-- <db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="8ace0984-cfc7-4782-8fe0-f665240550a1" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
     (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
 values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 		</db:bulk-insert> -->
-		<logger level="INFO" doc:name="LOG INFO" doc:id="a7bc1c5b-8cb9-4018-8177-bedd7b9f1c07" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
+		<logger level="INFO" doc:name="LOG INFO" doc:id="a7bc1c5b-8cb9-4018-8177-bedd7b9f1c07" message="Status of Bulk Insert: #[output application/json --- vars.vAuxInsertResult]" />
 		<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="548dc848-c726-4d58-a7b5-247ad86a1df8" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -335,7 +335,7 @@ vars.originalPayload]]></ee:set-payload>
 output application/json
 ---
 (vars.aux_data_insert default []) map(value, index) ->{
-	"uuid": vars.uuid[index],
+	"uuid": vars.vAuxInsertPayload[index].GUID,
 	"source_id": value.source_id default ''
 }]]></ee:set-variable>
 			</ee:variables>
