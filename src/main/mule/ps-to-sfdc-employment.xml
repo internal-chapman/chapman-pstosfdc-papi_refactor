@@ -1,174 +1,95 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:sfdc-sapi="http://www.mulesoft.org/schema/mule/sfdc-sapi" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xmlns:sfdc-sapi="http://www.mulesoft.org/schema/mule/sfdc-sapi"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/sfdc-sapi http://www.mulesoft.org/schema/mule/sfdc-sapi/current/mule-sfdc-sapi.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<flow name="pf-employment" doc:id="992a184e-00b8-499f-b02a-b29f96f99876">
-		<logger level="INFO" doc:name="LOG START" doc:id="f3b2041d-719f-46c9-aa2c-f4a7ae584faa" message='#["Employment sync started from PS to SFDC at " ++ now()]'/>
-		<!-- <os:retrieve doc:name="os retrieve empl_lastProcessedTime" doc:id="2564cdca-a454-4c64-bf5e-9e4e644bce9a" key="lastProcessedTime" target="lastProcessedTime" objectStore="Object_store">
-			<os:default-value ><![CDATA[#["2020-07-09 00:43:45"]]]></os:default-value>
-		</os:retrieve> -->
-		<db:select doc:name="Fetch Count from PS db" doc:id="4fcafee7-5de6-41ff-a30d-fd2146c78b37" config-ref="rpt-db-config">
-			<db:sql >#[p('db.rpt.query.employmentCount')]</db:sql>
-			<db:input-parameters ><![CDATA[#[{
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<http:listener-config name="HTTP_Listener_config1"
+		doc:name="HTTP Listener config" doc:id="245204b9-bf57-42d7-a31b-b665192886ca">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+	<flow name="pf-employment" doc:id="ffebc1b9-787e-44ff-8720-91d86914a5ef">
+		<logger level="INFO" doc:name="LOG START"
+			doc:id="81d491e9-788d-4b66-95d2-1f25d84cdede"
+			message='#["Employment sync started from PS to SFDC at " ++ vars.lastProcessedTime]' />
+		<db:select doc:name="Fetch Data From ps DB" doc:id="c2cf9510-78ac-47ba-96b3-f79ac62c7438"
+			config-ref="rpt-db-config">
+			<db:sql>#[p('db.rpt.query.employmentBatch')]</db:sql>
+			<db:input-parameters><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
 		</db:select>
-		<choice doc:name="Check Count" doc:id="1efeed16-5df0-4ab5-8ae0-7c2b39490a69" >
-			<when expression="#[payload[0].CNT &gt; 0]">
-				<ee:transform doc:name="DW Set Variables max_LAST_UPDT_DTTM and batch_size" doc:id="e004780f-9cc2-43c9-8c83-a1cef69fca49">
-					<ee:message>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="batch_size" ><![CDATA[20 as Number]]></ee:set-variable>
-						<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA['']]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-				<logger level="INFO" doc:name="LOG INFO" doc:id="982765b6-d9ed-4c00-9363-9a08132cf70a" message='#["Number of records for sync: " ++ (payload[0].CNT default 0)]'/>
-				<set-variable value="#[1 to ceil((payload[0].CNT default 0)/ vars.batch_size)]" doc:name="SET FV batch_list" doc:id="42179b0a-9235-477b-a0d8-9b509bbd64b9" variableName="batch_list"/>
-				<foreach doc:name="For Each" doc:id="db931730-e1e8-4ee2-a33e-4ad8d5cc886f" collection="#[vars.batch_list]">
-					<logger level="INFO" doc:name="LOG INFO" doc:id="933637cf-f85f-405f-8189-adb7c375327d" message='#["Fetching the records for batch: " ++ vars.counter]'/>
-					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="b3a51809-bd74-495a-8046-26631a3f400a" config-ref="rpt-db-config">
-						<db:sql >#[p('db.rpt.query.employmentBatch')]</db:sql>
-						<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime,
-	"start_offset": ((vars.counter-1)* vars.batch_size) + 1,
-	"end_offset": ((vars.counter-1) * vars.batch_size) + vars.batch_size
-}]]]></db:input-parameters>
-					</db:select>
-					<ee:transform doc:name="DW Java to JSON" doc:id="9c01ec80-d797-417e-a5f3-201f1b5904b1" >
-						<ee:message >
-							<ee:set-payload ><![CDATA[%dw 2.0
+		<batch:job jobName="ps-to-sfdc-employment-batch" doc:id="5f5ee033-2e6c-4982-b1b9-b04092128de3">
+			<batch:process-records>
+				<batch:step name="ps-to-sfdc-employment-sync" doc:id="47d06209-5479-4d13-972e-5ce29181d130">
+					<batch:aggregator doc:name="Batch Aggregator"
+						doc:id="27b7d45b-0671-48c7-9187-480da66011f3" size="20">
+						<logger level="INFO" doc:name="LOG INFO"
+							doc:id="82dfceba-64e4-4817-b29a-1d883d06404c" message="Employment records size : #[sizeOf(payload)]" />
+						<ee:transform doc:name="DW Set variables"
+							doc:id="dad0a24f-82a4-426f-ac34-0455fbd74a71">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 payload]]></ee:set-payload>
-						</ee:message>
-						<ee:variables >
-							<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(payload.LAST_UPDT_DTTM orderBy ($))[sizeOf(payload)-1]]]></ee:set-variable>
-							<ee:set-variable variableName="aux_data_insert" ><![CDATA[%dw 2.0
-output application/json
----
-payload map(value, index) ->{
-	"source": "PS-CS",
-	"source_id": value.EMPLID default '',
-	"metadata": "CS to SFDC",
-	"description": "Employee data transfer from Campus Solution to SFDC"
-}]]></ee:set-variable>
-						</ee:variables>
-					</ee:transform>
-					<ee:transform doc:name="DW Set vAuxInsertQuery and vAuxInsertPayload" doc:id="ff885228-4ff7-4b4d-aceb-3b093437a2aa">
-			<ee:message>
-			</ee:message>
-			<ee:variables>
-				<ee:set-variable variableName="originalPayload"><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-variable>
-							<ee:set-variable variableName="vAuxInsertPayload" ><![CDATA[%dw 2.0
-output application/json
-fun gui() = using(id = uuid())(id[0 to 7] ++  id[9]) 
----
-(vars.aux_data_insert default []) map {
-GUID: gui() default '',
-XC_AQ_SOURCE: $.source default '', 
-XC_AQ_SOURCE_ID: $.source_id default '',  
-XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.employment') default '',
-XC_AQ_DESTINATION: '-',
-XC_AQ_DEST_ID: '-',
-XC_AQ_DEST_TYPE:p('auxDBColumns.XC_AQ_DEST_TYPE.employment') default '',
-XC_AQ_STATUS: 'INPROGRESS',
-DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-XC_AQ_METADATA: $.metadata default '',
-DESCR250: $.description default ''
-}]]></ee:set-variable>
-							<ee:set-variable variableName="vAuxInsertQuery" ><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)"]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-					<flow-ref doc:name="Flow Ref To cf-aux-insert-bulk" doc:id="7c082f78-90c0-4acd-a169-fe3c04cc2700" name="cf-aux-insert-bulk"/>
-					<ee:transform doc:name="DW Set Payload to originalPayload" doc:id="11f5a35d-d8ec-40d7-946c-64d76bab8f73">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-vars.originalPayload]]></ee:set-payload>
-			</ee:message>
-			<ee:variables>
-				<ee:set-variable variableName="aux_insert_response"><![CDATA[%dw 2.0
-output application/json
----
-(vars.aux_data_insert default []) map(value, index) ->{
-	"uuid": vars.uuid[index],
-	"source_id": value.source_id default ''
-}]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-					<logger level="INFO" doc:name="LOG INFO" doc:id="ecad219f-1355-4a33-b86c-347517cc271d" message="#[payload]"/>
-					<try doc:name="Try" doc:id="84482ab2-853c-4b50-a808-cb042b2b4d4d" >
-						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="5fe624c7-b9a2-453d-9fb1-dd8d97b5ef05" message='#["Sending request to system api to sync Employments for batch: " ++ vars.counter]'/>
-						<http:request method="POST" doc:name="POST Employments Upsert" doc:id="57b15b36-231c-4ecb-ad14-af976d3870b7" config-ref="sfdc-system-http-request-config" path="/employment"/>
-						<logger level="INFO" doc:name="LOG INFO response" doc:id="97893dbb-815e-4b2b-8a84-98763429e369" message="#[payload]"/>
-						<choice doc:name="Check Errors" doc:id="cb9b6adc-efb8-4873-8c02-476c56ae5b6b" >
-							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)] default []) &gt; 0]">
-								<logger level="ERROR" doc:name="Errored Records" doc:id="7d0b7bf5-8d31-439e-bf99-4c08d674de4c" message="#[output application/json
----
-(payload[?(sizeOf($.errors default [])&gt;0)]) map(value, index) -&gt;{
-    &quot;errors&quot;: value.errors.message reduce($$++ ' , ' ++$)
-}]"/>
-							</when>
-						</choice>
-					</try>
-					<ee:transform doc:name="DW Set vAuxUpdateQuery and vAuxUpdatePayload" doc:id="90c44c43-61f2-4004-848e-4b022a1589ff">
-							<ee:message>
 							</ee:message>
 							<ee:variables>
-							<ee:set-variable resource="dataweave/vEmploymentAuxDataUpdate.dwl" variableName="vAuxUpdatePayload" />
-							<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, XC_AQ_DEST_TYPE = :destType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
-where GUID = :tuuid"]]></ee:set-variable>
+								<ee:set-variable variableName="vAuxInsertQuery"><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)"]]></ee:set-variable>
+								<ee:set-variable resource="dataweave/vAuxInsertEmployment.dwl" variableName="vAuxInsertPayload" />
 							</ee:variables>
 						</ee:transform>
-					<flow-ref doc:name="Flow Ref To cf-aux-update-bulk" doc:id="39f48edb-5bb7-4371-abdb-27aa1b3da47a" name="cf-aux-update-bulk"/>
-					<!-- <os:store doc:name="os store empl_lastProcessedTime" doc:id="5c51c9cf-975d-45f2-88fa-31ed148bd7b8" key="lastProcessedTime" objectStore="Object_store">
-						<os:value ><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
-					</os:store> -->
-					<logger level="INFO" doc:name="LOG END Batch" doc:id="44b1f452-a4c6-40ad-973b-ecbd3919ec34" message='#["Data Insert/Update for Batch: " ++ vars.counter ++ "is completed"]'/>
-				</foreach>
-				<logger level="INFO" doc:name="LOG END" doc:id="a12e9c39-326f-4708-b227-7bc3b23a6e83" message='#["Employments Sync Completed from PS to SF at " ++ now()]'/>
-			</when>
-			<otherwise >
-				<logger level="INFO" doc:name="LOG INFO" doc:id="3fc767d3-3718-43fa-8676-86f9d7612a6a" message="No records available!!"/>
-			</otherwise>
-		</choice>
+						<flow-ref doc:name="Bulk insert to Aux DB" doc:id="07ed27e3-eaeb-40c0-9600-a64f13dae6ea"
+							name="cf-aux-insert-bulk" target="vars.EmployentAuxSyncPayload" />
+						<logger level="INFO" doc:name="LOG INFO Request"
+							doc:id="a516bcaa-abf6-4f3d-ae56-a9faa21070ae" message='Employment record request to system:  #[payload]' />
+						<http:request method="POST" doc:name="Call SF System Api"
+							doc:id="303eac09-41a4-4303-9162-2560e51368cf" config-ref="sfdc-system-http-request-config"
+							path="/employment" />
+						<logger level="INFO" doc:name="LOG INFO Response"
+							doc:id="01bec7d8-6de8-4786-88ec-e9eec77a9d1e" message="Employment record response : #[payload]" />
+						<ee:transform doc:name="DW Set variables"
+							doc:id="58992e0e-929a-4cf0-8139-69916770755f">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable variableName="vAuxUpdateQuery"><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, XC_AQ_DEST_TYPE = :destType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+where GUID = :tuuid"]]></ee:set-variable>
+								<ee:set-variable resource="dataweave/vAuxUpdateEmployment.dwl" variableName="vAuxUpdatePayload" />
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Bulk update to Aux DB" doc:id="a521d21c-1845-4d32-b0c8-85384e6a18eb"
+							name="cf-aux-update-bulk" />
+						<logger level="INFO" doc:name="LOG END Records"
+							doc:id="57fbff7d-5777-40fc-b9cc-64e558fe27d7" message='#["Records synced with SFDC"]' />
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete>
+				<ee:transform doc:name="DW Batch summary"
+					doc:id="c43a799b-4ba7-4901-b4e6-9d5f4e10699e">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="LOG END Summary"
+					doc:id="511daf4e-b4ed-4402-92be-31f21f0d270f"
+					message='Employments Sync Completed from PS to SF: Batch Summary: #[payload]' />
+			</batch:on-complete>
+		</batch:job>
 	</flow>
-	<!-- <sub-flow name="sf-employment-aux-update" doc:id="190b49a4-f131-4e3a-969d-2aa6dd78e505" >
-		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="9aa77e35-b4ad-489c-9490-d2522340bd67" message="Flow entered aux update" />
-		<db:bulk-update doc:name="Bulk Update Status Aux Db" doc:id="8d381df7-5fcb-4392-a710-7590f66d66c5" config-ref="aux-db-config" >
-			<db:bulk-input-parameters ><![CDATA[#[vars.aux_data_update]]]></db:bulk-input-parameters>
-			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL 
-set 
-XC_AQ_DESTINATION = 'SFDC', 
-XC_AQ_DEST_ID = :id,
-DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'),
-XC_AQ_STATUS = :status,
-XC_AQ_METADATA = :metadata,
-DESCR250 = :description
-where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
-		</db:bulk-update>
-		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="cf77fb22-cd15-4022-9272-aa97636c644e" message="Updated AUX table #[payload]" />
-	</sub-flow> -->
-	<!-- <sub-flow name="sf-employment-aux-insert" doc:id="59779259-5a6a-4f5d-a1bb-69b01c8b214c" >
-		<logger level="INFO" doc:name="LOG INFO Aux Insert" doc:id="99c3538f-25a5-48d6-9157-b592eac41a1a" message="Flow entered aux insert" />
-		<db:bulk-insert doc:name="Bulk Insert Into Aux Db " doc:id="6c74c6c4-4cea-4bde-9ef9-495c9539e98b" config-ref="aux-db-config" target="response" >
-			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL
-    (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
-values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
-		</db:bulk-insert>
-		<logger level="INFO" doc:name="LOG INFO" doc:id="fbd6999e-9895-468f-a866-1e32c64838d0" message="Status of Bulk Insert: #[output application/json -&#45;&#45; vars.response]" />
-	</sub-flow> -->
 </mule>
