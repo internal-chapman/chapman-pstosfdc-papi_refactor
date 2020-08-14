@@ -210,7 +210,7 @@ var school = [
 payload map 
 {
   "AQB__Contact__c": ($."EMPLID" as String),
-  //"AQB__Institution__c": "a0u2E000009UhuSQAS",
+  "AQB__Institution__c": "a0u2E00000B1IyhQAF",
   "AQB__Campus__c": if(campus contains $.CAMPUS) ($.CAMPUS) else '',
   "AQB__IsPrimaryDegree__c": if($.XC_AQ_PRI_DEG == "no" and $.GRAD_YR_EOS != "" and $.GRAD_YR_EOS != null) "Yes" else '',
   "AQB__HonoraryDegree__c": false,
@@ -219,17 +219,13 @@ payload map
   "AQB__Graduation_Month__c": if(month contains $.XC_AQ_GRAD_MONTH) $.XC_AQ_GRAD_MONTH as String else '',
   "AQB__GraduationYear__c": $.GRAD_YR_EOS as String default '',
   "AQB__DegreeDiploma__c": $.XC_DEGREE_DESCR as String default '',
-  "AQB__PreferredYear__c": $.REUNION_YR as String default '',
+  ("AQB__PreferredYear__c":  $.REUNION_YR as String default '') if($.GRAD_YR_EOS != null),
   "AQB__FirstYearofAttendance__c": $.START_DT_YEAR as String default '',
   "AQB__LastYearofAttendance__c": $.END_DT_YEAR as String default '',
   "AQB__Type__c": $.ACAD_PLAN_TYPE default '',
   "AQB__Status__c": if(status contains $.XC_AQ_PROG_STATUS) $.XC_AQ_PROG_STATUS as String else "",
   "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
   "AQB__School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else "",
-  //"CreatedById": $.CREATED_BY default '',
-  //"CreatedDate": $.CREATED_DTTM default '',
-  //"LastModifiedById": $.LAST_UPDT_OPRID default '',
-  //"LastModifiedDate": $.LAST_UPDT_DTTM default '',
   //"Major_Minor__c": $.PLAN_DESCR default '',
   //"Emphasis_Specialization_Track__c": $.SAA_SUBPLAN_DESCR default ''
 }
