@@ -212,7 +212,7 @@ payload map
   "AQB__Contact__c": ($."EMPLID" as String),
   "AQB__Institution__c": "a0u2E00000B1IyhQAF",
   "AQB__Campus__c": if(campus contains $.CAMPUS) ($.CAMPUS) else '',
-  "AQB__IsPrimaryDegree__c": if($.XC_AQ_PRI_DEG == "no" and $.GRAD_YR_EOS != "" and $.GRAD_YR_EOS != null) "Yes" else '',
+  "AQB__IsPrimaryDegree__c": trim($.XC_AQ_PRI_DEG) default '',
   "AQB__HonoraryDegree__c": false,
   "RecordTypeId": if($.ACAD_PLAN_TYPE == "CRD") "0122E000000dBuTQAU" else "0122E000000h0RrQAI",
   "AQB__DegreeLevel__c": if(degree contains $.XC_AQ_DEG_LVL) $.XC_AQ_DEG_LVL as String else '',
@@ -226,8 +226,11 @@ payload map
   "AQB__Status__c": if(status contains $.XC_AQ_PROG_STATUS) $.XC_AQ_PROG_STATUS as String else "",
   "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
   "AQB__School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else "",
-  //"Major_Minor__c": $.PLAN_DESCR default '',
-  //"Emphasis_Specialization_Track__c": $.SAA_SUBPLAN_DESCR default ''
+  "degree": {
+  "Contact__c": ($.empid as String),
+  "Major_Minor__c": $.PLAN_DESCR default '',
+  "Emphasis_Specialization_Track__c": $.SAA_SUBPLAN_DESCR default ''
+  }
 }
 ]]></ee:set-payload>
 			</ee:message>
@@ -277,12 +280,12 @@ output application/json
 	</flow>
 	<sub-flow name="sf-persistance-education" doc:id="734cab7b-8ccd-4e00-a2e9-4dadb3fc6732" >
 		<logger level="INFO" doc:name="LOG INFO" doc:id="1ab1f0dd-0425-41a4-aa8b-a184ccf6a62a" message="flow initiated for persistant get:Education with payload:" />
-		<db:select doc:name="Select Education From Aux Db" doc:id="2a862ef0-89a5-4dda-81cc-86b770e8c295" target="PSEducation" config-ref="rpt-db-config">
+		<db:select doc:name="Select Education Records" doc:id="2a862ef0-89a5-4dda-81cc-86b770e8c295" target="PSEducation" config-ref="rpt-db-config">
 			<db:sql >#[p('db.rpt.query.education')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
-		</db:select>	
+		</db:select>
 		<set-variable value="#[(vars.PSEducation.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEducation)-1]]" doc:name="Set Last update time variable" doc:id="a319553c-ac94-49d7-b961-ccc5562b6c07" variableName="max_LAST_UPDT_DTTM"/>
 		<http:request method="POST" doc:name="GET Contact From Salesforce" doc:id="1a7512a8-d3b7-4f7e-a923-6edfb27b6cdf" config-ref="sfdc-system-http-request-config" path="/${http.request.system.sfdc.path.queryContact}">
 				<http:body ><![CDATA[#[output application/json --- vars.PSEducation]]]></http:body>
