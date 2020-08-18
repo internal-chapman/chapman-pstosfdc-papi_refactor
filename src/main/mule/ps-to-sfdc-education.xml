@@ -227,7 +227,7 @@ payload map
   "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
   "AQB__School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else "",
   "degree": {
-  "Contact__c": ($.empid as String),
+  "Status_Date__c": $.ACTION_DATE default '',
   "Major_Minor__c": $.PLAN_DESCR default '',
   "Emphasis_Specialization_Track__c": $.SAA_SUBPLAN_DESCR default ''
   }
