@@ -1,12 +1,12 @@
 %dw 2.0
 output application/json
-fun gui() = using(id = uuid())(id[0 to 7] ++  id[9])
+var gui = (vars.aux_data_insert default []) map (using(id = uuid())(id[0 to 7] ++  id[9]))
 ---
 (vars.aux_data_insert default []) map {
-GUID: gui() default '',
+GUID: gui[$$] default '',
 XC_AQ_SOURCE: $.source default '', 
 XC_AQ_SOURCE_ID: $.source_id default '',  
-XC_AQ_SOURCE_TYPE: gui() default '',
+XC_AQ_SOURCE_TYPE: gui[$$] default '',
 XC_AQ_DESTINATION: '-',
 XC_AQ_DEST_ID: '-',
 XC_AQ_STATUS: 'INPROGRESS',
