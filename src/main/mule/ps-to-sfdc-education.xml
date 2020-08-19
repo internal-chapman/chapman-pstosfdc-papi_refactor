@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" 
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" 
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
-http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0">
-		<scheduler doc:name="Scheduler" doc:id="ecacb353-fe15-44cc-8042-89f700004c5c" >
-			<scheduling-strategy >
-				<fixed-frequency frequency="3" timeUnit="MINUTES"/>
-			</scheduling-strategy>
-		</scheduler>
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="92039aee-053d-49a3-9401-9d99612bff22" message="Trigger entered for create Education " />
-		<flow-ref doc:name="Flow Ref To  sf-persistance-education" doc:id="8e5603c7-8e86-4ef2-b374-c08dfe3b9572" name="sf-persistance-education"/>
-		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education-batch" doc:id="e2b1fc57-64b3-4840-b8c8-68158b0b0240" name="pf-ps-to-sfdc-education-batch"/>
+		<db:select doc:name="Select Education Records" doc:id="c9b23e18-df5b-44a1-bd7c-a87e877e96a3" target="PSEducation" config-ref="rpt-db-config">
+			<db:sql >#[p('db.rpt.query.education')]</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="36fd1185-0a9e-4c00-bd5a-c7f2b4d32a7e" >
+			<when expression="#[sizeOf(vars.PSEducation) &gt; 0]">
+				<flow-ref doc:name="Flow Ref To  sf-persistance-education" doc:id="8e5603c7-8e86-4ef2-b374-c08dfe3b9572" name="sf-persistance-education" />
+				<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education-batch" doc:id="e2b1fc57-64b3-4840-b8c8-68158b0b0240" name="pf-ps-to-sfdc-education-batch" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1a3b80c5-1f99-427e-823f-1d687194b918" message="No New Records available "/>
+			</otherwise>
+		</choice>
 	</flow>
 	<flow name="pf-ps-to-sfdc-education-batch" doc:id="d2b8a41c-38d7-4a23-a7b0-931337e34c81" >
 		<batch:job jobName="education-sfdc-sync-batch-Job" doc:id="bfbf568d-491a-4151-a648-3dbbf81b0bcc" >
@@ -51,6 +60,20 @@ var campus = [
 	"Main/Orange Campus",
 	"Non-Institutional",
 	"Brandman"
+]
+
+var edutype = [
+  "Concentration",
+  "Course of Study",
+  "Credentials",
+  "Honors",
+  "Inter/Multidisc Cluster",
+  "Major",
+  "Minor",
+  "Non-Degree",
+  "Preparation",
+  "ROTC",
+  "Specialization"
 ]
 
 var degree = [
@@ -222,11 +245,11 @@ payload map
   ("AQB__PreferredYear__c":  $.REUNION_YR as String default '') if($.GRAD_YR_EOS != null),
   "AQB__FirstYearofAttendance__c": $.START_DT_YEAR as String default '',
   "AQB__LastYearofAttendance__c": $.END_DT_YEAR as String default '',
-  "AQB__Type__c": $.ACAD_PLAN_TYPE default '',
-  "AQB__Status__c": if(status contains $.XC_AQ_PROG_STATUS) $.XC_AQ_PROG_STATUS as String else "",
-  "AQB__Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
-  "AQB__School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else "",
   "degree": {
+  "Type__c": if(edutype contains $.ACAD_PLAN_TYPE) $.ACAD_PLAN_TYPE else '',
+  "Status__c": if(status contains $.XC_AQ_PROG_STATUS) $.XC_AQ_PROG_STATUS as String else "",
+  "Department__c": if(dept contains $.DEPT_DESCR) $.DEPT_DESCR as String else "",
+  "School__c": if(school contains $.SCHOOL_DESCR) $.SCHOOL_DESCR as String else "",
   "Status_Date__c": $.ACTION_DATE default '',
   "Major_Minor__c": $.PLAN_DESCR default '',
   "Emphasis_Specialization_Track__c": $.SAA_SUBPLAN_DESCR default ''
@@ -279,13 +302,6 @@ output application/json
 		</batch:job>
 	</flow>
 	<sub-flow name="sf-persistance-education" doc:id="734cab7b-8ccd-4e00-a2e9-4dadb3fc6732" >
-		<logger level="INFO" doc:name="LOG INFO" doc:id="1ab1f0dd-0425-41a4-aa8b-a184ccf6a62a" message="flow initiated for persistant get:Education with payload:" />
-		<db:select doc:name="Select Education Records" doc:id="2a862ef0-89a5-4dda-81cc-86b770e8c295" target="PSEducation" config-ref="rpt-db-config">
-			<db:sql >#[p('db.rpt.query.education')]</db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
-}]]]></db:input-parameters>
-		</db:select>
 		<set-variable value="#[(vars.PSEducation.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEducation)-1]]" doc:name="Set Last update time variable" doc:id="a319553c-ac94-49d7-b961-ccc5562b6c07" variableName="max_LAST_UPDT_DTTM"/>
 		<http:request method="POST" doc:name="GET Contact From Salesforce" doc:id="1a7512a8-d3b7-4f7e-a923-6edfb27b6cdf" config-ref="sfdc-system-http-request-config" path="/${http.request.system.sfdc.path.queryContact}">
 				<http:body ><![CDATA[#[output application/json --- vars.PSEducation]]]></http:body>
@@ -365,4 +381,16 @@ where XC_AQ_SOURCE_TYPE = :tuuid</db:sql>
 		</db:bulk-update> -->
 		<logger level="INFO" doc:name="LOG INFO Aux Dbase Updation Status" doc:id="28b80d12-9f8a-4752-84c4-3ced68fa6c68" message="Updated AUX table #[payload]" />
 	</sub-flow>
+	<flow name="ps-to-sfdc-educationFlow" doc:id="57e0c664-2560-4435-bd57-70d371208ddd" >
+		<http:listener doc:name="Listener" doc:id="7a3ccd6a-c7bd-47b2-8efb-39a9d734cd32" config-ref="HTTP_Listener_config" path="/clear"/>
+		<os:clear doc:name="Clear" doc:id="85f8b85f-5272-461c-8525-9a8062119ce0" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="0aa8c348-46dd-48ee-b1e3-0b292f2c3621" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"success"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 </mule>
