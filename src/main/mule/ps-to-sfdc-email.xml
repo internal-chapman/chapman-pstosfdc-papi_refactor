@@ -13,7 +13,8 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="pf-ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
-			<db:sql>SELECT EMPLID,E_ADDR_TYPE,EMAIL_ADDR,PREF_EMAIL_FLAG,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where EMPLID='0000002' and CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
+			<reconnect frequency="10000" count="3" />
+			<db:sql>SELECT EMPLID,SCC_EMAILTYP_DESC,EMAIL_ADDR,XC_AQ_STATUS,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 </db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
@@ -59,6 +60,7 @@ output application/json
 					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="87e2c588-592e-4537-ba80-d4bf9557c787" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-email-persistance-aux-insert" doc:id="8a3bcd68-9cce-402f-bb51-37f36c341ac0" name="sf-email-persistance-aux-insert" />
 					<http:request method="POST" doc:name="POST Create Address" doc:id="27a66c5f-3435-4c7b-a28c-757d12331ea6" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
+						<reconnect frequency="10000" count="3" />
 						<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
 						<http:query-params ><![CDATA[#[output application/java
 ---

@@ -12,6 +12,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
 		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
+			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
@@ -46,7 +47,9 @@ payload map(account, index) -> {
 					<logger level="INFO" doc:name="LOG INFO" doc:id="29a2b9f2-dbbc-44d1-b915-b88bf111b828" message="Account record request: #[payload]"/>
 					<flow-ref doc:name="FLow Ref To cf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-ext-accounts-aux-insert" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="sf-ext-accounts-aux-insert" target="vars.auxSyncPayload" />
-					<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}"/>
+					<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}">
+						<reconnect frequency="10000" count="3" />
+					</http:request>
 					<ee:transform doc:name="DW JSON To Java" doc:id="fdb04c8e-be4f-49f4-9f60-19402a4a02ae">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0

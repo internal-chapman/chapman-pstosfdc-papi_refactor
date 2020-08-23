@@ -10,6 +10,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="pf-ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce">
 		<logger level="INFO" doc:name="LOG START  Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Phone from PS DB" doc:id="9d5426fb-de36-4dfb-a999-b57539db6277" config-ref="rpt-db-config" target="PSPhone">
+			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
@@ -55,6 +56,7 @@ output application/json
 					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="5e731984-9ea1-4304-a326-2f696ab912dd" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-insert" doc:id="e833c480-1f80-44e4-bed5-d8f5d29a50aa" name="sf-phone-persistance-aux-insert" />
 					<http:request method="POST" doc:name="POST Create Address" doc:id="36cd069a-b9b5-4df5-b101-5f24c53f4367" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
+						<reconnect frequency="10000" count="3" />
 						<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
 						<http:query-params ><![CDATA[#[output application/java
 ---
