@@ -60,7 +60,7 @@ vars.originalPayload default [] map (indexOfConData, details)->{
 	"AQB__Gender__c": indexOfConData.SpouseGender,
 	"AQB__MaritalStatus__c" : indexOfConData.SpouseMaritalStatus,
 	"AQB__PlaceofBirth__c": indexOfConData.SpouseBirthplace,
-	"Birthdate" : indexOfConData.SpouseBirthdate as LocalDateTime as String {format: 'MM/dd/yyyy'}  default "",
+	"Birthdate" : indexOfConData.SpouseBirthdate as LocalDateTime as String {format: 'yyyy-MM-dd'}  default "",
 	"AQB__Ethnicity__c":indexOfConData.SpouseEthnicity,
 	"AQB__PrimaryGiftRecognitionCredit_Percent__c": "",
 	"AQB__SecondaryGiftRecognitionCreditPercent__c":"100%",

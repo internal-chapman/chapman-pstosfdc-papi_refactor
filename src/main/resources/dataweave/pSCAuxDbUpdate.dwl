@@ -4,7 +4,7 @@ fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
 ---
 vars.uuid map 
 {	
-	"id": vars.sfdcPrimaryContactsResponse.data[$$].id ,
+	"id": vars.sfdcPrimaryContactsResponse.data[$$].id default "-" ,
 	"tuuid": $,
 	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.contacts'),
 	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.contacts'),
@@ -12,5 +12,5 @@ vars.uuid map
 	"status": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "COMPLETED" else 'ERROR',
 	"metadata": if((vars.sfdcPrimaryContactsResponse.data[$$].success  == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
 	"description": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Spouses Contacts Record Insert or Updated in SFDC" else 
-	(((vars.sfdcPrimaryContactsResponse.data[$$].errors.message) or (vars.sfdcSecondaryContactsResponse.data[$$].errors.message)) reduce($$++ ' , ' ++$))[0 to size(((vars.sfdcPrimaryContactsResponse.data[$$].errors.message) or (vars.sfdcSecondaryContactsResponse.data[$$].errors.message)) reduce($$++ ' , ' ++$))]
+	"Error while upserting the data in salesforce"
 }

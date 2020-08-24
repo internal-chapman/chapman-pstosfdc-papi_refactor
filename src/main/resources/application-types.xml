@@ -45,4 +45,5 @@ type DBConDataNonSpouse = Array<{|  COUNTRY: String,   DECEASED: String,   GENDE
   </types:enrichment>
   <types:enrichment select="#90c44c43-61f2-4004-848e-4b022a1589ff"/>
   <types:enrichment select="#6d4f803a-44d2-43ad-96a2-4d9832e8012a"/>
+  <types:enrichment select="#17aef336-d87b-4405-9ef5-1727ba463cd3"/>
 </types:mule>

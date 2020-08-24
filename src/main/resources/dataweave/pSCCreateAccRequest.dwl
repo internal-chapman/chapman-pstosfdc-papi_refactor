@@ -19,5 +19,6 @@ vars.originalPayload default [] map ((indexOfDBConData, emplDetails ) ->
 		"AQB__AccountDefaultCountryId__c":indexOfDBConData."PermCountryId",
 		"AQB__AccountDefaultCity__c": indexOfDBConData.PermCity,
 		"AQB__AccountDefaultPhone__c": if (capitalize(indexOfDBConData.Emp_CAE) == "Employee" or capitalize(indexOfDBConData.SpouseCAE) == "Employee" ) "HOME" else "MAIN",
+		"Name": indexOfDBConData.AccountName
  	}
  )

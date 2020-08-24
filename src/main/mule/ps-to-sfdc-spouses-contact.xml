@@ -9,9 +9,15 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2811c5cc-763d-4c28-8351-3adbcb962435" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
 	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61"> 
+		<http:listener doc:name="remove" doc:id="5df304cd-802a-4535-a68e-e9b0a162c5fa" config-ref="HTTP_Listener_config" path="/spouse"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Spouses sync batch"]' />
+		<set-variable value="#['1920-08-13 13:50:40.50']" doc:name="remove" doc:id="f36eaee4-2465-484b-b29b-71240fd360cf" variableName="lastProcessedTime"/>
 		<db:select doc:name="Select spouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
+			<reconnect frequency="10000" count="3" />
 			<db:sql>select ALIASNAME    as &quot;AccountName&quot;
 ,EMPLID             as &quot;EmplID&quot;
 ,XC_AQ_CAE_CATEGORY as &quot;Emp_CAE&quot;
@@ -35,7 +41,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,CONTACTEMAIL       as &quot;OtherEmail&quot;
 ,XC_AQ_EMAIL_PREF   as &quot;EmailPreference&quot;
 ,XC_AQ_ADDR_PREF    as &quot;AddressPref&quot;
-,LAST_UPDT_DTTM     as &quot;ContactLastUpdateDttm&quot;
+,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM
 ,EMPLID2            as &quot;SpouseEmplID&quot;
 ,XC_AQ_CAE_CATGY_SP as &quot;SpouseCAE&quot;
 ,DESCR20            as &quot;SpouseSalutation&quot;
@@ -57,7 +63,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,XC_HR_CSTU_EMAIL   as &quot;SpouseSchoolEmail&quot;
 ,SSR_EMAIL_ADDR     as &quot;SpouseOtherEmail&quot;
 ,XC_AQ_EMAIL_PRF_SP as &quot;SpouseEmailPreference&quot;
-,LAST_CHANGED_DTTM  as &quot;SpouseLastUpdateDttm&quot;
+,CAST(LAST_CHANGED_DTTM AS DATE)LAST_CHANGED_DTTM
 ,XC_AQ_MAIL_STREET  as &quot;PermStreet&quot;
 ,CITY               as &quot;PermCity&quot;
 ,COUNTY             as &quot;PermCounty&quot;
@@ -66,25 +72,24 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,POSTAL             as &quot;PermPostal_Zip&quot;
 ,COUNTRY            as &quot;PermCountryId&quot;
 ,COUNTRY_DESCR      as &quot;PermCountry&quot;
-,LAST_UPDATE_DTTM   as &quot;AccountLastUpdateDttm&quot;
+,CAST(LAST_UPDATE_DTTM AS DATE)LAST_UPDATE_DTTM
 ,START_DT           as &quot;RelatedStartDate&quot;
 ,XC_AQ_STARTED      as &quot;RelatedStart&quot;
 ,END_DT             as &quot;RelatedEndDate&quot;
 ,XC_AQ_ENDED        as &quot;RelatedEnd&quot;
-,LAST_DTTM_UPDATE   as &quot;RelatedLastUpdateDttm&quot;
+,CAST(LAST_DTTM_UPDATE AS DATE)LAST_DTTM_UPDATE
 ,XC_AQ_PRI_CTCT_TYP as &quot;PrimaryContactType&quot;
 ,XC_AQ_SEC_CTCT_TYP as &quot;PossibleSecondaryTypes&quot;
-,LAST_REFRESH_DTTM  as &quot;AffiliaLastUpdateDttm&quot;
+,CAST(LAST_REFRESH_DTTM AS DATE)LAST_REFRESH_DTTM
 ,XC_AQ_PRI_CTCTYPSP as &quot;SpousePrimaryContactType&quot;
 ,XC_AQ_SEC_CTCTYPSP as &quot;SpousePossibleSecondaryTypes&quot;
-,LASTREFRESHDTTM    as &quot;SpouseAffiliaLastUpdateDttm&quot;
+,CAST(LASTREFRESHDTTM AS DATE) LASTREFRESHDTTM
 from SYSADM.PS_XC_AQ_SPOUSE_VW
 where EMPLID = '0180903' and ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_CHANGED_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
-or LAST_REFRESH_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') )
-;</db:sql>
+or LAST_REFRESH_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') )</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -97,7 +102,7 @@ output application/json
 vars.DBConData]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.DBConData.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.DBConData)-1]]]></ee:set-variable>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.DBConData.LAST_UPDATE_DTTM orderBy ($))[sizeOf(vars.DBConData)-1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
@@ -145,7 +150,7 @@ output application/json
 					</ee:transform>
 		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
 		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
-		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="Spouses Account creation completed!" />
+		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="Spouses Account creation completed! " />
 		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pSCCreatePrimarySCRequest.dwl" />
@@ -178,7 +183,7 @@ output application/json
 				<ee:set-variable resource="dataweave/pSCAuxDbInsert.dwl" variableName="vAuxInsertPayload" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="db2c04e4-4771-43f3-8ba2-4ae1247e144e" target="response" name="cf-aux-insert-bulk" targetValue="#[vars.vAuxInsertResult]"/>
+		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="db2c04e4-4771-43f3-8ba2-4ae1247e144e" name="cf-aux-insert-bulk" target="InsertAuxResult"/>
 		<!-- <db:bulk-insert doc:name="Bulk Insert Into AUX db" doc:id="c7c24b25-dd8c-4fad-a425-0f9a282f522b" config-ref="aux-db-config" target="response">
 			<db:sql>Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 		</db:bulk-insert> -->
@@ -193,10 +198,10 @@ output application/json
 				<ee:set-variable resource="dataweave/vAuxUpdateQuerySpouse.dwl" variableName="vAuxUpdateQuery" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="86555662-7cab-4ee2-b6e4-5af2deebe1ca" target="response" name="cf-aux-update-bulk" targetValue="#[vars.vAuxUpdateResult]"/>
+		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="86555662-7cab-4ee2-b6e4-5af2deebe1ca" name="cf-aux-update-bulk" target="UpdateAuxResponse"/>
 		<!-- <db:bulk-update doc:name="Bulk Update Into AUX db" doc:id="8a816248-9c82-4d59-9518-995fd1bf4ab0" config-ref="aux-db-config" target="response" >
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC',XC_AQ_DEST_ID = :id,XC_AQ_DEST_TYPE=:destType,DT_TIMESTAMP = :now,XC_AQ_STATUS = :status,XC_AQ_METADATA = :metadata,DESCR250 = :description,XC_AQ_SOURCE_TYPE = :sourceType where GUID= :tuuid</db:sql>
 		</db:bulk-update> -->
-		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response]" />
+		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response] " />
 	</sub-flow>
 </mule>
