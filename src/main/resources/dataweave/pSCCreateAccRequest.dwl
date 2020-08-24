@@ -9,7 +9,7 @@ vars.originalPayload default [] map ((indexOfDBConData, emplDetails ) ->
 		"AQB__AccountExternalID__c": indexOfDBConData.EmplID,		
 		"AQB__AccountDefaultStreet__c": indexOfDBConData."PermStreet",
 		"AQB__CAECategory__c": indexOfDBConData.Emp_CAE,
-		"AQB__AccountDefaultStatus__c": "Good" as String default '',
+		"AQB__AccountDefaultStatus__c": "Good" as String,
 		"AQB__AccountDefaultStateProvince__c":indexOfDBConData."PermStateDescr",
 		"AQB__AccountDefaultStateId__c": indexOfDBConData.PermState,
 		"AQB__AccountDefaultZipCode__c": indexOfDBConData.PermPostal_Zip,
