@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		<flow-ref doc:name="Flow Ref To pf-spouses-contacts-sync" doc:id="893b5f3b-8547-41b5-8b7e-6b48073cd9eb" name="pf-spouses-contacts-sync" />
 		<flow-ref doc:name="Flow Ref To pf-non-spouses-contacts-sync" doc:id="fffa568f-2fc4-4006-ba82-0063468f8e93" name="pf-non-spouses-contacts-sync" />
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-address-sync" doc:id="01e3480e-d135-4a12-905a-f13b622c1710" name="pf-ps-to-sfdc-address-sync" />
-		<!-- <flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-email-sync" doc:id="64256ff8-403b-41b3-a51c-a7b44f54e9ea" name="pf-ps-to-sfdc-email-sync" /> -->
+		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-email-sync" doc:id="64256ff8-403b-41b3-a51c-a7b44f54e9ea" name="pf-ps-to-sfdc-email-sync" />
 		<flow-ref doc:name="Flow Ref to pf-ps-to-sfdc-phone-sync" doc:id="fdcaf501-fa3f-44fe-8f89-76ed196c2561" name="pf-ps-to-sfdc-phone-sync" /> 
 		<flow-ref doc:name="Flow Ref To pf-ps-to-sfdc-education" doc:id="4066a968-b282-42f7-ac9b-a9df1be069ce" name="pf-ps-to-sfdc-education" />
 		<flow-ref doc:name="Flow Ref To pf-student-interest" doc:id="730d6bc0-fb6f-4b2c-91de-253d9001c2a2" name="pf-student-interest" />
