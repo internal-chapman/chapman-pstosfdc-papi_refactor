@@ -22,10 +22,6 @@ fun emailPerfCalc(EMAILPREF)=
     		"Other Email"
     else null     
 
-//mrs, mrs., Mrs, Mrs. --> Mrs.
-// dr, Dr, dr., Dr., Doctor, doc, Doc, doc., Doc. --> Dr.
-// Professor, Prof, professor, prof, prof., Prof. --> Prof.
-
 fun salutationCalc(SALUTATION)=
     if ((SALUTATION == "mr") or (SALUTATION == "mr.") or (SALUTATION == "Mr") or (SALUTATION == "Mr."))
     		"Mr."
@@ -42,34 +38,30 @@ fun salutationCalc(SALUTATION)=
 vars.originalPayload default [] map (indexOfConData, details)->{
 	
 	"AQB__ContactExternalID__c": indexOfConData.SpouseEmplID,
+	"Salutation" : salutationCalc(indexOfConData.SpouseSalutation),	
 	"FirstName": indexOfConData.SpouseFirstName as String,
 	"LastName" : indexOfConData.SpouseLastName as String,
+	"Suffix": indexOfConData.SpouseSuffix,
 	"MiddleName": indexOfConData.SpouseMiddleName as String,
 	"AQB__MaidenName__c" : indexOfConData.SpouseMaidenName,
-	"AQB__AddressInUseType__c" : addressPrefCalc(indexOfConData.PermAddrPref),
-    "AQB__CAECategory__c" : indexOfConData.Emp_CAE,
-    //"MailingAddress" : indexOfConData.MAILPREF,
-    "MailingStreet" : indexOfConData.PermStreet,
-    "MailingCity" : indexOfConData.PermCity,
-    'MailingState': indexOfConData.StateDescr,
-    'MailingPostalCode': indexOfConData.PermPostal_Zip,
-    'MailingCountry': indexOfConData.PermCountry,
-    //"AQB__DateofDeath__c": indexOfConData.DECEASEDDATE,
-    "AQB__Deceased__c": indexOfConData.AccountStatus as String as Boolean,
-    "AQB__EmailPreference__c": emailPerfCalc(indexOfConData.SpouseEmailPreference),
-    "AQB__Gender__c": indexOfConData.SpouseGender,
-    "AQB__MaritalStatus__c" : indexOfConData.MaritalStatus,
-    "AQB__PlaceofBirth__c": indexOfConData.SpouseBirthplace,
-   // "Birthdate" : indexOfConData.SpouseBirthdate as LocalDateTime as String {format: 'MM/dd/yyyy'}  default null,
-    "Email" : indexOfConData.SpouseEmail,
-    "AQB__PersonalEmail__c" : indexOfConData.SpouseEmail,
-    "AQB__BusinessEmail__c" : indexOfConData.SpouseEmail,
-    "AQB__SchoolEmail__c" : indexOfConData.SpouseEmail,
-   // "Salutation" : salutationCalc(indexOfConData.SALUTATION),
-    //"AQB__SalutationLink__c": indexOfConData.SALUTATION,
-    "AQB__CountryId__c" : indexOfConData.PermCountryId,
-	"AQB__County__c" : indexOfConData.PermCounty,
-	"AQB__Type__c": funConType::ConType(indexOfConData.AffDescShort as String),
-	"AQB__SecondaryType__c": indexOfConData.AffDescShort
-
+	"AQB__Nickname__c": indexOfConData.SpouseNickname,
+	"AQB__CAECategory__c" : indexOfConData.SpouseCAE,
+	"AQB__Type__c":indexOfConData.SpousePrimaryContactType,
+	"AQB__SecondaryType__c":"",	
+	"AQB__AddressInUseType__c" : addressPrefCalc(indexOfConData.AddressPref),
+	"AQB__PersonalEmail__c" : indexOfConData.SpouseEmail,
+    "AQB__BusinessEmail__c" : indexOfConData.SpouseBusinessEmail,
+    "AQB__SchoolEmail__c" : indexOfConData.SpouseSchoolEmail,
+    "AQB__OtherEmail__c": indexOfConData.SpouseOtherEmail,
+	"AQB__EmailPreference__c": emailPerfCalc(indexOfConData.SpouseEmailPreference),
+	"MobilePhone": indexOfConData.SpouseMobile,
+	"OtherPhone": indexOfConData.SpouseOtherphone,
+	"AQB__PhonePreference__c":"",
+	"AQB__Gender__c": indexOfConData.SpouseGender,
+	"AQB__MaritalStatus__c" : indexOfConData.SpouseMaritalStatus,
+	"AQB__PlaceofBirth__c": indexOfConData.SpouseBirthplace,
+	"Birthdate" : indexOfConData.SpouseBirthdate as Date as String {format: 'YYYY-MM-DD'}  default "",
+	"AQB__Ethnicity__c":indexOfConData.SpouseEthnicity,
+	"AQB__PrimaryGiftRecognitionCredit_Percent__c": "",
+	"AQB__SecondaryGiftRecognitionCreditPercent__c":"100",
 }
