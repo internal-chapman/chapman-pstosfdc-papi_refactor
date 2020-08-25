@@ -42,7 +42,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 		<logger level="INFO" doc:name="LOG INFO End Aux DB Update " doc:id="7f4bb01d-3c91-4a9f-b72b-3399a6af179c" message="Completed Aux DB Update Successfully || CorrelationId : #[vars.correlationId]" />
 	</flow>
 	<flow name="cf-aux-insert-bulk" doc:id="686bfced-cab4-4ff5-a80d-503ed1f33319" >
-		<logger level="INFO" doc:name="LOG INFO Start Aux DB Insert" doc:id="5eb206e1-6866-4128-ba95-96c26f27fd0b" message="Completed Bulk Insert Into Aux Db Successfully"/>
+		<logger level="INFO" doc:name="LOG INFO Start Aux DB Insert" doc:id="5eb206e1-6866-4128-ba95-96c26f27fd0b" message="Started Bulk Insert Into Aux Db"/>
 		<db:bulk-insert doc:name="Bulk insert into Aux Db" doc:id="05e3cd6d-8bed-4aea-9fc8-b50eb7abe784" config-ref="aux-db-config" target="vAuxInsertResult">
 			<db:bulk-input-parameters ><![CDATA[#[vars.vAuxInsertPayload]]]></db:bulk-input-parameters>
 			<db:sql >#[vars.vAuxInsertQuery]</db:sql>
@@ -50,12 +50,12 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 		<logger level="INFO" doc:name="LOG INFO End Aux DB Bulk Insert" doc:id="069001bc-633d-49b2-8d8a-0067e2f883a7" message="Completed Bulk Insert Into Aux Db Successfully"/>
 	</flow>
 	<flow name="cf-aux-update-bulk" doc:id="768060a3-5ef4-48f8-8e39-a6a665fc0dde" >
-		<logger level="INFO" doc:name="LOG INFO Start Aux DB Bulk Update" doc:id="35160906-b2f8-4ffa-93cd-0ef8e46226f2" message="Staring Bulk Update Into Aux Db"/>
+		<logger level="INFO" doc:name="LOG INFO Start Aux DB Bulk Update" doc:id="35160906-b2f8-4ffa-93cd-0ef8e46226f2" message="Started Bulk Update Into Aux Db"/>
 		<db:bulk-update doc:name="Bulk update into Aux Db" doc:id="2cbd448d-d7ff-4af6-9f36-3e97028b41d9" config-ref="aux-db-config" target="vAuxUpdateResult">
 			<db:bulk-input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:bulk-input-parameters>
 			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
 		</db:bulk-update>
-		<logger level="INFO" doc:name="LOG INFO End Aux DB Bulk Update" doc:id="4bea36ab-9186-4b65-8149-68506a32b35b" />
+		<logger level="INFO" doc:name="LOG INFO End Aux DB Bulk Update" doc:id="4bea36ab-9186-4b65-8149-68506a32b35b" message="Completed Bulk Update Into Aux Db Successfully"/>
 	</flow>
 	<flow name="cf-email-implementation" doc:id="32d23233-9dbb-458f-86a1-24bf853e4ba5" >
 		<logger level="INFO" doc:name="LOG INFO Start Email Send" doc:id="7dc98bf6-5e05-4217-aaa7-70d5b26c319f" message="Email Flow Started"/>

@@ -10,58 +10,58 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
 	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61"> 
+		<http:listener doc:name="Listener" doc:id="875db801-7f4d-44bb-87f5-b869607688d2" config-ref="HTTP_Listener_config1" path="/nonspouses"/>
+		<set-variable value="#['2020-08-13 13:50:40.50']" doc:name="Set Variable" doc:id="5007431d-9264-4474-844d-93cf39d86ca5" variableName="lastProcessedTime"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync batch"]' />
 		<db:select doc:name="Select nonSpouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
-			<db:sql>Select
-distinct(a.EMPLID)      as &quot;EMPLID&quot;
-, a.FIRST_NAME          as &quot;FIRST_NAME&quot;
-, a.LAST_NAME           as &quot;LAST_NAME&quot;
-, a.MIDDLE_NAME         as &quot;MIDDLE_NAME&quot;
-, a.MAIDEN_NAME         as &quot;MAIDEN_NAME&quot;
-, a.XC_AQ_MAR_STATUS    as &quot;MARTIALSTATUS&quot;
-, a.XC_AQ_BIRTHPLACE    as &quot;BIRTHPLACE&quot;
-, a.XC_AQ_CAE_CATEGORY  as &quot;CAE&quot;
-, a.XC_AQ_GENDER        as &quot;GENDER&quot;
-, a.EMAIL_ADDR          as &quot;EMAIL&quot;
-, a.XC_AQ_EMAIL_PREF    as &quot;EMAILPREF&quot;
-, a.SALUTATION          as &quot;SALUTATION&quot;
-, a.HOME_PHONE                        as &quot;HomePhone&quot;
-, a.MOBILE_PHONE                      as &quot;Mobile&quot;
-, a.XC_AQ_OTHER_PHONE                 as &quot;Otherphone&quot;
-, a.WORK_PHONE                        as &quot;Workphone&quot;
-, a.XC_AQ_ADDR_PREF     as &quot;ADDRESSPREF&quot;
-, a.XC_AQ_MAIL_ADDR     as &quot;MAILPREF&quot;
-, a.XC_AQ_MAIL_STREET   as &quot;STREET&quot;
-, a.CITY                as &quot;CITY&quot;
-, a.COUNTY              as &quot;COUNTY&quot;
-, a.COUNTRY_DESCR       as &quot;COUNTRYDESC&quot;
-, a.STATE               as &quot;STATE&quot;
-, a.STATE_DESCR         as &quot;STATEDESC&quot;
-, a.POSTAL              as &quot;POSTAL&quot;
-, a.COUNTRY             as &quot;COUNTRY&quot;
-, CAST(a.BIRTHDATE as DATE)          as &quot;BIRTHDATE&quot;
-, a.DT_OF_DEATH         as &quot;DECEASEDDATE&quot;
-, a.XC_AQ_DECEASED      as &quot;DECEASED&quot;
-, a.XC_AQ_DUP_FLAG      as &quot;DUPFLAG&quot;
-, a.XC_AQ_DUP_EMPLID    as &quot;DUPEMPLID&quot;
-,CAST(a.LAST_UPDT_DTTM as DATE) as &quot;LASTUPDATEDDATE&quot;
-, af.SCC_AFL_CODE                     as &quot;AFFCODE&quot;
-, af.SCC_AFL_DESCRSHORT               as &quot;AFFDESCSHORT&quot;
-, r.EMPLID              as &quot;RELEMPLID&quot;
-, CAST(r.END_DT as DATE)as &quot;RELENDDATE&quot;
-, r.XC_AQ_ENDED         as &quot;RELENDED&quot;
-, r.EMPLID_RELATED      as &quot;RELATEDEMPLID&quot;
-, r.Name                as &quot;RELNAME&quot;
-, r.RELATION_DESCR      as &quot;RELATIONSHIP&quot;
-, r.XC_AQ_REVERSE_RELA  as &quot;REVRELATIONSHIP&quot;
-, CAST(r.START_DT as DATE) as &quot;STARTDATE&quot;
-, r.XC_AQ_STARTED       as &quot;STARTED&quot;
-FROM SYSADM.PS_XC_AQ_INCTCT_VW a
-LEFT JOIN sysadm.PS_XC_AQ_INRELA_VW r ON a.emplid = r.emplid
-LEFT JOIN sysadm.PS_XC_AQ_AFL_VW af ON a.emplid = af.emplid
-where r.RELATION_DESCR != 'Spouse'
-and af.scc_afl_descrshort in ('Alumni', 'Friend', 'Employee', 'Parent', 'Student')
-and a.EMPLID in ('0916425','1960382','0000002', '0000023') and CAST(a.LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')</db:sql>
+			<db:sql>select EMPLID       as &quot;EMPLID&quot;
+,XC_AQ_CAE_CATEGORY as &quot;CAE&quot;
+,SALUTATION         as &quot;SALUTATION&quot;
+,FIRST_NAME         as &quot;FIRST_NAME&quot;
+,MIDDLE_NAME        as &quot;MIDDLE_NAME&quot;
+,LAST_NAME          as &quot;LAST_NAME&quot;
+,NAME_SUFFIX        as &quot;SUFFIX&quot;
+,XC_AQ_GENDER       as &quot;GENDER&quot;
+,XC_AQ_MAR_STATUS   as &quot;MARTIALSTATUS&quot;
+,MAIDEN_NAME        as &quot;MAIDEN_NAME&quot;
+,MCF_NICKNAME       as &quot;NICKNAME&quot;
+,XC_AQ_BIRTHPLACE   as &quot;BIRTHPLACE&quot;
+,BIRTHDATE          as &quot;BIRTHDATE&quot;
+,XC_ETHNICITY       as &quot;ETHNICITY&quot;
+,MOBILE_PHONE       as &quot;Mobile&quot;
+,XC_AQ_OTHER_PHONE  as &quot;Otherphone&quot;
+,EMAIL_ADDR         as &quot;EMAIL&quot;
+,XC_CS_CAMP_EMAIL   as &quot;BUSINESSEMAIL&quot;
+,XC_CS_CSTU_EMAIL   as &quot;SCHOOLEMAIL&quot;
+,CONTACTEMAIL       as &quot;OTHEREMAIL&quot;
+,XC_AQ_EMAIL_PREF   as &quot;EMAILPREF&quot;
+,XC_AQ_ADDR_PREF    as &quot;ADDRESSPREF&quot;
+,LAST_UPDT_DTTM     as &quot;CONTACTLASTUPDATEDTTM&quot;
+,XC_AQ_MAIL_STREET  as &quot;STREET&quot;
+,CITY               as &quot;CITY&quot;
+,COUNTY             as &quot;COUNTY&quot;
+,STATE              as &quot;STATE&quot;
+,STATE_DESCR        as &quot;STATEDESC&quot;
+,POSTAL             as &quot;POSTAL&quot;
+,COUNTRY            as &quot;COUNTRY&quot;
+,COUNTRY_DESCR      as &quot;COUNTRYDESC&quot;
+,LAST_UPDATE_DTTM   as &quot;ACCOUNTLASTUPDATEDTTM&quot;
+,EMPLID_RELATED     as &quot;RELATEDEMPLID&quot;
+,RELATION_DESCR     as &quot;RELATIONSHIP&quot;
+,XC_AQ_REVERSE_RELA as &quot;REVRELATIONSHIP&quot;
+,START_DT           as &quot;STARTDATE&quot;
+,XC_AQ_STARTED      as &quot;STARTED&quot;
+,END_DT             as &quot;RELENDDATE&quot;
+,XC_AQ_ENDED        as &quot;RELENDED&quot;
+,LAST_DTTM_UPDATE   as &quot;RELATEDLASTUPDATEDTTM&quot;
+,XC_AQ_PRI_CTCT_TYP as &quot;PRIMARYCONTACTTYPE&quot;
+,XC_AQ_SEC_CTCT_TYP as &quot;POSSIBLESECONDARYTYPES&quot;
+,LAST_REFRESH_DTTM  as &quot;AFFILIALASTUPDATEDTTM&quot;
+from SYSADM.PS_XC_AQ_NONSPS_VW
+where ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( '2019-07-13 13:50:40.50' , 'YYYY-MM-DD HH24:MI:SS.FF')
+or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( '2019-07-13 13:50:40.50' , 'YYYY-MM-DD HH24:MI:SS.FF')
+or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( '2019-07-13 13:50:40.50', 'YYYY-MM-DD HH24:MI:SS.FF')
+or LAST_REFRESH_DTTM &gt; TO_TIMESTAMP( '2019-07-13 13:50:40.50', 'YYYY-MM-DD HH24:MI:SS.FF') ) AND EMPLID = '1195726'</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -84,14 +84,10 @@ vars.DBConData]]></ee:set-payload>
 				<ee:set-variable variableName="AuxDetails"><![CDATA[%dw 2.0
 output application/json
 ---
-
- 
-payload map ((indexOfEmpl, emplDetails ) ->
-	{
-		emplID: indexOfEmpl.EMPLID as String,
-		LastUpdatedDate: indexOfEmpl.LASTUPDATEDDATE as LocalDateTime as String {format: 'yyyy-MM-dd HH.mm.ss.SSSSSSSSS '}
-	}
-)]]></ee:set-variable>
+payload map ((indexOfEmpl, emplDetails) -> {
+	emplID: indexOfEmpl.EMPLID as String,
+	LastUpdatedDate: indexOfEmpl.ACCOUNTLASTUPDATEDTTM as LocalDateTime {format: "yyyy-MM-dd'T'HH:mm:ss"} default ''
+})]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Payload" doc:id="3422a71e-fb54-423c-9b1f-a01421ef5a00" message="#[output application/json --- payload]" />
@@ -130,9 +126,9 @@ output application/json
 				<ee:set-payload resource="dataweave/pNSCCreateAccRequest.dwl" />
 						</ee:message>
 					</ee:transform>
-		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
+		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="Creating Non spouses account." />
 		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
-		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="NonSpouses Account creation completed!" />
+		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="NonSpouses Account creation completed." />
 		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pNSCCreatePriNSCRequest.dwl" />
@@ -169,14 +165,12 @@ vars.originalPayload]]></ee:set-payload>
 				<ee:set-variable resource="dataweave/pNSCAuxDbInsert.dwl" variableName="vAuxInsertPayload" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="4b2d9c66-32f6-4873-ac58-8dc3e16c19fd" name="cf-aux-insert-bulk" target="response" targetValue="#[vars.vAuxInsertResult]"/>
+		<flow-ref doc:name="Flow Ref to cf-aux-insert-bulk" doc:id="4b2d9c66-32f6-4873-ac58-8dc3e16c19fd" name="cf-aux-insert-bulk" target="response"/>
 		<!-- <db:bulk-insert doc:name="Bulk Insert Into AUX db" doc:id="a54569e7-4ff7-43a6-8e16-0b335fe0980d" config-ref="aux-db-config" target="response" >
 			<db:sql >Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)</db:sql>
 		</db:bulk-insert> -->
-		<logger level="INFO" doc:name="LOG INFO" doc:id="96847c92-8ac7-438a-94b2-240ab19d90ef" message="Status of Bulk Insert: #[output application/json --- vars.response]" />
 	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
-		<logger level="INFO" doc:name="LOG INFO Rows updated" doc:id="3df2dfb2-74aa-4e7e-bb7c-d537aa40de01" message="Result Updated: #[vars.response]" />
 		<ee:transform doc:name="DW Set Payload" doc:id="78312f16-3cea-407c-8b37-22e5f5b432c3" >
 			<ee:message >
 			</ee:message>
@@ -185,7 +179,7 @@ vars.originalPayload]]></ee:set-payload>
 				<ee:set-variable resource="dataweave/pNSCAuxDbUpdate.dwl" variableName="vAuxUpdatePayload" />
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="fecb6d7d-437f-4816-a3ae-fb467ace6849" name="cf-aux-update-bulk" target="response" targetValue="#[vars.vAuxUpdateResult]"/>
+		<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="fecb6d7d-437f-4816-a3ae-fb467ace6849" name="cf-aux-update-bulk" target="response"/>
 		<!-- <db:bulk-update doc:name="Bulk Update Into AUX db" doc:id="ecb57b98-3a66-4f24-aa54-d65f49564cbb" config-ref="aux-db-config" target="response" >
 			<db:sql >Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC',XC_AQ_DEST_ID = :id,XC_AQ_DEST_TYPE=:destType,DT_TIMESTAMP = :now,XC_AQ_STATUS = :status,XC_AQ_METADATA = :metadata,DESCR250 = :description,XC_AQ_SOURCE_TYPE = :sourceType where GUID= :tuuid</db:sql>
 		</db:bulk-update> -->
