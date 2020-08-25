@@ -8,14 +8,8 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-	
-	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2811c5cc-763d-4c28-8351-3adbcb962435" >
-		<http:listener-connection host="0.0.0.0" port="8085" />
-	</http:listener-config>
-	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61"> 
-		<http:listener doc:name="remove" doc:id="5df304cd-802a-4535-a68e-e9b0a162c5fa" config-ref="HTTP_Listener_config" path="/spouse"/>
+	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
 		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Spouses sync batch"]' />
-		<set-variable value="#['1920-08-13 13:50:40.50']" doc:name="remove" doc:id="f36eaee4-2465-484b-b29b-71240fd360cf" variableName="lastProcessedTime"/>
 		<db:select doc:name="Select spouses Contacts data from PS db" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
 			<reconnect frequency="10000" count="3" />
 			<db:sql>select ALIASNAME    as &quot;AccountName&quot;
