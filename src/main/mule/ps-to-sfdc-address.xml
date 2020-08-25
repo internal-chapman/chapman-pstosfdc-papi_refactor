@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
 			<reconnect frequency="10000" count="3" />
-			<db:sql>SELECT EMPLID,ADDR_TYPE_SHORT,ADDRESSLONG,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,XC_AQ_STATUS,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') </db:sql>
+			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
