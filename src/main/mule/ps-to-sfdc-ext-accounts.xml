@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": vars.lastProcessTime
 }]]]></db:input-parameters>
 		</db:select>
 		<logger level="INFO" doc:name="LOG INFO payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
@@ -97,7 +97,7 @@ output application/json
 	DTTM_CREATED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	DTTM_MODIFIED: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	XC_AQ_METADATA: "CS to SFDC",
-	DESCR250: "Accounts: Data transfer from Campus Solution to SFDC"
+	DESCR250: "External Accounts Data transfer from Campus Solution to SFDC"
 }]]></ee:set-variable>
 				<ee:set-variable variableName="vAuxInsertQuery" ><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL
  (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) 
@@ -126,7 +126,7 @@ output application/json
 	DT_TIMESTAMP: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
 	XC_AQ_STATUS: if(payload.data[0].success == true) "Completed" else "Error",
 	XC_AQ_METADATA: "Record inserted in SFDC",
-	DESCR250: "Record inserted in SFDC"
+	DESCR250: if(payload.data[0].success == true) "Record inserted/updated in SFDC" else "Record is not inserted/updated in SFDC"
 }]]></ee:set-variable>
 				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["UPDATE SYSADM.PS_XC_AQ_AUX_TBL 
 set XC_AQ_DESTINATION = :XC_AQ_DESTINATION, 
