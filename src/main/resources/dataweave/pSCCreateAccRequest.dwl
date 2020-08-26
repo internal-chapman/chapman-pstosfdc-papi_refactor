@@ -6,7 +6,7 @@ output application/json skipNullOn='everywhere'
 vars.originalPayload default [] map ((indexOfDBConData, emplDetails ) ->
     {		
 		"RecordTypeId": "0122E000000h0RDQAY" as String,
-		"AQB__AccountExternalID__c": indexOfDBConData.EmplID,		
+		"AQB__AccountExternalID__c": "00" ++ indexOfDBConData.EmplID,		
 		"AQB__AccountDefaultStreet__c": indexOfDBConData."PermStreet",
 		"AQB__CAECategory__c": indexOfDBConData.Emp_CAE,
 		"AQB__AccountDefaultStatus__c": "Good" as String,
