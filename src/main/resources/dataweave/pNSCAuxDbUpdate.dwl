@@ -12,18 +12,18 @@ vars.uuid map(value, index) -> {
 	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.contacts'),
 	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.nonSpouses'),
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-	"status": if ((vars.sfdcContactsResponse.data[index].success == true))
+	"status": if(vars.sfdcContactsResponse != null) (if ((vars.sfdcContactsResponse.data[index].success == true))
       "Completed"
     else
-      'Error',
-	"metadata": if ((vars.sfdcContactsResponse.data[index].success == true))
+      'Error') else 'Completed',
+	"metadata": if(vars.sfdcContactsResponse != null) (if ((vars.sfdcContactsResponse.data[index].success == true))
       "Record Insert or Updated in SFDC"
     else
-      "Error while Insert or Update in SFDC",
-	"description": if ((vars.sfdcContactsResponse.data[index].success == true))
-      "Spouses Contacts Record Insert or Updated in SFDC"
+      "Error while Insert or Update in SFDC") else "Contact type : Spouses",
+	"description": if(vars.sfdcContactsResponse != null) (if ((vars.sfdcContactsResponse.data[index].success == true))
+      "Non Spouses Contacts Record Insert or Updated in SFDC"
     else if ((vars.sfdcContactsResponse.data[index].success == false))
       ((vars.sfdcContactsResponse.data[index].errors.message) reduce ($$ ++ ' , ' ++ $))[0 to size((vars.sfdcContactsResponse.data[index].errors.message) reduce ($$ ++ ' , ' ++ $))]
     else
-      "Error Occurred"
+      "Error Occurred") else "Contact type : Spouses"
 }
