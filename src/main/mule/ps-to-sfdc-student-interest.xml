@@ -11,6 +11,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef">
 		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Employment sync started" />
 		<db:select doc:name="Fetch Count From People Soft db" doc:id="241a87a9-8cf5-4d55-befd-b18efffcb8fd" config-ref="rpt-db-config" >
+			<reconnect frequency="10000" count="3" />
 			<db:sql >#[p('db.rpt.query.studentInterest')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
@@ -30,6 +31,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<foreach doc:name="For Each" doc:id="815a8769-7076-40d6-85eb-681e94a4d022" collection="#[vars.batch_list]" >
 					<logger level="INFO" doc:name="LOG INFO" doc:id="85540f29-88ed-4640-8bfe-6394b4855d04" message='#["Fetching the records for batch: " ++ vars.counter]'/>
 					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="cad3d4e3-480e-434f-990a-d5e9957cbc5a" config-ref="rpt-db-config" >
+						<reconnect frequency="10000" count="3" />
 						<db:sql >SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,LAST_UPDT_DTTM FROM (
   SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,LAST_UPDT_DTTM, RANK() OVER (ORDER BY EMPLID , LAST_UPDT_DTTM) as my_rank
   FROM sysadm.PS_XC_AQ_STUINT_VW  )
@@ -64,7 +66,9 @@ payload map(value, index) ->{
 					<logger level="INFO" doc:name="LOG INFO" doc:id="2313b54f-2965-41e8-9365-1c743b621fc7" message="#[payload]" />
 					<try doc:name="Try" doc:id="4cb2d958-338f-4da3-b261-5cb080b083d0" >
 						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="12b1b85f-a3f0-4061-b09f-382b10662dc2" message='#["Sending request to system api to sync StudentInterest for batch: " ++ vars.counter]'/>
-						<http:request method="POST" doc:name="POST Student Interest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest"/>
+						<http:request method="POST" doc:name="POST Student Interest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest">
+							<reconnect frequency="10000" count="3" />
+						</http:request>
 						<logger level="INFO" doc:name="LOG INFO Sync End" doc:id="453bdb98-49be-4058-b7e0-3cbefcdc25d4" message="#[payload]" />
 						<choice doc:name="Check Error Records" doc:id="e2fdcb4b-82b6-4991-b4ac-cb3a728eb692" >
 							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]  default []) &gt; 0]" >

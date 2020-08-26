@@ -143,27 +143,35 @@ output application/json
 						</ee:message>
 					</ee:transform>
 		<logger level="DEBUG" doc:name="LOG INFO Accounts payload" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="#[payload]" />
-		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" />
+		<http:request method="POST" doc:name="POST Create Accounts" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" >
+			<reconnect frequency="10000" count="3" />
+		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Accounts created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="Spouses Account creation completed! " />
 		<ee:transform doc:name="DW Set Payload" doc:id="7c65ac1c-9413-4122-9daf-90f8cb50d4f8">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pSCCreatePrimarySCRequest.dwl" />
 						</ee:message>
 					</ee:transform>
-		<http:request method="POST" doc:name="POST  Create Primary Spouse Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcPrimaryContactsResponse" config-ref="sfdc-system-http-request-config" />
+		<http:request method="POST" doc:name="POST  Create Primary Spouse Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcPrimaryContactsResponse" config-ref="sfdc-system-http-request-config" >
+			<reconnect frequency="10000" count="3" />
+		</http:request>
 		<ee:transform doc:name="DW Set Payload" doc:id="b2626fc0-2594-47a1-976f-821fc05d23a9" >
 			<ee:message >
 				<ee:set-payload resource="dataweave/pSCCreateSecSCRequest.dwl" />
 			</ee:message>
 		</ee:transform>
-		<http:request method="POST" doc:name="POST  Create Secondary Spouse Contact" doc:id="31dffc46-4757-4651-889f-c79ae48ec5ef" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcSecondaryContactsResponse" />
+		<http:request method="POST" doc:name="POST  Create Secondary Spouse Contact" doc:id="31dffc46-4757-4651-889f-c79ae48ec5ef" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcSecondaryContactsResponse" >
+			<reconnect frequency="10000" count="3" />
+		</http:request>
 		<ee:transform doc:name="DW Set Payload" doc:id="8fdb3823-a6f7-4aeb-853c-a968a8f90866">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pSCAccUpdateRequest.dwl" />
 						</ee:message>
 						<ee:variables />
 					</ee:transform>
-		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" />
+		<http:request method="POST" doc:name="POST Account Update" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" >
+			<reconnect frequency="10000" count="3" />
+		</http:request>
 		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
 		<logger level="INFO" doc:name="LOG END  Spouses End" doc:id="9a832b6a-224f-4b68-9856-4b2e7b7bf0f2" message="Spouses Conatct Sync Completed Successfully."/>
 	</sub-flow>

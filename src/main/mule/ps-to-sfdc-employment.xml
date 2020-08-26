@@ -26,7 +26,8 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 			message='#["Employment sync started from PS to SFDC at " ++ vars.lastProcessedTime]' />
 		<db:select doc:name="Fetch Data From ps DB" doc:id="c2cf9510-78ac-47ba-96b3-f79ac62c7438"
 			config-ref="rpt-db-config">
-			<db:sql>#[p('db.rpt.query.employmentBatch')]</db:sql>
+			<reconnect frequency="10000" count="3" />
+			<db:sql>#[p('db.rpt.query.employment')]</db:sql>
 			<db:input-parameters><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -57,7 +58,9 @@ payload]]></ee:set-payload>
 							doc:id="a516bcaa-abf6-4f3d-ae56-a9faa21070ae" message='Employment record request to system:  #[payload]' />
 						<http:request method="POST" doc:name="Call SF System Api"
 							doc:id="303eac09-41a4-4303-9162-2560e51368cf" config-ref="sfdc-system-http-request-config"
-							path="/employment" />
+							path="/employment" >
+							<reconnect frequency="10000" count="3" />
+						</http:request>
 						<logger level="INFO" doc:name="LOG INFO Response"
 							doc:id="01bec7d8-6de8-4786-88ec-e9eec77a9d1e" message="Employment record response : #[payload]" />
 						<ee:transform doc:name="DW Set variables"

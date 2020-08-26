@@ -10,7 +10,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
-		<os:retrieve doc:name="Retrieve Last Processed Time from Object Store" doc:id="e8983c52-8b0d-40e4-a1a6-94fc48ea9d8a" key="lastProcessedTime" objectStore="Object_store"/>
+		<os:retrieve doc:name="Retrieve Last Processed Time from Object Store" doc:id="e8983c52-8b0d-40e4-a1a6-94fc48ea9d8a" key="lastProcessedTime" objectStore="Object_store">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<flow-ref doc:name="Flow Ref To cf-correlationId" doc:id="4addab4c-70d5-4f1e-ac4d-1d5525119b69" name="cf-correlationId"/>
 		<flow-ref doc:name="Flow Ref To pf-spouses-contacts-sync" doc:id="893b5f3b-8547-41b5-8b7e-6b48073cd9eb" name="pf-spouses-contacts-sync" />
 		<flow-ref doc:name="Flow Ref To pf-non-spouses-contacts-sync" doc:id="fffa568f-2fc4-4006-ba82-0063468f8e93" name="pf-non-spouses-contacts-sync" />
@@ -30,7 +32,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
-		<os:retrieve doc:name="Retrieve Last Process Time from Object Store" doc:id="7a3ffc9c-ef8b-40c3-83a0-ef30e082632a" key="lastProcessTime" objectStore="Object_store"/>
+		<os:retrieve doc:name="Retrieve Last Process Time from Object Store" doc:id="7a3ffc9c-ef8b-40c3-83a0-ef30e082632a" key="lastProcessTime" objectStore="Object_store">
+			<os:default-value ><![CDATA[#[p('default.lastProcessTime')]]]></os:default-value>
+		</os:retrieve>
 		<flow-ref doc:name="Flow Ref To cf-correlationId" doc:id="b35b3ef7-01ec-4a9d-8505-7cda779b5f9b" name="cf-correlationId" />
 		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process" doc:id="dde579ac-f455-404d-9d47-4100fca82680" name="pf-ext-accounts-sync-process" />
 		<os:store doc:name="Store Last Process Time to Object Store" doc:id="17cadb7a-c3d9-407d-afd7-4f2565687f02" objectStore="Object_store" key="lastProcessTime">
