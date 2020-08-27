@@ -1,4 +1,5 @@
 %dw 2.0 
+import * from dw::core::Strings
 output application/json skipNullOn='everywhere'
 import modules::funConType
 
@@ -37,7 +38,7 @@ fun salutationCalc(SALUTATION)=
 ---
 vars.originalPayload default [] map (indexOfConData, details)->{
 	
-	"AQB__ContactExternalID__c": indexOfConData.EmplID,
+	"AQB__ContactExternalID__c": leftPad(indexOfConData.EmplID, 9, "0"),
 	"Salutation" : salutationCalc(indexOfConData.Salutation),	
 	"FirstName": indexOfConData.FirstName as String,
 	"LastName" : indexOfConData.LastName as String,

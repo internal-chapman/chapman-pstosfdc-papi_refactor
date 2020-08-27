@@ -29,8 +29,8 @@ http:
           createEducation: "education"
           createRelationship: "relationship"
           queryContact: "query"
-default.lastProcessedTime: "2020-08-11 13:50:40.50"
-default.lastProcessTime: "2020-08-11 13:50:40.50"
+default.lastProcessedTime: "2000-08-11 13:50:40.50"
+default.lastProcessTime: "2000-08-11 13:50:40.50"
 db:
   rpt:
     host: "psdb-cs92rpt.chapman.edu"
