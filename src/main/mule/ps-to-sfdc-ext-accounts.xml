@@ -18,8 +18,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	"LAST_UPDT_DTTM": vars.lastProcessTime
 }]]]></db:input-parameters>
 		</db:select>
-		<logger level="INFO" doc:name="LOG INFO payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
-		<ee:transform doc:name="DW Set Payload" doc:id="c70ab1a1-eefa-461c-bdb4-b95cd370543c">
+		<choice doc:name="Choice" doc:id="0dde44cb-95c9-45e1-904b-fc107449ad72" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<logger level="INFO" doc:name="LOG INFO payload size" doc:id="aeaf8768-356b-46bd-a3c8-2abac336b7c0" message="Account records size from PS db : #[sizeOf(payload)]" />
+				<ee:transform doc:name="DW Set Payload" doc:id="c70ab1a1-eefa-461c-bdb4-b95cd370543c">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -32,13 +34,18 @@ payload map(account, index) -> {
 	AQC_Inst_Country__c: account.'COUNTRY_NM'
 }]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(payload.LAST_UPDT_DTTM orderBy ($))[sizeOf(payload)-1]
+			<ee:variables>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(payload.LAST_UPDT_DTTM orderBy ($))[sizeOf(payload)-1]
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process-batch" doc:id="7ebe7664-257c-4ea0-a313-eee88a4872a6" name="pf-ext-accounts-sync-process-batch"/>
-		<logger level="INFO" doc:name="LOG END" doc:id="2f9086ac-1042-44a4-86ba-80a8428d6789" message="Ext Account flow completed"/>
+				<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process-batch" doc:id="7ebe7664-257c-4ea0-a313-eee88a4872a6" name="pf-ext-accounts-sync-process-batch" />
+				<logger level="INFO" doc:name="LOG END" doc:id="2f9086ac-1042-44a4-86ba-80a8428d6789" message="Ext Account flow completed" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Info" doc:id="390b197a-5b93-4a93-85b7-98ba3d6286fa" message="No new record for External Account"/>
+			</otherwise>
+		</choice>
 	</flow>
 	<flow name="pf-ext-accounts-sync-process-batch" doc:id="bb7e26f4-b1bf-44c4-ac1a-5e54a57907d7" >
 		<batch:job jobName="ext-accounts-sync-process" doc:id="3b3129ee-fb6a-4029-b284-59e19478e9fc" >

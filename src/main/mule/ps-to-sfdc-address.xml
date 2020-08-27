@@ -16,20 +16,27 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
 		</db:select>
-		<ee:transform doc:name="DW Java To JSON" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
+		<choice doc:name="Choice" doc:id="4561687d-8e74-46e4-9682-8ac6d1074bfa" >
+			<when expression="#[sizeOf(vars.PSAddress)&gt;0]">
+				<ee:transform doc:name="DW Java To JSON" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 vars.PSAddress]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSAddress.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSAddress)-1]]]></ee:set-variable>
+			<ee:variables>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(vars.PSAddress.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSAddress)-1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
-		<flow-ref doc:name="Refer to pf-address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="pf-address-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name="SET Payload" doc:id="d9338ea1-c9cc-46dc-a8e1-79cec28e1cf0" />
+				<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
+				<flow-ref doc:name="Refer to pf-address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="pf-address-sync-process-batch" />
+				<set-payload value="#[output application/json --- payload]" doc:name="SET Payload" doc:id="d9338ea1-c9cc-46dc-a8e1-79cec28e1cf0" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Info" doc:id="82efccef-becf-4b68-8231-4c15e549eb1e" message="No new record for Address"/>
+			</otherwise>
+		</choice>
 	</flow>
 	 <flow name="pf-address-sync-process-batch" doc:id="52784469-8dc5-444b-b271-e78deff56580" >
 		<batch:job jobName="address-sync-process" doc:id="b139b952-fa77-4e4e-8217-2bbcb2a0ac86" >

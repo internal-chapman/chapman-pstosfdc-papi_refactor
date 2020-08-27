@@ -63,18 +63,20 @@ or LAST_REFRESH_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50', 'YYYY-MM-DD HH
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
 		</db:select>
-		<ee:transform doc:name="DW Java To JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
+		<choice doc:name="Choice" doc:id="ffdbece8-9638-4d33-a82e-f7ea7f3e8e88" >
+			<when expression="#[sizeOf(vars.DBConData)&gt;0]">
+				<ee:transform doc:name="DW Java To JSON" doc:id="17aef336-d87b-4405-9ef5-1727ba463cd3">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 vars.DBConData]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.DBConData.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.DBConData)-1]]]></ee:set-variable>
+			<ee:variables>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(vars.DBConData.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.DBConData)-1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
+				<ee:transform doc:name="DW Set AuxDetails" doc:id="dcc64d6a-f447-423c-8bba-94c5d0e99180">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
@@ -87,8 +89,8 @@ payload map ((indexOfEmpl, emplDetails) -> {
 })]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO Payload size" doc:id="99cab1f6-4811-4ac8-a98c-7d99b0c0ee63" message="Non spouses payload size : #[sizeOf(payload)]" />
-		<foreach doc:name="For Each" doc:id="222cf17f-1d1b-4ac4-afdc-8277891e5c44" collection="#[payload]">
+				<logger level="INFO" doc:name="LOG INFO Payload size" doc:id="99cab1f6-4811-4ac8-a98c-7d99b0c0ee63" message="Non spouses payload size : #[sizeOf(payload)]" />
+				<foreach doc:name="For Each" doc:id="222cf17f-1d1b-4ac4-afdc-8277891e5c44" collection="#[payload]">
 			<ee:transform doc:name="DW Set Payload as an Array" doc:id="6d9c4a2b-bd75-4196-bcd6-2a7331bc8873">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
@@ -99,6 +101,11 @@ output application/java
 			</ee:transform>
 			<flow-ref doc:name="Non spouses flow" doc:id="32b84162-fed1-4e33-8991-b4f3f44a9c5f" name="sf-contacts-non-spouses" />
 		</foreach>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Info" doc:id="13f975fe-9332-4de1-b469-428cd5076972" message="No new record for Non Spouses"/>
+			</otherwise>
+		</choice>
 	</flow>
 	<sub-flow name="sf-contacts-non-spouses" doc:id="63c77740-4f43-41bc-b44d-7d12fa162d98" >
 		<ee:transform doc:name="DW Set Variables" doc:id="799ff089-8182-413f-bac9-8bc2211e5583" >

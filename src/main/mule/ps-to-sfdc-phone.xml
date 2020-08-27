@@ -18,20 +18,27 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			
 		
 </db:select>
-		<ee:transform doc:name="DW Java To JSON" doc:id="53228e2a-8505-4461-a30a-b6f95dec3b96">
+		<choice doc:name="Choice" doc:id="3f228a01-1f8b-41a7-a464-dff3603cb2bf" >
+			<when expression="#[sizeOf(vars.PSPhone)&gt;0]">
+				<ee:transform doc:name="DW Java To JSON" doc:id="53228e2a-8505-4461-a30a-b6f95dec3b96">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 vars.PSPhone]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSPhone.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSPhone)-1]]]></ee:set-variable>
+			<ee:variables>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(vars.PSPhone.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSPhone)-1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message='#[payload]' />
-		<flow-ref doc:name="Flow Ref To pf-phone-sync-process-batch" doc:id="17aac280-2952-4de4-b59f-ac9e46530d5a" name="pf-phone-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name="SET  Payload Of Execution Status Of Batch" doc:id="76ecdaf1-b91f-4ee5-96f1-8d8730b884c9" />
+				<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="83985051-0c1e-48af-9e91-06325709307b" message="#[payload]" />
+				<flow-ref doc:name="Flow Ref To pf-phone-sync-process-batch" doc:id="17aac280-2952-4de4-b59f-ac9e46530d5a" name="pf-phone-sync-process-batch" />
+				<set-payload value="#[output application/json --- payload]" doc:name="SET  Payload Of Execution Status Of Batch" doc:id="76ecdaf1-b91f-4ee5-96f1-8d8730b884c9" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Info" doc:id="1b26b028-15f4-4045-ac06-e0f0dfc865dc" message="No new record for Phone"/>
+			</otherwise>
+		</choice>
 	</flow>
 	<flow name="pf-phone-sync-process-batch" doc:id="6ba067f8-e53b-4c7f-b602-4bd48fcee7b4" >
 		<batch:job jobName="phone-sync-process" doc:id="68ca8a79-ce78-4fd0-878c-2b8c3a4534d5" >
