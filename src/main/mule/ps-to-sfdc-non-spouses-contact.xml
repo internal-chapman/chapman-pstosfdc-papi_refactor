@@ -9,6 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
+		<http:listener doc:name="Listener" doc:id="5f5e009e-2dae-4e97-bb78-4bffd59f8d8f" config-ref="HTTP_Listener_config1" path="/nonspouses"/>
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync flow"]' />
 		<db:select doc:name="Select Non spouses data" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
 			<db:sql>select EMPLID       as &quot;EMPLID&quot;
@@ -117,9 +118,9 @@ output application/json
 		</ee:transform>
 		<flow-ref doc:name="Insert to AUX DB" doc:id="a9d2e1ed-74ac-4f71-be99-d7a039f7576a" name="sf-non-spouses-contacts-ps-aux-sync-insert" />
 		<db:select doc:name="Get relationship from PS DB" doc:id="709172e5-1aca-4de5-a59c-bcaf7d828578" config-ref="rpt-db-config" target="dbRelationshipPayload">
-			<db:sql >SELECT RELATION_DESCR FROM SYSADM.PS_XC_AQ_INRELA_VW WHERE EMPLID = :emplId AND EMPLID_RELATED = :emplIdRelated
+			<db:sql >SELECT RELATION_DESCR FROM SYSADM.PS_XC_AQ_INRELA_VW WHERE EMPLID = :emplId
 </db:sql>
-			<db:input-parameters ><![CDATA[#[{'emplId': vars.originalPayload[0].EMPLID, 'emplIdRelated': vars.originalPayload[0].RELATEDEMPLID}]]]></db:input-parameters>
+			<db:input-parameters ><![CDATA[#[{'emplId': vars.originalPayload[0].EMPLID}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="DW Spouse check var" doc:id="89e4fd89-b367-43ea-9684-06c36fc716df" >
 			<ee:message >
@@ -128,7 +129,7 @@ output application/json
 				<ee:set-variable variableName="spouseBool" ><![CDATA[%dw 2.0
 output application/java
 ---
-if(vars.dbRelationshipPayload != null)(if(lower(vars.dbRelationshipPayload[0].'RELATION_DESCR') == "spouse") true else false) else false]]></ee:set-variable>
+if(vars.dbRelationshipPayload != null)(if(vars.dbRelationshipPayload.'RELATION_DESCR' contains "Spouse" ) true else false) else false]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="5218880f-973b-448f-b2b1-900eea9ad140" >
