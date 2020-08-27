@@ -5,7 +5,7 @@ vars.AuxDataInsert map {
 GUID: vars.uuid[$$] default '',
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: $.emplID default '',  
-XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.contacts') default '',
+XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.Spouses') default '',
 XC_AQ_DESTINATION: 'SFDC',
 XC_AQ_DEST_ID: '-',
 XC_AQ_DEST_TYPE: p('auxDBColumns.XC_AQ_DEST_TYPE.contacts') default '',

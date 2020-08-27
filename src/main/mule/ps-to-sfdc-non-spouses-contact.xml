@@ -9,7 +9,6 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
-		<http:listener doc:name="Listener" doc:id="5f5e009e-2dae-4e97-bb78-4bffd59f8d8f" config-ref="HTTP_Listener_config1" path="/nonspouses"/>
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync flow"]' />
 		<db:select doc:name="Select Non spouses data" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
 			<db:sql>select EMPLID       as &quot;EMPLID&quot;
