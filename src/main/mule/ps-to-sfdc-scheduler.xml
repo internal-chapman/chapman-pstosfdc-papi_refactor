@@ -4,7 +4,7 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<flow name="mf-ps-to-sfdc-account-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa" maxConcurrency="1" initialState="started">
+	<flow name="mf-ps-to-sfdc-account-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa" maxConcurrency="1" initialState="stopped">
 		<scheduler doc:name="Scheduler" doc:id="480c13ca-afb3-41e3-8bfd-108ce00b00cd" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>

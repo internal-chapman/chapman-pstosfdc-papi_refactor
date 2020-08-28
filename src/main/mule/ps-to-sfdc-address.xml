@@ -8,10 +8,12 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
 	<flow name="pf-ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
+		<http:listener doc:name="Listener" doc:id="c8160f37-6979-4732-ab8f-c9d5608b8ddb" config-ref="HTTP_Listener_config2" path="/address"/>
+		<set-variable value="#['2000-08-13 13:50:40.50']" doc:name="Set Variable" doc:id="2f9d48bc-0e7d-4bbe-871e-5742300e9ff8" variableName="lastProcessedTime"/>
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
 			<reconnect frequency="10000" count="3" />
-			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
+			<db:sql>#[p('db.rpt.query.address')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
