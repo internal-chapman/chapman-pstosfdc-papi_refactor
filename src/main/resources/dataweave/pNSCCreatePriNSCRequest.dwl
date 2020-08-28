@@ -46,7 +46,7 @@ vars.originalPayload default [] map (indexOfConData, details) -> {
 	"AQB__Nickname__c": indexOfConData.MCF_NICKNAME,
 	"AQB__CAECategory__c": indexOfConData.CAE,
 	"AQB__Type__c": indexOfConData.PRIMARYCONTACTTYPE,
-	"AQB__SecondaryType__c": indexOfConData.POSSIBLESECONDARYTYPES,
+	"AQB__SecondaryType__c": indexOfConData.SECONDARYCONTACTTYPES,
 	"AQB__AddressInUseType__c": addressPrefCalc(indexOfConData.ADDRESSPREF),
 	"AQB__PersonalEmail__c": indexOfConData.EMAIL,
 	"AQB__BusinessEmail__c": indexOfConData.BUSINESSEMAIL,

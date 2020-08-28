@@ -18,7 +18,7 @@ vars.originalPayload default [] map ((indexOfDBConData, emplDetails ) ->
 		"AQB__AccountDefaultCountry__c": indexOfDBConData.PermCountry,
 		"AQB__AccountDefaultCountryId__c":indexOfDBConData."PermCountryId",
 		"AQB__AccountDefaultCity__c": indexOfDBConData.PermCity,
-		"AQB__AccountDefaultPhone__c": if (capitalize(indexOfDBConData.PrimaryContactType) == "Employee") "HOME" else "MAIN",
+		"AQB__AccountDefaultPhone__c": vars.phoneNumber[index].PHONE default "",
 		"Name": indexOfDBConData.AccountName
  	}
  )
