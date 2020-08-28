@@ -18,6 +18,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			<db:sql>select ALIASNAME    as &quot;AccountName&quot;
 ,EMPLID             as &quot;EmplID&quot;
 ,XC_AQ_CAE_CATEGORY as &quot;Emp_CAE&quot;
+,XC_AQ_PRI_CTCT_TYP as &quot;PrimaryContactType&quot;
+,XC_AQ_SEC_CTCT_TYP as &quot;SecondaryContactTypes&quot;
 ,SALUTATION         as &quot;Salutation&quot;
 ,FIRST_NAME         as &quot;FirstName&quot;
 ,MIDDLE_NAME        as &quot;MiddleName&quot;
@@ -41,6 +43,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM
 ,EMPLID2            as &quot;SpouseEmplID&quot;
 ,XC_AQ_CAE_CATGY_SP as &quot;SpouseCAE&quot;
+,XC_AQ_PRI_CTCTYPSP as &quot;SpousePrimaryContactType&quot;
+,XC_AQ_SEC_CTCTYPSP as &quot;SpouseSecondaryContactTypes&quot;
 ,DESCR20            as &quot;SpouseSalutation&quot;
 ,FIRST_NAME_TOEFL   as &quot;SpouseFirstName&quot;
 ,MIDDLE_NAME_TOEFL  as &quot;SpouseMiddleName&quot;
@@ -75,18 +79,11 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,END_DT             as &quot;RelatedEndDate&quot;
 ,XC_AQ_ENDED        as &quot;RelatedEnd&quot;
 ,CAST(LAST_DTTM_UPDATE AS DATE)LAST_DTTM_UPDATE
-,XC_AQ_PRI_CTCT_TYP as &quot;PrimaryContactType&quot;
-,XC_AQ_SEC_CTCT_TYP as &quot;PossibleSecondaryTypes&quot;
-,CAST(LAST_REFRESH_DTTM AS DATE)LAST_REFRESH_DTTM
-,XC_AQ_PRI_CTCTYPSP as &quot;SpousePrimaryContactType&quot;
-,XC_AQ_SEC_CTCTYPSP as &quot;SpousePossibleSecondaryTypes&quot;
-,CAST(LASTREFRESHDTTM AS DATE) LASTREFRESHDTTM
 from SYSADM.PS_XC_AQ_SPOUSE_VW
-where EMPLID = '0180903' and ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
+where  EMPLID = '0180903' and ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_CHANGED_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
-or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
-or LAST_REFRESH_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') )</db:sql>
+or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') )</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>

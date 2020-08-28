@@ -38,7 +38,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		<flow-ref doc:name="Flow Ref To cf-correlationId" doc:id="b35b3ef7-01ec-4a9d-8505-7cda779b5f9b" name="cf-correlationId" />
 		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process" doc:id="dde579ac-f455-404d-9d47-4100fca82680" name="pf-ext-accounts-sync-process" />
 		<os:store doc:name="Store Last Process Time to Object Store" doc:id="17cadb7a-c3d9-407d-afd7-4f2565687f02" objectStore="Object_store" key="lastProcessTime">
-			<os:value ><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
+			<os:value ><![CDATA[#[vars.max_LAST_UPDT_DTTM default '']]]></os:value>
 		</os:store>
 	</flow>
 </mule>
