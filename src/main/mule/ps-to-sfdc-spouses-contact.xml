@@ -188,8 +188,8 @@ output application/json
 		<db:select doc:name="Get Phone No. from Phone view" doc:id="124d0120-fc4d-4531-9981-e4d1c5e34d1e" config-ref="rpt-db-config">
 			<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC = :phoneType</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	'emplId': vars.originalPayload[0].EMPLID, 
-	'phoneType': if(vars.originalPayload[0].PRIMARYCONTACTTYPE == "Employee" or vars.originalPayload[0].SECONDARYCONTACTTYPE == "Employee") "Home" else "Main"
+	'emplId': vars.originalPayload[0].EmplID, 
+	'phoneType': if(vars.originalPayload[0].PrimaryContactType == "Employee" or vars.originalPayload[0].SecondaryContactTypes == "Employee") "Home" else "Main"
 }]]]></db:input-parameters>
 		</db:select>
 		<logger level="INFO" doc:name="Log Info" doc:id="70ceec41-27c7-4335-b74d-753a37c3bed4" message="Retrieved phone number : #[output application/json --- payload]"/>
