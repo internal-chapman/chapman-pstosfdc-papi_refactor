@@ -35,7 +35,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,CONTACTEMAIL       as &quot;OTHEREMAIL&quot;
 ,XC_AQ_EMAIL_PREF   as &quot;EMAILPREF&quot;
 ,XC_AQ_ADDR_PREF    as &quot;ADDRESSPREF&quot;
-,LAST_UPDT_DTTM     as &quot;CONTACTLASTUPDATEDTTM&quot;
+,CAST(LAST_UPDT_DTTM AS DATE) LAST_UPDT_DTTM
 ,XC_AQ_MAIL_STREET  as &quot;STREET&quot;
 ,CITY               as &quot;CITY&quot;
 ,COUNTY             as &quot;COUNTY&quot;
@@ -44,7 +44,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,POSTAL             as &quot;POSTAL&quot;
 ,COUNTRY            as &quot;COUNTRY&quot;
 ,COUNTRY_DESCR      as &quot;COUNTRYDESC&quot;
-,LAST_UPDATE_DTTM   as &quot;ACCOUNTLASTUPDATEDTTM&quot;
+,CAST(LAST_UPDATE_DTTM AS DATE)LAST_UPDATE_DTTM
 ,EMPLID_RELATED     as &quot;RELATEDEMPLID&quot;
 ,RELATION_DESCR     as &quot;RELATIONSHIP&quot;
 ,XC_AQ_REVERSE_RELA as &quot;REVRELATIONSHIP&quot;
@@ -52,7 +52,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,XC_AQ_STARTED      as &quot;STARTED&quot;
 ,END_DT             as &quot;RELENDDATE&quot;
 ,XC_AQ_ENDED        as &quot;RELENDED&quot;
-,LAST_DTTM_UPDATE   as &quot;RELATEDLASTUPDATEDTTM&quot;
+,CAST(LAST_DTTM_UPDATE AS DATE)LAST_DTTM_UPDATE
 from SYSADM.PS_XC_AQ_NONSPS_VW
 where ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50' , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50', 'YYYY-MM-DD HH24:MI:SS.FF')
