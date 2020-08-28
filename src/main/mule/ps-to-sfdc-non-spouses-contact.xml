@@ -9,10 +9,13 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
+		<http:listener doc:name="Listener" doc:id="e324a736-f276-4756-a48e-9f129b227cf5" config-ref="HTTP_Listener_config1" path="/nonspouses"/>
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync flow"]' />
 		<db:select doc:name="Select Non spouses data" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
 			<db:sql>select EMPLID       as &quot;EMPLID&quot;
 ,XC_AQ_CAE_CATEGORY as &quot;CAE&quot;
+,XC_AQ_PRI_CTCT_TYP as &quot;PRIMARYCONTACTTYPE&quot;
+,XC_AQ_SEC_CTCT_TYP as &quot;SECONDARYCONTACTTYPE&quot;
 ,SALUTATION         as &quot;SALUTATION&quot;
 ,FIRST_NAME         as &quot;FIRST_NAME&quot;
 ,MIDDLE_NAME        as &quot;MIDDLE_NAME&quot;
@@ -51,14 +54,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,END_DT             as &quot;RELENDDATE&quot;
 ,XC_AQ_ENDED        as &quot;RELENDED&quot;
 ,LAST_DTTM_UPDATE   as &quot;RELATEDLASTUPDATEDTTM&quot;
-,XC_AQ_PRI_CTCT_TYP as &quot;PRIMARYCONTACTTYPE&quot;
-,XC_AQ_SEC_CTCT_TYP as &quot;POSSIBLESECONDARYTYPES&quot;
-,LAST_REFRESH_DTTM  as &quot;AFFILIALASTUPDATEDTTM&quot;
 from SYSADM.PS_XC_AQ_NONSPS_VW
 where ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50' , 'YYYY-MM-DD HH24:MI:SS.FF')
-or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50' , 'YYYY-MM-DD HH24:MI:SS.FF')
-or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50', 'YYYY-MM-DD HH24:MI:SS.FF')
-or LAST_REFRESH_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50', 'YYYY-MM-DD HH24:MI:SS.FF') ) AND EMPLID = '1195726'</db:sql>
+or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50', 'YYYY-MM-DD HH24:MI:SS.FF')
+or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( '1990-07-13 13:50:40.50' , 'YYYY-MM-DD HH24:MI:SS.FF') ) AND EMPLID = '1195726'</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
@@ -163,6 +162,7 @@ vars.originalPayload]]></ee:set-payload>
 		<logger level="INFO" doc:name="LOG END flow" doc:id="883ddefa-58f5-41d1-94da-05006dd0358f" message="Non Spouses Sync Completed Successfully."/>
 	</sub-flow>
 	<sub-flow name="create-accounts-flow" doc:id="47aa8a3c-3f70-4542-b55e-22e20e063d64">
+		<flow-ref doc:name="Retrieve Phone" doc:id="6f95cb11-0315-4972-9c74-2f968bdaf074" name="get-phone-number-sub-flow" target="phoneNumber"/>
 		<ee:transform doc:name="DW Account payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pNSCCreateAccRequest.dwl" />
@@ -195,6 +195,17 @@ vars.originalPayload]]></ee:set-payload>
 		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Updated account" doc:id="f53ba24a-6c87-4d61-bd4b-a12488e272c7" message="Updated Non spouses contact successfully" />
 	</sub-flow>
+	<sub-flow name="get-phone-number-sub-flow" doc:id="0d942817-12e9-46d0-a4b7-afa47ce26271" >
+		<logger level="INFO" doc:name="Log Info" doc:id="af001cb1-f65d-4374-b6ff-7621cbd07a9a" message="Retriving phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
+		<db:select doc:name="Select Phone from Phone View" doc:id="660c72b8-eb87-48d3-af3c-36ece9083967" config-ref="rpt-db-config">
+			<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC = :phoneType</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'emplId': vars.originalPayload[0].EMPLID, 
+	'phoneType': if(vars.originalPayload[0].PRIMARYCONTACTTYPE == "Employee" or vars.originalPayload[0].SECONDARYCONTACTTYPE == "Employee") "Home" else "Main"
+}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Log Info" doc:id="f66de26c-26a6-4de3-9fb1-62502b2b14ee" message="Retrieved phone : #[output application/json --- payload]"/>
+	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >
 		<set-variable value="#[output application/json --- vars.AuxDataInsert map ((uuid()[0 to 7]) ++ (uuid()[9]))]" doc:name="Set UUID" doc:id="36326e84-dff4-4ae4-8db0-aab88021c655" variableName="uuid" />
 		<ee:transform doc:name="DW Aux Insert vars" doc:id="fe13dda1-33ae-46f5-a94a-e6e13732f0f0" >
@@ -211,6 +222,7 @@ vars.originalPayload]]></ee:set-payload>
 		</db:bulk-insert> -->
 	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-update" doc:id="e3b4bd31-de34-46e1-8dcb-f2a5ebd9d570" >
+		<logger level="INFO" doc:name="Log Info" doc:id="17529387-4f6a-45a9-b345-b39c06a3f263" message="Bulk update"/>
 		<ee:transform doc:name="DW Aux Update vars" doc:id="78312f16-3cea-407c-8b37-22e5f5b432c3" >
 			<ee:message >
 			</ee:message>
