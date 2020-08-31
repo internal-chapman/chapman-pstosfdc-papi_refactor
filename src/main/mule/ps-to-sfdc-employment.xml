@@ -21,6 +21,8 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 			port="8081" />
 	</http:listener-config>
 	<flow name="pf-employment" doc:id="ffebc1b9-787e-44ff-8720-91d86914a5ef">
+		<http:listener doc:name="Listener" doc:id="2b3ec47c-f722-44e3-b847-7d3021f0c836" path="/employment" config-ref="HTTP_Listener_config2"/>
+		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="b7ed0f53-8306-4808-9cde-419238e110a5" variableName="lastProcessedTime" />
 		<logger level="INFO" doc:name="LOG START"
 			doc:id="81d491e9-788d-4b66-95d2-1f25d84cdede"
 			message='#["Employment sync started from PS to SFDC at " ++ vars.lastProcessedTime]' />

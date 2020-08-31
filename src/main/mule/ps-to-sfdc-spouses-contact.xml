@@ -147,6 +147,7 @@ output application/json
 		</ee:transform>
 		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-insert" doc:id="a9d2e1ed-74ac-4f71-be99-d7a039f7576a" name="sf-spouses-contacts-ps-aux-sync-insert" />
 		<flow-ref doc:name="Retrieve Phone No." doc:id="21972d1f-8fe7-4fc6-a4ca-e8d6631ee44e" target="phoneNumber" name="get-phone-number-for-spouse"/>
+		<flow-ref doc:name="Retrieve Mobile Phone No." doc:id="dccbc164-19e9-4f27-ad8e-71f371b84893" name="get-mobile-phone" target="mobileNumber"/>
 		<ee:transform doc:name="DW Set Payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pSCCreateAccRequest.dwl" />
@@ -183,17 +184,39 @@ output application/json
 			<reconnect frequency="10000" count="3" />
 		</http:request>
 		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
-		<logger level="INFO" doc:name="LOG END  Spouses End " doc:id="9a832b6a-224f-4b68-9856-4b2e7b7bf0f2" message="Spouses Conatct Sync Completed Successfully."/>
+		<logger level="INFO" doc:name="LOG END  Spouses End" doc:id="9a832b6a-224f-4b68-9856-4b2e7b7bf0f2" message="Spouses Conatct Sync Completed Successfully."/>
+	</sub-flow>
+	<sub-flow name="get-mobile-phone" doc:id="a9d31a9e-dd1c-420a-b151-bf3df4bf084d" >
+		<logger level="INFO" doc:name="Log Info" doc:id="ce05164e-0f6f-4dfd-9b9a-c21ac5cac534" message="Retriving mobile phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
+		<db:select doc:name="Get Mobile Phone" doc:id="d14b0037-4a4c-47fc-bb45-766903c6ca0f" config-ref="rpt-db-config">
+			<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC ='Mobile'</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'emplId': vars.originalPayload[0].EmplID 
+	
+	}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Log Info" doc:id="2904faf1-e91f-464c-a82d-da8da5fef4dd" message="Retrieved phone number : #[output application/json --- payload]"/>
 	</sub-flow>
 	<sub-flow name="get-phone-number-for-spouse" doc:id="3249d810-a9a9-4785-9f3f-8f22c3bf2b5d" >
 		<logger level="INFO" doc:name="Log Info" doc:id="b0b113f6-0ecb-4e8b-a39b-7dec75083e95" message="Retriving phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
 		<db:select doc:name="Get Phone No. from Phone view" doc:id="124d0120-fc4d-4531-9981-e4d1c5e34d1e" config-ref="rpt-db-config">
 			<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC = :phoneType</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	'emplId': vars.originalPayload[0].EmplID, 
-	'phoneType': if(vars.originalPayload[0].PrimaryContactType == "Employee" or vars.originalPayload[0].SecondaryContactTypes == "Employee") "Home" else "Main"
+	'emplId': vars.originalPayload[0].EmplID,
+    'phoneType': if(vars.originalPayload[0].PRIMARYCONTACTTYPE == "Employee" or vars.originalPayload[0].SECONDARYCONTACTTYPE == "Employee") "Home" else "Main"
 }]]]></db:input-parameters>
 		</db:select>
+		<choice doc:name="Choice" doc:id="1fca6788-5149-4e84-ba70-221c59d7fade" >
+			<when expression="#[payload == null or payload == []]">
+				<db:select doc:name="Get Phone No. from Phone view" doc:id="f1ef55ca-d2d9-411e-8c48-75f37f8c7669" config-ref="rpt-db-config">
+					<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC = :phoneType</db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	'emplId': vars.originalPayload[0].EmplID,
+    'phoneType': if(vars.originalPayload[0].PRIMARYCONTACTTYPE == "Employee" or vars.originalPayload[0].SECONDARYCONTACTTYPE == "Employee") "Main" else "Home"
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+		</choice>
 		<logger level="INFO" doc:name="Log Info" doc:id="70ceec41-27c7-4335-b74d-753a37c3bed4" message="Retrieved phone number : #[output application/json --- payload]"/>
 	</sub-flow>
 	<sub-flow name="sf-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >

@@ -3,6 +3,7 @@ import * from dw::core::Strings
 output application/json skipNullOn='everywhere'
 import modules::funConType
 
+fun BDate(bd) = (bd as Date {format: "MM-dd-yy"}) as Date {format: "yyyy-MM-dd"}
 fun addressPrefCalc(ADDRESSPREF)=
     if (ADDRESSPREF == "Account Mailing") 
     		"Account Mailing"
@@ -57,11 +58,11 @@ vars.originalPayload default [] map (indexOfConData, details)->{
 	"AQB__EmailPreference__c": emailPerfCalc(indexOfConData.SpouseEmailPreference),
 	"MobilePhone": indexOfConData.SpouseMobile,
 	"OtherPhone": indexOfConData.SpouseOtherphone,
-	"AQB__PhonePreference__c":if(vars.phoneNumber[details].PHONE != null) "Account Phone" else "Mobile" default "",
+	"AQB__PhonePreference__c":if(vars.phoneNumber[details].PHONE != null) "Account Phone" else if (vars.phoneNumber[details].PHONE == null and vars.mobileNumber[details].PHONE != null) "Mobile" else "",
 	"AQB__Gender__c": indexOfConData.SpouseGender,
 	"AQB__MaritalStatus__c" : indexOfConData.SpouseMaritalStatus,
 	"AQB__PlaceofBirth__c": indexOfConData.SpouseBirthplace,
-	"Birthdate" : indexOfConData.SpouseBirthdate as Date as String {format: 'YYYY-MM-DD'}  default "",
+	"Birthdate" : indexOfConData.SpouseBirthdate as LocalDateTime {format: "yyyy-MM-dd'T'HH:mm:ss"} default '',
 	"AQB__Ethnicity__c":indexOfConData.SpouseEthnicity,
 	"AQB__PrimaryGiftRecognitionCredit_Percent__c": "",
 	"AQB__SecondaryGiftRecognitionCreditPercent__c":"100",

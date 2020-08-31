@@ -3,6 +3,7 @@ import * from dw::core::Strings
 output application/json skipNullOn='everywhere'
 import modules::funConType
 
+
 fun addressPrefCalc(ADDRESSPREF)=
     if (ADDRESSPREF == "Account Mailing") 
     		"Account Mailing"
@@ -57,11 +58,11 @@ vars.originalPayload default [] map (indexOfConData, details)->{
 	"AQB__EmailPreference__c": emailPerfCalc(indexOfConData.EmailPreference),
 	"MobilePhone": indexOfConData."Mobile",
 	"OtherPhone": indexOfConData."Otherphone",
-	"AQB__PhonePreference__c": if(vars.phoneNumber[details].PHONE != null) "Account Phone" else "Mobile" default "",
+	"AQB__PhonePreference__c": if(vars.phoneNumber[details].PHONE != null) "Account Phone" else if (vars.phoneNumber[details].PHONE == null and vars.mobileNumber[details].PHONE != null) "Mobile" else "",
 	"AQB__Gender__c": indexOfConData.Gender,
 	"AQB__MaritalStatus__c" : indexOfConData.MaritalStatus,
 	"AQB__PlaceofBirth__c": indexOfConData.Birthplace,
-	"Birthdate" : indexOfConData.Birthdate as Date as String {format: 'YYYY-MM-DD'}  default "",
+	"Birthdate" : indexOfConData.Birthdate as LocalDateTime {format: "yyyy-MM-dd'T'HH:mm:ss"} default '' ,
 	"AQB__Ethnicity__c":indexOfConData."Ethnicity",
 	"AQB__PrimaryGiftRecognitionCredit_Percent__c": "100",
 	"AQB__SecondaryGiftRecognitionCreditPercent__c":"100"
