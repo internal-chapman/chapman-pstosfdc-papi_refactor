@@ -7,6 +7,6 @@ fun y(index)=vars.sfdcSecondaryContactsResponse.data[index].id
  {
   AQB__AccountExternalID__c: item,
   AQB__PrimaryContact__c: x(index),
-  AQB__SecondaryContact__c:y(index)
- 
+  AQB__SecondaryContact__c:y(index),
+  Name: vars.originalPayload[0].AccountName
  }

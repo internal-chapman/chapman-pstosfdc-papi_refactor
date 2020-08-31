@@ -11,25 +11,32 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
 			<reconnect frequency="10000" count="3" />
-			<db:sql>SELECT EMPLID,ADDR_TYPE_SHORT,ADDRESSLONG,CITY,COUNTY,STATE,STATE_DESCR,COUNTRY_CD,COUNTRY_NM,POSTAL,XC_AQ_STATUS,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM,ADDRESSLINE FROM SYSADM.PS_XC_AQ_ADDRSS_VW where CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') </db:sql>
+			<db:sql>#[p('db.rpt.query.address')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
 		</db:select>
-		<ee:transform doc:name="DW Java To JSON" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
+		<choice doc:name="Choice" doc:id="4561687d-8e74-46e4-9682-8ac6d1074bfa" >
+			<when expression="#[sizeOf(vars.PSAddress)&gt;0]">
+				<ee:transform doc:name="DW Java To JSON" doc:id="47c8ce79-7ab9-4ddb-88a9-421ad4c10c78">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 vars.PSAddress]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSAddress.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSAddress)-1]]]></ee:set-variable>
+			<ee:variables>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(vars.PSAddress.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSAddress)-1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
-		<flow-ref doc:name="Refer to pf-address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="pf-address-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name="SET Payload" doc:id="d9338ea1-c9cc-46dc-a8e1-79cec28e1cf0" />
+				<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="fdb2a35f-403f-4c15-8bd0-0c7a70a57379" message="#[vars.PSAddress]" />
+				<flow-ref doc:name="Refer to pf-address-sync-process-batch" doc:id="3189a43e-431b-412d-9d08-5ee159dc27f4" name="pf-address-sync-process-batch" />
+				<set-payload value="#[output application/json --- payload]" doc:name="SET Payload" doc:id="d9338ea1-c9cc-46dc-a8e1-79cec28e1cf0" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Info" doc:id="82efccef-becf-4b68-8231-4c15e549eb1e" message="No new record for Address"/>
+			</otherwise>
+		</choice>
 	</flow>
 	 <flow name="pf-address-sync-process-batch" doc:id="52784469-8dc5-444b-b271-e78deff56580" >
 		<batch:job jobName="address-sync-process" doc:id="b139b952-fa77-4e4e-8217-2bbcb2a0ac86" >
@@ -110,9 +117,9 @@ GUID: vars.uuid,
 XC_AQ_SOURCE: 'PS-CS', 
 XC_AQ_SOURCE_ID: vars.AuxDetails.emplID,  
 XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.address'),
-XC_AQ_DESTINATION: '-',
+XC_AQ_DESTINATION: 'SFDC',
 XC_AQ_DEST_ID: '-',
-XC_AQ_STATUS: 'In progress',
+XC_AQ_STATUS: 'In Progress',
 DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 XC_AQ_METADATA: 'CS to SFDC',

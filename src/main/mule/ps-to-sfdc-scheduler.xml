@@ -4,13 +4,15 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<flow name="mf-ps-to-sfdc-account-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa" maxConcurrency="1" initialState="started">
+	<flow name="mf-ps-to-sfdc-account-scheduler" doc:id="571147bb-d37d-4456-be61-c1dd782424aa" maxConcurrency="1" initialState="stopped">
 		<scheduler doc:name="Scheduler" doc:id="480c13ca-afb3-41e3-8bfd-108ce00b00cd" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
-		<os:retrieve doc:name="Retrieve Last Processed Time from Object Store" doc:id="e8983c52-8b0d-40e4-a1a6-94fc48ea9d8a" key="lastProcessedTime" objectStore="Object_store"/>
+		<os:retrieve doc:name="Retrieve Last Processed Time from Object Store" doc:id="e8983c52-8b0d-40e4-a1a6-94fc48ea9d8a" key="lastProcessedTime" objectStore="Object_store" target="lastProcessedTime">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<flow-ref doc:name="Flow Ref To cf-correlationId" doc:id="4addab4c-70d5-4f1e-ac4d-1d5525119b69" name="cf-correlationId"/>
 		<flow-ref doc:name="Flow Ref To pf-spouses-contacts-sync" doc:id="893b5f3b-8547-41b5-8b7e-6b48073cd9eb" name="pf-spouses-contacts-sync" />
 		<flow-ref doc:name="Flow Ref To pf-non-spouses-contacts-sync" doc:id="fffa568f-2fc4-4006-ba82-0063468f8e93" name="pf-non-spouses-contacts-sync" />
@@ -24,13 +26,19 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			<os:value ><![CDATA[#[(vars.max_LAST_UPDT_DTTM default '') replace 'T' with(' ')]]]></os:value>
 		</os:store>
 	</flow>
-	<flow name="mf-ps-to-sfdc-extAcc-address-email-scheduler" doc:id="d27e477c-2b5f-4040-b1bd-f5350b4d6ec9" initialState="started" maxConcurrency="1">
+	<flow name="mf-ps-to-sfdc-extAcc-address-email-scheduler" doc:id="d27e477c-2b5f-4040-b1bd-f5350b4d6ec9" initialState="stopped" maxConcurrency="1">
 		<scheduler doc:name="Scheduler" doc:id="d88f2c98-bb45-4830-af4a-569907f3a570" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency.seconds}" timeUnit="HOURS"/>
 			</scheduling-strategy>
 		</scheduler>
+		<os:retrieve doc:name="Retrieve Last Process Time from Object Store" doc:id="7a3ffc9c-ef8b-40c3-83a0-ef30e082632a" key="lastProcessTime" objectStore="Object_store" target="lastProcessTime">
+			<os:default-value ><![CDATA[#[p('default.lastProcessTime')]]]></os:default-value>
+		</os:retrieve>
 		<flow-ref doc:name="Flow Ref To cf-correlationId" doc:id="b35b3ef7-01ec-4a9d-8505-7cda779b5f9b" name="cf-correlationId" />
 		<flow-ref doc:name="Flow Ref To pf-ext-accounts-sync-process" doc:id="dde579ac-f455-404d-9d47-4100fca82680" name="pf-ext-accounts-sync-process" />
+		<os:store doc:name="Store Last Process Time to Object Store" doc:id="17cadb7a-c3d9-407d-afd7-4f2565687f02" objectStore="Object_store" key="lastProcessTime">
+			<os:value ><![CDATA[#[vars.max_LAST_UPDT_DTTM default '']]]></os:value>
+		</os:store>
 	</flow>
 </mule>

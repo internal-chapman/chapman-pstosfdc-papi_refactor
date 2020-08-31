@@ -14,28 +14,34 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
 			<reconnect frequency="10000" count="3" />
-			<db:sql>SELECT EMPLID,SCC_EMAILTYP_DESC,EMAIL_ADDR,XC_AQ_STATUS,CAST(LAST_UPDT_DTTM AS DATE)LAST_UPDT_DTTM FROM SYSADM.PS_XC_AQ_EMAIL_VW where CAST(LAST_UPDT_DTTM AS DATE) &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
-</db:sql>
+			<db:sql>#[p('db.rpt.query.email')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
 			
 		
 </db:select>
-		<ee:transform doc:name="DW Java To JSON" doc:id="f347aabd-5943-4626-8d59-bcb44aa88eb8">
+		<choice doc:name="Choice" doc:id="08c2f1cd-e002-412e-841c-0abb4361ca84" >
+			<when expression="#[sizeOf(vars.PSEmail)&gt;0]">
+				<ee:transform doc:name="DW Java To JSON" doc:id="f347aabd-5943-4626-8d59-bcb44aa88eb8">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 vars.PSEmail]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="max_LAST_UPDT_DTTM" ><![CDATA[(vars.PSEmail.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEmail)-1]]]></ee:set-variable>
+			<ee:variables>
+				<ee:set-variable variableName="max_LAST_UPDT_DTTM"><![CDATA[(vars.PSEmail.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEmail)-1]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[payload]" />
-		<flow-ref doc:name="Flow Ref To pf-email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="pf-email-sync-process-batch" />
-		<set-payload value="#[output application/json --- payload]" doc:name="SET Payload Of Execution Status Of Batch" doc:id="b8e34ee9-34af-4ea9-ad47-f60b41aac6da" />
+				<logger level="INFO" doc:name="LOG INFO Transformed Resultset" doc:id="4f24474e-457a-4889-b62d-9ba7e0697bc1" message="#[payload]" />
+				<flow-ref doc:name="Flow Ref To pf-email-sync-process-batch" doc:id="70b210db-0d84-455d-b4bb-b4352e5d8802" name="pf-email-sync-process-batch" />
+				<set-payload value="#[output application/json --- payload]" doc:name="SET Payload Of Execution Status Of Batch" doc:id="b8e34ee9-34af-4ea9-ad47-f60b41aac6da" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Info" doc:id="8a3d8092-4e94-4b7d-a9d7-66a14f7f9523" message="No New records for Email"/>
+			</otherwise>
+		</choice>
 	</flow>
 	<flow name="pf-email-sync-process-batch" doc:id="6e3810ba-6ed8-405f-af40-1d755bc65716" >
 		<batch:job jobName="email-sync-process" doc:id="7945c006-71c8-4229-bb42-1e1f89322caf" >

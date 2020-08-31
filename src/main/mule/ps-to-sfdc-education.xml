@@ -13,6 +13,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0">
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="92039aee-053d-49a3-9401-9d99612bff22" message="Trigger entered for create Education " />
 		<db:select doc:name="Select Education Records" doc:id="c9b23e18-df5b-44a1-bd7c-a87e877e96a3" target="PSEducation" config-ref="rpt-db-config">
+			<reconnect frequency="10000" count="3" />
 			<db:sql >#[p('db.rpt.query.education')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
@@ -260,6 +261,7 @@ payload map
 		</ee:transform>
 						<logger level="DEBUG" doc:name="LOG INFO Education payload" doc:id="e158cd44-800e-4600-a8bd-589e46ab5da9" message="#[payload]" />
 						<http:request method="POST" doc:name="POST Create Education" doc:id="46abbe48-6535-46a3-aede-ffb64d79952e" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createEducation}" responseTimeout="120000">
+							<reconnect frequency="10000" count="3" />
 		</http:request>
 						<logger level="INFO" doc:name="LOG INFO Education payload" doc:id="5027aea2-4980-4848-8999-e83e848ee3ab" message="#[payload]" />
 						<ee:transform doc:name="DW Set Variable aux_data-update" doc:id="92d65e85-2478-437d-a59c-a62a491ff2d8" >

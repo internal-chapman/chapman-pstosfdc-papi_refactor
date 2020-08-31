@@ -28,6 +28,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 	<flow name="cf-aux-insert" doc:id="a3fed5fd-de84-4f90-b905-c2adedf43b51" >
 		<logger level="INFO" doc:name="LOG INFO Start Aux Insert" doc:id="5c9a6c98-42dc-4e42-b227-8027dddee1ed" message="Starting Aux DB Insert || CorrelationId: #[vars.correlationId]" />
 		<db:insert doc:name="Insert Into Aux DB " doc:id="fd41cae8-d720-4d2e-abfc-07c222bc353f" config-ref="aux-db-config" target="vAuxInsertResult">
+			<reconnect frequency="10000" count="3" />
 			<db:sql >#[vars.vAuxInsertQuery]</db:sql>
 			<db:input-parameters ><![CDATA[#[vars.vAuxInsertPayload]]]></db:input-parameters>
 		</db:insert>
@@ -36,26 +37,29 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 	<flow name="cf-aux-update" doc:id="5e23aa53-93cf-4716-9f81-6fddfc243502" >
 		<logger level="INFO" doc:name="LOG INFO Start Aux DB Update " doc:id="de121b62-6491-4ae1-82cb-933390c5a006" message="Starting Aux DB Update || CorrelationId : #[vars.correlationId]" />
 		<db:update doc:name="Update Status Into Aux DB" doc:id="e9ad5c85-fb5a-468d-80d6-ef9cbd299025" config-ref="aux-db-config" target="vAuxUpdateResult">
+			<reconnect frequency="10000" count="3" />
 			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
 			<db:input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:input-parameters>
 		</db:update>
 		<logger level="INFO" doc:name="LOG INFO End Aux DB Update " doc:id="7f4bb01d-3c91-4a9f-b72b-3399a6af179c" message="Completed Aux DB Update Successfully || CorrelationId : #[vars.correlationId]" />
 	</flow>
 	<flow name="cf-aux-insert-bulk" doc:id="686bfced-cab4-4ff5-a80d-503ed1f33319" >
-		<logger level="INFO" doc:name="LOG INFO Start Aux DB Insert" doc:id="5eb206e1-6866-4128-ba95-96c26f27fd0b" message="Completed Bulk Insert Into Aux Db Successfully"/>
+		<logger level="INFO" doc:name="LOG INFO Start Aux DB Insert" doc:id="5eb206e1-6866-4128-ba95-96c26f27fd0b" message="Started Bulk Insert Into Aux Db"/>
 		<db:bulk-insert doc:name="Bulk insert into Aux Db" doc:id="05e3cd6d-8bed-4aea-9fc8-b50eb7abe784" config-ref="aux-db-config" target="vAuxInsertResult">
+			<reconnect frequency="10000" count="3" />
 			<db:bulk-input-parameters ><![CDATA[#[vars.vAuxInsertPayload]]]></db:bulk-input-parameters>
 			<db:sql >#[vars.vAuxInsertQuery]</db:sql>
 		</db:bulk-insert>
 		<logger level="INFO" doc:name="LOG INFO End Aux DB Bulk Insert" doc:id="069001bc-633d-49b2-8d8a-0067e2f883a7" message="Completed Bulk Insert Into Aux Db Successfully"/>
 	</flow>
 	<flow name="cf-aux-update-bulk" doc:id="768060a3-5ef4-48f8-8e39-a6a665fc0dde" >
-		<logger level="INFO" doc:name="LOG INFO Start Aux DB Bulk Update" doc:id="35160906-b2f8-4ffa-93cd-0ef8e46226f2" message="Staring Bulk Update Into Aux Db"/>
+		<logger level="INFO" doc:name="LOG INFO Start Aux DB Bulk Update" doc:id="35160906-b2f8-4ffa-93cd-0ef8e46226f2" message="Started Bulk Update Into Aux Db"/>
 		<db:bulk-update doc:name="Bulk update into Aux Db" doc:id="2cbd448d-d7ff-4af6-9f36-3e97028b41d9" config-ref="aux-db-config" target="vAuxUpdateResult">
+			<reconnect frequency="10000" count="3" />
 			<db:bulk-input-parameters ><![CDATA[#[vars.vAuxUpdatePayload]]]></db:bulk-input-parameters>
 			<db:sql >#[vars.vAuxUpdateQuery]</db:sql>
 		</db:bulk-update>
-		<logger level="INFO" doc:name="LOG INFO End Aux DB Bulk Update" doc:id="4bea36ab-9186-4b65-8149-68506a32b35b" />
+		<logger level="INFO" doc:name="LOG INFO End Aux DB Bulk Update" doc:id="4bea36ab-9186-4b65-8149-68506a32b35b" message="Completed Bulk Update Into Aux Db Successfully"/>
 	</flow>
 	<flow name="cf-email-implementation" doc:id="32d23233-9dbb-458f-86a1-24bf853e4ba5" >
 		<logger level="INFO" doc:name="LOG INFO Start Email Send" doc:id="7dc98bf6-5e05-4217-aaa7-70d5b26c319f" message="Email Flow Started"/>
