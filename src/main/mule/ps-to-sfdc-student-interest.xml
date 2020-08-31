@@ -8,13 +8,9 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<http:listener-config name="HTTP_Listener_config2" doc:name="HTTP Listener config" doc:id="e066fd09-bc63-4a72-8791-455e43c4d749" >
-		<http:listener-connection host="0.0.0.0" port="3081" />
-	</http:listener-config>
 	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef">
-		<http:listener doc:name="Listener" doc:id="ec26c296-ed81-43ae-bcc9-2ea5991c4ffc" config-ref="HTTP_Listener_config2" path="/test"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Employment sync started" />
-		<flow-ref doc:name="Flow Ref To sf-ps-to-sfdc-student-interest-type-upsert" doc:id="d24c5db3-5a26-43a1-8052-6ee442e20d24" name="sf-ps-to-sfdc-student-interest-type-upsert"/>
+		<flow-ref doc:name="Flow Ref To sf-ps-to-sfdc-student-interest-type-upsert" doc:id="d24c5db3-5a26-43a1-8052-6ee442e20d24" name="cf-correlationId"/>
 		<db:select doc:name="Fetch Count From People Soft db" doc:id="241a87a9-8cf5-4d55-befd-b18efffcb8fd" config-ref="rpt-db-config" >
 			<db:sql >SELECT count(*) cnt FROM sysadm.PS_XC_AQ_STUINT_VW</db:sql>
 			<db:input-parameters ><![CDATA[#[{
@@ -31,13 +27,13 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			</ee:variables>
 		</ee:transform>
 				<logger level="INFO" doc:name="LOG INFO" doc:id="4fb47233-2cfe-461a-adcc-886a1050f8c2" message='#["Total Data Set Size: " ++ (payload[0].CNT default 0) ++ " Batch Count: " ++ ceil((payload[0].CNT default 0)/50)]' />
-				<set-variable value="#[1 to ceil((payload[0].CNT default 0)/vars.batch_size)]" doc:name="SET  FV batch_list" doc:id="c6fb2768-31e0-43c9-a4f6-001599597b42" variableName="batch_list" />
+				<set-variable value="#[1 to 1]" doc:name="SET  FV batch_list" doc:id="c6fb2768-31e0-43c9-a4f6-001599597b42" variableName="batch_list" />
 				<foreach doc:name="For Each" doc:id="815a8769-7076-40d6-85eb-681e94a4d022" collection="#[vars.batch_list]" >
 					<logger level="INFO" doc:name="LOG INFO" doc:id="85540f29-88ed-4640-8bfe-6394b4855d04" message='#["Fetching the records for batch: " ++ vars.counter]'/>
 					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="cad3d4e3-480e-434f-990a-d5e9957cbc5a" config-ref="rpt-db-config" >
 						<db:sql >SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,XC_AQ_DEG_LVL,LAST_UPDT_DTTM FROM (
   SELECT s.EMPLID,s.INSTITUTION_NAME,s.DESCR_GROUP_TYPE,si.DESCR_STDNT_GROUP,s.DESCR_POSITION,s.START_DT_DAY,s.START_DT_MONTH,s.START_DT_YEAR,s.END_DT_DAY,s.END_DT_MONTH,s.END_DT_YEAR,s.XC_AQ_DEG_LVL,s.LAST_UPDT_DTTM,RANK() OVER (ORDER BY s.EMPLID , s.LAST_UPDT_DTTM) as my_rank  FROM SYSADM.PS_XC_AQ_STUINT_VW s LEFT JOIN SYSADM.PS_XC_AQ_LL_INT_VW si ON s.DESCR_GROUP_TYPE = si.DESCR_GROUP_TYPE  )
-WHERE EMPLID IN ('0000040') </db:sql>
+WHERE EMPLID IN ('0000332') </db:sql>
 						<db:input-parameters ><![CDATA[#[{
 	"LAST_UPDT_DTTM": vars.lastProcessedTime,
 	"start_offset": ((vars.counter-1)* vars.batch_size) + 1,
@@ -145,7 +141,7 @@ output application/json
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL 
+				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL
 set 
 XC_AQ_DESTINATION = 'SFDC', 
 XC_AQ_DEST_ID = :id,
@@ -155,7 +151,7 @@ XC_AQ_METADATA = :metadata,
 DESCR250 = :description,
 XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE,
 XC_AQ_DEST_TYPE = :XC_AQ_DEST_TYPE
-where XC_AQ_SOURCE_TYPE = :tuuid"]]></ee:set-variable>
+where GUID = :tuuid"]]></ee:set-variable>
 				<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
 output application/json
 fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
@@ -165,9 +161,9 @@ fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
 	"XC_AQ_SOURCE_TYPE": p('auxDBColumns.XC_AQ_SOURCE_TYPE.studentInterest'),
     "XC_AQ_DEST_TYPE": p('auxDBColumns.XC_AQ_DEST_TYPE.studentInterest'),
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"status": if(payload[index].success == true ) "COMPLETED" else "ERROR",// ERROR or COMPLETED
 	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
-	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else (payload[index].errors.message reduce($$++ ' , ' ++$))[0 to size(payload[index].errors.message reduce($$++ ' , ' ++$))],
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error Occurred while Insert/Updated in SFDC",
 	"tuuid": vars.aux_insert_response[index].uuid
 }]]></ee:set-variable>
 			</ee:variables>
