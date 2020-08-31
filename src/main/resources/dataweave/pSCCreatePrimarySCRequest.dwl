@@ -57,7 +57,7 @@ vars.originalPayload default [] map (indexOfConData, details)->{
 	"AQB__EmailPreference__c": emailPerfCalc(indexOfConData.EmailPreference),
 	"MobilePhone": indexOfConData."Mobile",
 	"OtherPhone": indexOfConData."Otherphone",
-	"AQB__PhonePreference__c":"Account Phone",
+	"AQB__PhonePreference__c": if(vars.phoneNumber[details].PHONE != null) "Account Phone" else "Mobile" default "",
 	"AQB__Gender__c": indexOfConData.Gender,
 	"AQB__MaritalStatus__c" : indexOfConData.MaritalStatus,
 	"AQB__PlaceofBirth__c": indexOfConData.Birthplace,
