@@ -140,7 +140,7 @@ if(vars.dbRelationshipPayload != null)(if(vars.dbRelationshipPayload.'RELATION_D
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="5218880f-973b-448f-b2b1-900eea9ad140" >
 			<when expression="#[vars.spouseBool == false]">
-				<flow-ref doc:name="Create account and contact" doc:id="d6f83161-6ffb-49cb-87c1-bce961cd702d" name="create-accounts-flow" />
+				<flow-ref doc:name="Create account and contact" doc:id="d6f83161-6ffb-49cb-87c1-bce961cd702d" name="pf-ps-to-sfdc-non-spouses-contactFlow" />
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="LOG INFO Contact exists" doc:id="504ed26a-6bed-4fd9-a343-89a5e22936c9" message="Account is a spouse. Skipping account and contact creation."/>
@@ -162,16 +162,16 @@ vars.originalPayload]]></ee:set-payload>
 		<flow-ref doc:name="Update AUX DB" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-non-spouses-contacts-ps-aux-sync-update" />
 		<logger level="INFO" doc:name="LOG END flow" doc:id="883ddefa-58f5-41d1-94da-05006dd0358f" message="Non Spouses Sync Completed Successfully."/>
 	</sub-flow>
-	<sub-flow name="create-accounts-flow" doc:id="47aa8a3c-3f70-4542-b55e-22e20e063d64">
-		<flow-ref doc:name="Retrieve Phone" doc:id="6f95cb11-0315-4972-9c74-2f968bdaf074" name="get-phone-number-sub-flow" target="phoneNumber"/>
-		<flow-ref doc:name="Retrieve Mobile Phone" doc:id="b4220956-16b9-44f9-b0fb-8037ca738556" name="sf-get-mobile-phone-number" target="mobileNumber"/>
+	<flow name="pf-ps-to-sfdc-non-spouses-contactFlow" doc:id="415beae3-1c85-4069-bd4d-8cb912b33b78" >
+		<flow-ref doc:name="Retrieve Phone" doc:id="6f95cb11-0315-4972-9c74-2f968bdaf074" name="get-phone-number-sub-flow" target="phoneNumber" />
+		<flow-ref doc:name="Retrieve Mobile Phone" doc:id="b4220956-16b9-44f9-b0fb-8037ca738556" name="sf-get-mobile-phone-number" target="mobileNumber" />
 		<ee:transform doc:name="DW Account payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pNSCCreateAccRequest.dwl" />
 						</ee:message>
 					</ee:transform>
 		<logger level="DEBUG" doc:name="LOG INFO Create account" doc:id="0263d5b6-cf41-4319-a909-44a98c102265" message="Creating Non spouses account" />
-		<http:request method="POST" doc:name="POST Create Account" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config" >
+		<http:request method="POST" doc:name="POST Create Account" doc:id="c5124567-286c-4d22-b49d-d6efc19d6a25" path="${http.request.system.sfdc.path.createAccount}" responseTimeout="120000" target="sfdcAccountsResponse" config-ref="sfdc-system-http-request-config">
 			<reconnect />
 		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Account created" doc:id="b246f0c0-4674-47c1-8a08-622e57cad9b3" message="Created Non spouses account successfully" />
@@ -181,7 +181,7 @@ vars.originalPayload]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Create contact" doc:id="1a975559-5e24-4c85-8c78-195a8a489be2" message="Creating Non spouses contact" />
-		<http:request method="POST" doc:name="POST Create Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcContactsResponse" config-ref="sfdc-system-http-request-config" >
+		<http:request method="POST" doc:name="POST Create Contact" doc:id="91b14def-cf43-4064-8000-12543c27e9c5" path="${http.request.system.sfdc.path.createContact}" responseTimeout="120000" target="sfdcContactsResponse" config-ref="sfdc-system-http-request-config">
 			<reconnect />
 		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Contact created" doc:id="cbd0fd13-a4b0-45dc-b461-3ee3f33d6474" message="Created Non spouses contact successfully" />
@@ -192,11 +192,11 @@ vars.originalPayload]]></ee:set-payload>
 						<ee:variables />
 					</ee:transform>
 		<logger level="INFO" doc:name="LOG INFO Update account" doc:id="aef12dde-3aa0-4aaa-ac33-edd12e336464" message="Updating Non spouses contact successfully" />
-		<http:request method="POST" doc:name="POST Update Account" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config" >
+		<http:request method="POST" doc:name="POST Update Account" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config">
 			<reconnect />
 		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Updated account" doc:id="f53ba24a-6c87-4d61-bd4b-a12488e272c7" message="Updated Non spouses contact successfully" />
-	</sub-flow>
+	</flow>
 	<sub-flow name="sf-get-mobile-phone-number" doc:id="ded2c825-810b-4bf7-95fe-2a9333e4c69f" >
 		<logger level="INFO" doc:name="Log Info" doc:id="7af25bb8-f1e9-402f-9b7b-96cead05b046" message="Retriving mobile phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
 		<db:select doc:name="get mobile number" doc:id="5d5d6565-de54-4d1a-b1be-4ea0fb61998b" config-ref="rpt-db-config">
