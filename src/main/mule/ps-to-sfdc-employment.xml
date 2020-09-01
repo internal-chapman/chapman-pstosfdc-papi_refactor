@@ -20,6 +20,39 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 		<http:listener-connection host="0.0.0.0"
 			port="8081" />
 	</http:listener-config>
+	<flow name="sfdc-sys-call-employment" doc:id="67c6c668-86ed-4727-9891-8a1d925a7254" >
+		<http:request method="POST" doc:name="Call SF System Api" doc:id="303eac09-41a4-4303-9162-2560e51368cf" config-ref="sfdc-system-http-request-config" path="/employment">
+							<reconnect frequency="10000" count="3" />
+						</http:request>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="32dbbc92-49b0-40b7-b777-453a7b8eff92" >
+				<ee:transform doc:name="DW set variables" doc:id="3ce85847-ef12-41e6-a9f9-8f5f83ec4c3f" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(payload default[]) map(value, index) ->{
+	"id": value.id default 'NA',
+	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.employment'),
+	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.employment'),
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(value.success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+	"description": if(value.success == true) "Record Insert or Updated in SFDC" else if (error.description != null) (error.description) else "Error while Insert or Update in SFDC",
+	"tuuid": vars.vAuxInsertPayload[index].GUID
+}
+]]></ee:set-variable>
+						<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, XC_AQ_DEST_TYPE = :destType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+where GUID = :tuuid"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Bulk update to Aux DB" doc:id="46ec2441-d544-486d-9a91-a0bcdb8c1379" name="cf-aux-update-bulk"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
 	<flow name="pf-employment" doc:id="ffebc1b9-787e-44ff-8720-91d86914a5ef">
 		<http:listener doc:name="Listener" doc:id="2b3ec47c-f722-44e3-b847-7d3021f0c836" path="/employment" config-ref="HTTP_Listener_config2"/>
 		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="b7ed0f53-8306-4808-9cde-419238e110a5" variableName="lastProcessedTime" />
@@ -58,11 +91,7 @@ payload]]></ee:set-payload>
 							name="cf-aux-insert-bulk" target="vars.EmployentAuxSyncPayload" />
 						<logger level="INFO" doc:name="LOG INFO Request"
 							doc:id="a516bcaa-abf6-4f3d-ae56-a9faa21070ae" message='Employment record request to system:  #[payload]' />
-						<try doc:name="Try" doc:id="26cf0f40-5468-4a02-bf26-bea7c430bc33" >
-							<http:request method="POST" doc:name="Call SF System Api" doc:id="303eac09-41a4-4303-9162-2560e51368cf" config-ref="sfdc-system-http-request-config" path="/employment">
-							<reconnect frequency="10000" count="3" />
-						</http:request>
-						</try>
+						<flow-ref doc:name="Flow Ref to sfdc-sys-call-employment" doc:id="dc7cc5b4-0f9b-4d4d-bf05-cb4ac433c63c" name="sfdc-sys-call-employment" />
 						<logger level="INFO" doc:name="LOG INFO Response"
 							doc:id="01bec7d8-6de8-4786-88ec-e9eec77a9d1e" message="Employment record response : #[payload]" />
 						<ee:transform doc:name="DW Set variables"
