@@ -30,9 +30,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		</choice>
 	</flow>
 	<flow name="pf-ps-to-sfdc-education-batch" doc:id="d2b8a41c-38d7-4a23-a7b0-931337e34c81" >
-		<batch:job jobName="education-sfdc-sync-batch-Job" doc:id="bfbf568d-491a-4151-a648-3dbbf81b0bcc" >
+		<batch:job jobName="education-sfdc-sync-batch-Job" doc:id="bfbf568d-491a-4151-a648-3dbbf81b0bcc" maxFailedRecords="-1">
 			<batch:process-records >
-				<batch:step name="Batch_Step" doc:id="8956c4e4-c6a2-4939-94f1-574beac9138d">
+				<batch:step name="Batch_Step" doc:id="8956c4e4-c6a2-4939-94f1-574beac9138d" acceptPolicy="ALL">
 					<batch:aggregator doc:name="Batch Aggregator" doc:id="64627df8-b32f-4168-b8fa-685c71293432" size="20">
 						<ee:transform doc:name="DW Set Variable aux_data_insert" doc:id="43c72a58-449f-4325-afa0-ef3196f0207d">
 			<ee:message>
@@ -260,9 +260,11 @@ payload map
 			</ee:message>
 		</ee:transform>
 						<logger level="DEBUG" doc:name="LOG INFO Education payload" doc:id="e158cd44-800e-4600-a8bd-589e46ab5da9" message="#[payload]" />
-						<http:request method="POST" doc:name="POST Create Education" doc:id="46abbe48-6535-46a3-aede-ffb64d79952e" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createEducation}" responseTimeout="120000">
+						<try doc:name="Try" doc:id="70a22f5b-3c29-4278-8a31-2f621cf941af" >
+							<http:request method="POST" doc:name="POST Create Education" doc:id="46abbe48-6535-46a3-aede-ffb64d79952e" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createEducation}" responseTimeout="120000">
 							<reconnect frequency="10000" count="3" />
 		</http:request>
+						</try>
 						<logger level="INFO" doc:name="LOG INFO Education payload" doc:id="5027aea2-4980-4848-8999-e83e848ee3ab" message="#[payload]" />
 						<ee:transform doc:name="DW Set Variable aux_data-update" doc:id="92d65e85-2478-437d-a59c-a62a491ff2d8" >
 							<ee:message >

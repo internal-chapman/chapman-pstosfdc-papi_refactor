@@ -34,9 +34,9 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 	"LAST_UPDT_DTTM": vars.lastProcessedTime
 }]]]></db:input-parameters>
 		</db:select>
-		<batch:job jobName="ps-to-sfdc-employment-batch" doc:id="5f5ee033-2e6c-4982-b1b9-b04092128de3">
+		<batch:job jobName="ps-to-sfdc-employment-batch" doc:id="5f5ee033-2e6c-4982-b1b9-b04092128de3" maxFailedRecords="-1">
 			<batch:process-records>
-				<batch:step name="ps-to-sfdc-employment-sync" doc:id="47d06209-5479-4d13-972e-5ce29181d130">
+				<batch:step name="ps-to-sfdc-employment-sync" doc:id="47d06209-5479-4d13-972e-5ce29181d130" acceptPolicy="ALL">
 					<batch:aggregator doc:name="Batch Aggregator"
 						doc:id="27b7d45b-0671-48c7-9187-480da66011f3" size="20">
 						<logger level="INFO" doc:name="LOG INFO"
@@ -58,11 +58,11 @@ payload]]></ee:set-payload>
 							name="cf-aux-insert-bulk" target="vars.EmployentAuxSyncPayload" />
 						<logger level="INFO" doc:name="LOG INFO Request"
 							doc:id="a516bcaa-abf6-4f3d-ae56-a9faa21070ae" message='Employment record request to system:  #[payload]' />
-						<http:request method="POST" doc:name="Call SF System Api"
-							doc:id="303eac09-41a4-4303-9162-2560e51368cf" config-ref="sfdc-system-http-request-config"
-							path="/employment" >
+						<try doc:name="Try" doc:id="26cf0f40-5468-4a02-bf26-bea7c430bc33" >
+							<http:request method="POST" doc:name="Call SF System Api" doc:id="303eac09-41a4-4303-9162-2560e51368cf" config-ref="sfdc-system-http-request-config" path="/employment">
 							<reconnect frequency="10000" count="3" />
 						</http:request>
+						</try>
 						<logger level="INFO" doc:name="LOG INFO Response"
 							doc:id="01bec7d8-6de8-4786-88ec-e9eec77a9d1e" message="Employment record response : #[payload]" />
 						<ee:transform doc:name="DW Set variables"

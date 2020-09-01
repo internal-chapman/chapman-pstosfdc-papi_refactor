@@ -41,9 +41,9 @@ vars.PSPhone]]></ee:set-payload>
 		</choice>
 	</flow>
 	<flow name="pf-phone-sync-process-batch" doc:id="6ba067f8-e53b-4c7f-b602-4bd48fcee7b4" >
-		<batch:job jobName="phone-sync-process" doc:id="68ca8a79-ce78-4fd0-878c-2b8c3a4534d5" >
+		<batch:job jobName="phone-sync-process" doc:id="68ca8a79-ce78-4fd0-878c-2b8c3a4534d5" maxFailedRecords="-1">
 			<batch:process-records >
-				<batch:step name="sync-ps-records-to-sfdc" doc:id="44d68f82-4d3f-4ea2-bee5-36ed9d09cb90" >
+				<batch:step name="sync-ps-records-to-sfdc" doc:id="44d68f82-4d3f-4ea2-bee5-36ed9d09cb90" acceptPolicy="ALL">
 					<ee:transform doc:name="DW Map Payload Address EmplId" doc:id="5d86ccdf-5d7b-41e7-9e3d-54076b3fd356" >
 						<ee:message />
 						<ee:variables >
@@ -62,15 +62,17 @@ output application/json
 					</ee:transform>
 					<flow-ref doc:name="Flow Ref To cf-generate-uuid" doc:id="5e731984-9ea1-4304-a326-2f696ab912dd" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-insert" doc:id="e833c480-1f80-44e4-bed5-d8f5d29a50aa" name="sf-phone-persistance-aux-insert" />
-					<http:request method="POST" doc:name="POST Create Address" doc:id="36cd069a-b9b5-4df5-b101-5f24c53f4367" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
+					<try doc:name="Try" doc:id="b7be9b18-163b-44a5-b293-66c533998ad8" >
+						<http:request method="POST" doc:name="POST Create Address" doc:id="36cd069a-b9b5-4df5-b101-5f24c53f4367" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
 						<reconnect frequency="10000" count="3" />
-						<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
-						<http:query-params ><![CDATA[#[output application/java
+						<http:body><![CDATA[#[output application/json --- payload]]]></http:body>
+						<http:query-params><![CDATA[#[output application/java
 ---
 {
 	"ViewName" : "phone"
 }]]]></http:query-params>
 					</http:request>
+					</try>
 					<logger level="INFO" doc:name="LOG INFO for SFDC Results" doc:id="28ef80cb-2713-4fed-805c-c0f8be5d95fc" message="#[vars.sdfc_address_result]" />
 					<set-variable value="#[vars.uuid]" doc:name="Set Variable id" doc:id="d727e7f2-b0cb-4572-8cd2-ab1f77cafb47" variableName="id" />
 					<flow-ref doc:name="Flow Ref To sf-phone-persistance-aux-update" doc:id="3b1da5d8-21d6-40eb-b53d-7aa903d3fd3b" name="sf-phone-persistance-aux-update" />
