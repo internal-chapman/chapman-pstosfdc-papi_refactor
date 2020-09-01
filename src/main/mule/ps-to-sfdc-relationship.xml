@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="pf-relationship" doc:id="996c86a2-e6ad-420f-863b-4c606435bfc8" >
+		<logger level="INFO" doc:name="Logger" doc:id="185e82da-08b5-486c-9536-77b4b98e10e8" />
+		<db:select doc:name="Relationship Data" doc:id="c257f8bd-16d4-4aee-80b2-ed83fc3eba4b" config-ref="rpt-db-config">
+			<db:sql >SELECT EMPLID as EMPLID, EMPLID_RELATED as &quot;RELATEDEMPLID&quot;, RELATION_DESCR as &quot;RELATIONSHIP&quot;, XC_AQ_REVERSE_RELA as &quot;REVRELATIONSHIP&quot; FROM SYSADM.PS_XC_AQ_INRELA_VW where ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD') AND EMPLID = '1195726' </db:sql>
+		</db:select>
+		<batch:job jobName="ps-to-sfdc-relationship-batch" doc:id="d86f8f87-954d-4896-bec9-876b5d9e6e92" maxFailedRecords="-1">
+			<batch:process-records >
+				<batch:step name="ps-to-sfdc-relationship-sync" doc:id="bb2e5136-e643-4b3e-8971-ec3309f97fdb" acceptPolicy="ALL">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="35b64651-6eb0-479d-a76a-31072379ec7c" size="20"/>
+				</batch:step>
+			</batch:process-records>
+		</batch:job>
+		<logger level="INFO" doc:name="Logger" doc:id="07b3329b-3fe5-465a-99df-4238c67a338d" />
+	</flow>
+</mule>

@@ -15,15 +15,15 @@ vars.uuid map(value, index) -> {
 	"status": if(vars.sfdcContactsResponse != null) (if ((vars.sfdcContactsResponse.data[index].success == true))
       "Completed"
     else
-      'Error') else 'Completed',
+      'Error') else 'Error',
 	"metadata": if(vars.sfdcContactsResponse != null) (if ((vars.sfdcContactsResponse.data[index].success == true))
       "Record Insert or Updated in SFDC"
     else
-      "Error while Insert or Update in SFDC") else "Contact type : Spouses",
+      "Error while Insert or Update in SFDC") else "Error while Insert or Update in SFDC",
 	"description": if(vars.sfdcContactsResponse != null) (if ((vars.sfdcContactsResponse.data[index].success == true))
       "Non Spouses Contacts Record Insert or Updated in SFDC"
     else if ((vars.sfdcContactsResponse.data[index].success == false))
       ((vars.sfdcContactsResponse.data[index].errors.message) reduce ($$ ++ ' , ' ++ $))[0 to size((vars.sfdcContactsResponse.data[index].errors.message) reduce ($$ ++ ' , ' ++ $))]
     else
-      "Error Occurred") else "Contact type : Spouses"
+      "Error Occurred") else "Error while Insert or Update in SFDC"
 }

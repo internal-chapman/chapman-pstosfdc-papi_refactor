@@ -82,7 +82,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 ,XC_AQ_ENDED        as &quot;RelatedEnd&quot;
 ,CAST(LAST_DTTM_UPDATE AS DATE)LAST_DTTM_UPDATE
 from SYSADM.PS_XC_AQ_SPOUSE_VW
-where  EMPLID in ('0180903') and ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
+where  EMPLID in ('0180903','2386574') and ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_CHANGED_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') )</db:sql>
@@ -185,6 +185,34 @@ output application/json
 		</http:request>
 		<flow-ref doc:name="Flow Ref sf-spouses-contacts-ps-aux-sync-update" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-spouses-contacts-ps-aux-sync-update" />
 		<logger level="INFO" doc:name="LOG END  Spouses End" doc:id="9a832b6a-224f-4b68-9856-4b2e7b7bf0f2" message="Spouses Conatct Sync Completed Successfully." />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="353899df-f519-4448-8399-e85fde771efa" >
+				<ee:transform doc:name="Transform Message" doc:id="1ec1a7a7-f833-48b4-81ab-101ce36dc1ce" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA[p('db.aux.query.SpouseUpdate')]]></ee:set-variable>
+						<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+vars.uuid map 
+{	
+	"id": vars.sfdcPrimaryContactsResponse.data[$$].id default "NA" ,
+	"tuuid": $,
+	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.contacts'),
+	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.Spouses'),
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "COMPLETED" else 'ERROR',
+	"metadata": if((vars.sfdcPrimaryContactsResponse.data[$$].success  == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+	"description": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Spouses Contacts Record Insert or Updated in SFDC" else if (error.description != null) (error.description) else 
+	"Error while upserting the data in salesforce"
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="f287e1ea-9d9b-4a98-8837-4a3975acc22e" name="cf-aux-update-bulk" target="UpdateAuxResponse"/>
+			</on-error-continue>
+		</error-handler>
 	</flow>
 	<sub-flow name="get-mobile-phone" doc:id="a9d31a9e-dd1c-420a-b151-bf3df4bf084d" >
 		<logger level="INFO" doc:name="Log Info" doc:id="ce05164e-0f6f-4dfd-9b9a-c21ac5cac534" message="Retriving mobile phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
