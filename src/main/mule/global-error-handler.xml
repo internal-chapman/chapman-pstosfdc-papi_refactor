@@ -45,7 +45,7 @@ output application/json
 				</ee:variables>
 			</ee:transform>
 			<choice doc:name="Choice" doc:id="76cad9cc-64bb-4e17-b212-105fb90099b8" >
-				<when expression="#[p('email.error.sendNotification' == 'true')]">
+				<when expression="#[p('email.error.sendNotification') == 'true']">
 					<ee:transform doc:name="DW Set Template Variabels" doc:id="540e1ba5-0d50-47a4-a708-39271e2d9630">
 				<ee:message>
 				</ee:message>

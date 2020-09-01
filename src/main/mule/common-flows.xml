@@ -63,9 +63,9 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 	</flow>
 	<flow name="cf-email-implementation" doc:id="32d23233-9dbb-458f-86a1-24bf853e4ba5" >
 		<logger level="INFO" doc:name="LOG INFO Start Email Send" doc:id="7dc98bf6-5e05-4217-aaa7-70d5b26c319f" message="Email Flow Started"/>
-		<email:send doc:id="b9e24655-1c31-41d3-9074-fdf37765763a" config-ref="Email_SMTP" subject="#[vars.vEmailSubject]" doc:name="Send Email">
+		<email:send doc:id="b9e24655-1c31-41d3-9074-fdf37765763a" config-ref="Email_SMTP" subject="#[vars.vEmailSubject]" doc:name="Send Email" fromAddress="mulesofterrorrpt@chapman.edu">
 			<email:to-addresses >
-				<email:to-address value="deepanshu.gupta@apisero.com" />
+				<email:to-address value="avanish.rai@apisero.com" />
 			</email:to-addresses>
 			<email:body contentType="text/html" encoding="UTF-8">
 				<email:content ><![CDATA[#[vars.vEmailBody]]]></email:content>

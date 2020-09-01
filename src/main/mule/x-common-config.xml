@@ -39,7 +39,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 		<os:connection />
 	</os:config>
 	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="e7d34c2f-3b0c-4581-90ac-d6baf3e6e4b9" >
-		<email:smtp-connection host="smtp.gmail.com" port="587" connectionTimeout="30" readTimeout="30">
+		<email:smtp-connection host="smtp.office365.com" port="587" connectionTimeout="30" readTimeout="30" user="mulesofterrorrpt@chapman.edu" password="CUmule20!">
 			<email:properties >
 				<email:property key="mail.smtp.starttls.enable" value="true" />
 			</email:properties>
