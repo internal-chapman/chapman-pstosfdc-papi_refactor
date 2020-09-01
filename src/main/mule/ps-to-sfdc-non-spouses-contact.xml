@@ -162,6 +162,7 @@ vars.originalPayload]]></ee:set-payload>
 	</sub-flow>
 	<sub-flow name="create-accounts-flow" doc:id="47aa8a3c-3f70-4542-b55e-22e20e063d64">
 		<flow-ref doc:name="Retrieve Phone" doc:id="6f95cb11-0315-4972-9c74-2f968bdaf074" name="get-phone-number-sub-flow" target="phoneNumber"/>
+		<flow-ref doc:name="Retrieve Mobile Phone" doc:id="b4220956-16b9-44f9-b0fb-8037ca738556" name="sf-get-mobile-phone-number" target="mobileNumber"/>
 		<ee:transform doc:name="DW Account payload" doc:id="6e84657c-62dd-4c36-a4ed-7d21a76afb96">
 						<ee:message>
 				<ee:set-payload resource="dataweave/pNSCCreateAccRequest.dwl" />
@@ -194,6 +195,16 @@ vars.originalPayload]]></ee:set-payload>
 		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Updated account" doc:id="f53ba24a-6c87-4d61-bd4b-a12488e272c7" message="Updated Non spouses contact successfully" />
 	</sub-flow>
+	<sub-flow name="sf-get-mobile-phone-number" doc:id="ded2c825-810b-4bf7-95fe-2a9333e4c69f" >
+		<logger level="INFO" doc:name="Log Info" doc:id="7af25bb8-f1e9-402f-9b7b-96cead05b046" message="Retriving mobile phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
+		<db:select doc:name="get mobile number" doc:id="5d5d6565-de54-4d1a-b1be-4ea0fb61998b" config-ref="rpt-db-config">
+			<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC ='Mobile'</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'emplId': vars.originalPayload[0].EMPLID, 
+}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Log Info" doc:id="368a227e-7dc2-438e-af66-d9f09cb855c4" message="Retrieved mobile phone : #[output application/json --- payload]"/>
+	</sub-flow>
 	<sub-flow name="get-phone-number-sub-flow" doc:id="0d942817-12e9-46d0-a4b7-afa47ce26271" >
 		<logger level="INFO" doc:name="Log Info" doc:id="af001cb1-f65d-4374-b6ff-7621cbd07a9a" message="Retriving phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
 		<db:select doc:name="Select Phone from Phone View" doc:id="660c72b8-eb87-48d3-af3c-36ece9083967" config-ref="rpt-db-config">
@@ -203,6 +214,17 @@ vars.originalPayload]]></ee:set-payload>
 	'phoneType': if(vars.originalPayload[0].PRIMARYCONTACTTYPE == "Employee" or vars.originalPayload[0].SECONDARYCONTACTTYPE == "Employee") "Home" else "Main"
 }]]]></db:input-parameters>
 		</db:select>
+		<choice doc:name="Choice" doc:id="69569b25-5406-4ec2-a0b0-cf3b331d03dc" >
+			<when expression="#[payload == null or payload ==[]]">
+				<db:select doc:name="Select Phone from Phone View" doc:id="567b9cc0-28e7-41f1-8b94-5b9daa7bd323" config-ref="rpt-db-config">
+					<db:sql >SELECT PHONE FROM SYSADM.PS_XC_AQ_PHONE_VW WHERE EMPLID = :emplId AND SCC_PHONETYP_DESC = :phoneType</db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	'emplId': vars.originalPayload[0].EMPLID, 
+	'phoneType': if(vars.originalPayload[0].PRIMARYCONTACTTYPE == "Employee" or vars.originalPayload[0].SECONDARYCONTACTTYPE == "Employee") "Main" else "Home"
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+		</choice>
 		<logger level="INFO" doc:name="Log Info" doc:id="f66de26c-26a6-4de3-9fb1-62502b2b14ee" message="Retrieved phone : #[output application/json --- payload]"/>
 	</sub-flow>
 	<sub-flow name="sf-non-spouses-contacts-ps-aux-sync-insert" doc:id="919e5b59-58f6-4aa2-bc81-228f69e7cfd3" >
