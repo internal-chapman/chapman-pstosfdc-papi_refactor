@@ -47,8 +47,6 @@ output application/json
 		</error-handler>
 	</flow>
 	<flow name="pf-ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
-		<http:listener doc:name="Listener" doc:id="b6719904-a3bc-4754-9d89-27db1005a8fe" config-ref="HTTP_Listener_config2" path="/email"/>
-		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="77cce2e4-554c-40f3-930d-d29897ae7a61" variableName="lastProcessedTime"/>
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
 		<db:select doc:name="Select Email from PS DB" doc:id="239e7884-0677-4745-b18b-25759874d533" config-ref="rpt-db-config" target="PSEmail">
 			<reconnect frequency="10000" count="3" />
