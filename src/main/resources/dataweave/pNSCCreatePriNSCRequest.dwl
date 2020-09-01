@@ -55,10 +55,11 @@ vars.originalPayload default [] map (indexOfConData, details) -> {
 	"AQB__EmailPreference__c": emailPerfCalc(indexOfConData.EMAILPREF),
 	"MobilePhone": indexOfConData.Mobile,
 	"OtherPhone": indexOfConData.Otherphone,
+	"AQB__PhonePreference__c": if(vars.phoneNumber[details].PHONE != null) "Account Phone" else if (vars.phoneNumber[details].PHONE == null and vars.mobileNumber[details].PHONE != null) "Mobile" else "",
 	"AQB__Gender__c": indexOfConData.GENDER,
 	"AQB__MaritalStatus__c": indexOfConData.MARITALSTATUS,
 	"AQB__PlaceofBirth__c": indexOfConData.BIRTHPLACE,
-	"Birthdate": indexOfConData.BIRTHDATE as LocalDateTime {format: "yyyy-MM-dd'T'HH:mm:ss"} as String {format: 'YYYY-MM-DD'} default '',
+	"Birthdate": indexOfConData.BIRTHDATE as LocalDateTime {format: "yyyy-MM-dd'T'HH:mm:ss"} default '',
 	"AQB__Ethnicity__c": indexOfConData.ETHNICITY,
 	"AQB__PrimaryGiftRecognitionCredit_Percent__c": "100",
 	"AQB__SecondaryGiftRecognitionCreditPercent__c": "100"
