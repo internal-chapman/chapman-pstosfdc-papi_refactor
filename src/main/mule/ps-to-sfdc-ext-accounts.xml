@@ -9,6 +9,48 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
+	<flow name="sfdc-sys-call-ext-account" doc:id="6392664a-eba2-4d1a-86aa-d52ca8d9e088" >
+		<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}">
+						<reconnect frequency="10000" count="3" />
+					</http:request>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a6510026-c894-48cb-b9d4-8aaead1837a5" >
+				<ee:transform doc:name="DW Set  Aux Update Variables" doc:id="7827608a-cff0-4c7b-b54a-500a61d25fe6" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
+output application/json
+
+
+---
+{
+	GUID: vars.uuid,
+	XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.extAccounts'),
+	XC_AQ_DESTINATION: 'SFDC',
+	XC_AQ_DEST_ID: payload.data[0].id,
+	XC_AQ_DEST_TYPE: p('auxDBColumns.XC_AQ_DEST_TYPE.extAccounts'),
+	DT_TIMESTAMP: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	XC_AQ_STATUS: if(payload.data[0].success == true) "Completed" else "Error",
+	XC_AQ_METADATA: "Record inserted in SFDC",
+	DESCR250: if(payload.data[0].success == true) "Record inserted/updated in SFDC" else if (error.description != null) (error.description) else "Record is not inserted/updated in SFDC"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["UPDATE SYSADM.PS_XC_AQ_AUX_TBL 
+set XC_AQ_DESTINATION = :XC_AQ_DESTINATION, 
+XC_AQ_DEST_ID = :XC_AQ_DEST_ID,
+XC_AQ_DEST_TYPE= :XC_AQ_DEST_TYPE,
+DT_TIMESTAMP = :DT_TIMESTAMP,
+XC_AQ_STATUS = :XC_AQ_STATUS,
+XC_AQ_METADATA = :XC_AQ_METADATA,
+DESCR250 = :DESCR250,
+XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE
+WHERE GUID= :GUID"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Ref To cf-aux-update" doc:id="bc12e519-547d-4f97-80af-07324e9de1f3" name="cf-aux-update"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
 		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
@@ -54,11 +96,7 @@ payload map(account, index) -> {
 					<logger level="INFO" doc:name="LOG INFO" doc:id="29a2b9f2-dbbc-44d1-b915-b88bf111b828" message="Account record request: #[payload]"/>
 					<flow-ref doc:name="FLow Ref To cf-generate-uuid" doc:id="58c242c0-13fa-4976-9306-24aab7558a10" name="cf-generate-uuid" />
 					<flow-ref doc:name="Flow Ref To sf-ext-accounts-aux-insert" doc:id="8ba7e190-587f-44ac-ac6d-c288845a0bd7" name="sf-ext-accounts-aux-insert" target="vars.auxSyncPayload" />
-					<try doc:name="Try" doc:id="0335f8c5-c027-4749-baed-3e1402bae6e0" >
-						<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}">
-						<reconnect frequency="10000" count="3" />
-					</http:request>
-					</try>
+					<flow-ref doc:name="Flow Ref to sfdc-sys-call-ext-account" doc:id="d5da9094-9f6a-44a7-8b45-3bcd6da1d575" name="sfdc-sys-call-ext-account" />
 					<ee:transform doc:name="DW JSON To Java" doc:id="fdb04c8e-be4f-49f4-9f60-19402a4a02ae">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0

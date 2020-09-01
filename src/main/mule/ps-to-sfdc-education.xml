@@ -10,6 +10,36 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<flow name="sfdc-sys-call-education" doc:id="5e5e9b0a-345a-474e-acc5-c1e94e0893cb" >
+		<http:request method="POST" doc:name="POST Create Education" doc:id="46abbe48-6535-46a3-aede-ffb64d79952e" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createEducation}" responseTimeout="120000">
+							<reconnect frequency="10000" count="3" />
+		</http:request>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0bc5c267-a594-4f89-a1ef-b81e74f70682" >
+				<ee:transform doc:name="Transform Message" doc:id="955060f4-e453-4a42-9d3a-c61639e83a2a" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA[p('db.aux.query.EduUpdate')]]></ee:set-variable>
+						<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(vars.originalPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.education'),
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if (error.description != null) (error.description) else "Error while Insert or Update in SFDC",
+	"tuuid": vars.aux_insert_response[index].uuid
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Ref to cf-aux-update-bulk" doc:id="694675be-7d62-4fa9-ad69-5c46fdb74397" name="cf-aux-update-bulk"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
 	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0">
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="92039aee-053d-49a3-9401-9d99612bff22" message="Trigger entered for create Education " />
 		<db:select doc:name="Select Education Records" doc:id="c9b23e18-df5b-44a1-bd7c-a87e877e96a3" target="PSEducation" config-ref="rpt-db-config">
@@ -260,11 +290,7 @@ payload map
 			</ee:message>
 		</ee:transform>
 						<logger level="DEBUG" doc:name="LOG INFO Education payload" doc:id="e158cd44-800e-4600-a8bd-589e46ab5da9" message="#[payload]" />
-						<try doc:name="Try" doc:id="70a22f5b-3c29-4278-8a31-2f621cf941af" >
-							<http:request method="POST" doc:name="POST Create Education" doc:id="46abbe48-6535-46a3-aede-ffb64d79952e" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createEducation}" responseTimeout="120000">
-							<reconnect frequency="10000" count="3" />
-		</http:request>
-						</try>
+						<flow-ref doc:name="Flow Ref to sfdc-sys-call-education" doc:id="3d6ff5d4-b303-42de-9a39-822c8fd7a062" name="sfdc-sys-call-education" />
 						<logger level="INFO" doc:name="LOG INFO Education payload" doc:id="5027aea2-4980-4848-8999-e83e848ee3ab" message="#[payload]" />
 						<ee:transform doc:name="DW Set Variable aux_data-update" doc:id="92d65e85-2478-437d-a59c-a62a491ff2d8" >
 							<ee:message >
@@ -309,7 +335,8 @@ output application/json
 	<sub-flow name="sf-persistance-education" doc:id="734cab7b-8ccd-4e00-a2e9-4dadb3fc6732" >
 		<set-variable value="#[(vars.PSEducation.LAST_UPDT_DTTM orderBy ($))[sizeOf(vars.PSEducation)-1]]" doc:name="Set Last update time variable" doc:id="a319553c-ac94-49d7-b961-ccc5562b6c07" variableName="max_LAST_UPDT_DTTM"/>
 		<http:request method="POST" doc:name="GET Contact From Salesforce" doc:id="1a7512a8-d3b7-4f7e-a923-6edfb27b6cdf" config-ref="sfdc-system-http-request-config" path="/${http.request.system.sfdc.path.queryContact}">
-				<http:body ><![CDATA[#[output application/json --- vars.PSEducation]]]></http:body>
+				<reconnect frequency="10000" count="3" />
+			<http:body ><![CDATA[#[output application/json --- vars.PSEducation]]]></http:body>
 			</http:request>
 		<ee:transform doc:name="DW JSON To Java" doc:id="c78a6736-d0c4-459a-941f-7ad974ba8da7" >
 			<ee:message >
