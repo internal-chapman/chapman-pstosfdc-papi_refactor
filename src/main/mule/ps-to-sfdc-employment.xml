@@ -34,18 +34,17 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 output application/json
 fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
 ---
-(payload default[]) map(value, index) ->{
-	"id": value.id default 'NA',
-	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.employment'),
+(vars.originalPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
 	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.employment'),
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
-	"status": if(value.success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
 	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
-	"description": if(value.success == true) "Record Insert or Updated in SFDC" else if (error.description != null) (error.description) else "Error while Insert or Update in SFDC",
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if (error.description != null) (error.description) else "Error while Insert or Update in SFDC",
 	"tuuid": vars.vAuxInsertPayload[index].GUID
 }
 ]]></ee:set-variable>
-						<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, XC_AQ_DEST_TYPE = :destType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+						<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
 where GUID = :tuuid"]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
@@ -85,6 +84,10 @@ payload]]></ee:set-payload>
 							<ee:variables>
 								<ee:set-variable variableName="vAuxInsertQuery"><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)"]]></ee:set-variable>
 								<ee:set-variable resource="dataweave/vAuxInsertEmployment.dwl" variableName="vAuxInsertPayload" />
+								<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
 							</ee:variables>
 						</ee:transform>
 						<flow-ref doc:name="Bulk insert to Aux DB" doc:id="07ed27e3-eaeb-40c0-9600-a64f13dae6ea"
@@ -98,7 +101,7 @@ payload]]></ee:set-payload>
 							doc:id="58992e0e-929a-4cf0-8139-69916770755f">
 							<ee:message />
 							<ee:variables>
-								<ee:set-variable variableName="vAuxUpdateQuery"><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, XC_AQ_DEST_TYPE = :destType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+								<ee:set-variable variableName="vAuxUpdateQuery"><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
 where GUID = :tuuid"]]></ee:set-variable>
 								<ee:set-variable resource="dataweave/vAuxUpdateEmployment.dwl" variableName="vAuxUpdatePayload" />
 							</ee:variables>
