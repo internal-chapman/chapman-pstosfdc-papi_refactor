@@ -146,7 +146,6 @@ if(vars.dbRelationshipPayload != null)(if(vars.dbRelationshipPayload.'RELATION_D
 				<logger level="INFO" doc:name="LOG INFO Contact exists" doc:id="504ed26a-6bed-4fd9-a343-89a5e22936c9" message="Account is a spouse. Skipping account and contact creation."/>
 			</otherwise>
 		</choice>
-		<flow-ref doc:name="Flow Ref to relationship flow" doc:id="23b8b6f2-592f-4a36-a5de-cdc7b4421f41" name="pf-ps-to-sfdc-non-spouses-relationshipFlow"/>
 	</sub-flow>
 	<flow name="pf-ps-to-sfdc-non-spouses-contactFlow" doc:id="415beae3-1c85-4069-bd4d-8cb912b33b78" >
 		<flow-ref doc:name="Retrieve Phone" doc:id="6f95cb11-0315-4972-9c74-2f968bdaf074" name="get-phone-number-sub-flow" target="phoneNumber" />
@@ -181,6 +180,7 @@ if(vars.dbRelationshipPayload != null)(if(vars.dbRelationshipPayload.'RELATION_D
 		<http:request method="POST" doc:name="POST Update Account" doc:id="2bd78883-c95f-4d81-8019-c07b0729811e" path="${http.request.system.sfdc.path.createAccount}" target="sfdcAccountsUpdateResponse" config-ref="sfdc-system-http-request-config">
 			<reconnect />
 		</http:request>
+		<flow-ref doc:name="Update AUX DB" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-non-spouses-contacts-ps-aux-sync-update" />
 		<logger level="INFO" doc:name="LOG INFO Updated account" doc:id="f53ba24a-6c87-4d61-bd4b-a12488e272c7" message="Updated Non spouses contact successfully" />
 		<error-handler >
 			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="68cb3487-c941-4b3a-b399-14b1f698cca5" >
@@ -224,12 +224,12 @@ vars.uuid map(value, index) -> {
 			</on-error-continue>
 		</error-handler>
 	</flow>
-	<flow name="pf-ps-to-sfdc-non-spouses-relationshipFlow" doc:id="921e1935-2e2f-4c69-92ea-d2db2b515822" >
+	<!-- <flow name="pf-ps-to-sfdc-non-spouses-relationshipFlow" doc:id="921e1935-2e2f-4c69-92ea-d2db2b515822" >
 		<ee:transform doc:name="DW Set original payload" doc:id="9b791420-551a-4803-ac53-0de16c8267fd">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/json
----
+-&#45;&#45;
 vars.originalPayload]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
@@ -238,9 +238,8 @@ vars.originalPayload]]></ee:set-payload>
 			<reconnect />
 		</http:request>
 		<logger level="INFO" doc:name="LOG INFO Created Relationship" doc:id="a8b38927-27f9-45a4-bb9a-a5ba3faa9cb1" message="Created Non spouses relationship successfully" />
-		<flow-ref doc:name="Update AUX DB" doc:id="cd4b7769-ead9-437d-aff9-e4b593d043dd" name="sf-non-spouses-contacts-ps-aux-sync-update" />
 		<logger level="INFO" doc:name="LOG END flow" doc:id="883ddefa-58f5-41d1-94da-05006dd0358f" message="Non Spouses Sync Completed Successfully." />
-	</flow>
+	</flow> -->
 	<sub-flow name="sf-get-mobile-phone-number" doc:id="ded2c825-810b-4bf7-95fe-2a9333e4c69f" >
 		<logger level="INFO" doc:name="Log Info" doc:id="7af25bb8-f1e9-402f-9b7b-96cead05b046" message="Retriving mobile phone for EmplId : #[vars.originalPayload[0].'EMPLID']"/>
 		<db:select doc:name="get mobile number" doc:id="5d5d6565-de54-4d1a-b1be-4ea0fb61998b" config-ref="rpt-db-config">

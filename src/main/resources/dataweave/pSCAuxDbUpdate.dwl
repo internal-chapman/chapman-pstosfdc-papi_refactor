@@ -11,6 +11,6 @@ vars.uuid map
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 	"status": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "COMPLETED" else 'ERROR',
 	"metadata": if((vars.sfdcPrimaryContactsResponse.data[$$].success  == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
-	"description": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Spouses Contacts Record Insert or Updated in SFDC" else 
-	"Error while upserting the data in salesforce"
+	"description": if((vars.sfdcPrimaryContactsResponse.data[$$].success == true) and (vars.sfdcSecondaryContactsResponse.data[$$].success == true)) "Spouses Contacts Record Insert or Updated in SFDC" else if ((vars.sfdcPrimaryContactsResponse.data[$$].success == false) or (vars.sfdcSecondaryContactsResponse.data[$$].success == false))
+	(((vars.sfdcPrimaryContactsResponse.data[$$].errors.message) or (vars.sfdcSecondaryContactsResponse.data[$$].errors.message)) reduce($$++ ' , ' ++$))[0 to size(((vars.sfdcPrimaryContactsResponse.data[$$].errors.message) or (vars.sfdcSecondaryContactsResponse.data[$$].errors.message)) reduce($$++ ' , ' ++$))] else "Error while Insert or Update in SFDC"
 }
