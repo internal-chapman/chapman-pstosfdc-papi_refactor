@@ -54,7 +54,7 @@ WHERE GUID= :GUID"]]></ee:set-variable>
 	</flow>
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
 		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_ExtAccount" doc:id="017263d7-8364-40ca-a3f0-37485911a2ff" variableName="currentTime_ExtAccount"/>
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_ExtAccount" doc:id="017263d7-8364-40ca-a3f0-37485911a2ff" variableName="currentTime_ExtAccount"/>
 		<os:retrieve doc:name="Retrieve lastProcessedTime_ExtAccount" doc:id="5a4b867d-dfb2-44b6-a2dd-c63a52e6d148" key="lastProcessedTime_ExtAccount" objectStore="Object_store" target="lastProcessedTime_ExtAccount">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

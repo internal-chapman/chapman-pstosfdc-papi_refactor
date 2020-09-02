@@ -46,7 +46,7 @@ output application/json
 	</flow>
 	<flow name="pf-ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce">
 		<logger level="INFO" doc:name="LOG START  Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Phone" doc:id="70f59333-c01b-44c2-b0e4-e31ea47faa3f" variableName="currentTime_Phone"/>
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_Phone" doc:id="70f59333-c01b-44c2-b0e4-e31ea47faa3f" variableName="currentTime_Phone"/>
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Phone" doc:id="a2e8d4b1-d50a-4c87-aa79-a185b05e321e" key="lastProcessedTime_Phone" objectStore="Object_store" target="lastProcessedTime_Phone">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

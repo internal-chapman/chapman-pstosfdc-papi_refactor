@@ -49,7 +49,7 @@ output application/json
 	</flow>
 	<flow name="pf-ps-to-sfdc-email-sync" doc:id="55bc9a72-8233-4f94-99a3-19683c1e2184">
 		<logger level="INFO" doc:name="LOG START Trigger Email Flow" doc:id="5d801724-9def-46c9-8d1b-f1a04eab9c12" message="Trigger entered for create Email sync" />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Email" doc:id="f5752444-a857-4b9e-9627-581f4360683c" variableName="currentTime_Email"/>
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_Email" doc:id="f5752444-a857-4b9e-9627-581f4360683c" variableName="currentTime_Email"/>
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Email" doc:id="46f4e2f5-0f5b-4831-b89d-e71e1c1e4918" key="lastProcessedTime_Email" objectStore="Object_store" target="lastProcessedTime_Email">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

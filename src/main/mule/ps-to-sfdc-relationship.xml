@@ -41,7 +41,7 @@ where GUID = :tuuid"]]></ee:set-variable>
 	<flow name="pf-relationship" doc:id="996c86a2-e6ad-420f-863b-4c606435bfc8" >
 		<http:listener doc:name="Listener" doc:id="fd0e122f-a10d-4a1b-bb5e-1444a45891ab" config-ref="HTTP_Listener_config2" path="/relation"/>
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="185e82da-08b5-486c-9536-77b4b98e10e8" message='#["Relationship sync started from PS to SFDC"]'/>
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Relationship" doc:id="1e08afb5-1cc1-47be-bd7d-090d9d9c3202" variableName="currentTime_Relationship" />
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_Relationship" doc:id="1e08afb5-1cc1-47be-bd7d-090d9d9c3202" variableName="currentTime_Relationship" />
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Relationship" doc:id="5101feac-2f6a-41d4-b327-d7167ac7f142" objectStore="Object_store" key="lastProcessedTime_Relationship" target="lastProcessedTime_Relationship">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

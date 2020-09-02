@@ -42,7 +42,7 @@ fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
 	</flow>
 	<flow name="pf-ps-to-sfdc-education" doc:id="ff04972f-f986-413b-944c-75c86d579bf0">
 		<logger level="INFO" doc:name="LOG Flow for create education" doc:id="92039aee-053d-49a3-9401-9d99612bff22" message="Trigger entered for create Education " />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Education" doc:id="b25cdab9-faf7-4895-b2cc-6a53fcd59046" variableName="currentTime_Education"/>
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_Education" doc:id="b25cdab9-faf7-4895-b2cc-6a53fcd59046" variableName="currentTime_Education"/>
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Education" doc:id="e521447e-c412-4a18-b69c-73b2d2945f8d" key="lastProcessedTime_Education" objectStore="Object_store" target="lastProcessedTime_Education">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

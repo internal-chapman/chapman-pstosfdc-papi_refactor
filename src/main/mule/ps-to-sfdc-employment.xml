@@ -55,7 +55,7 @@ where GUID = :tuuid"]]></ee:set-variable>
 	<flow name="pf-employment" doc:id="ffebc1b9-787e-44ff-8720-91d86914a5ef">
 		<http:listener doc:name="Listener" doc:id="2b3ec47c-f722-44e3-b847-7d3021f0c836" path="/employment" config-ref="HTTP_Listener_config2"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="81d491e9-788d-4b66-95d2-1f25d84cdede" message='#["Employment sync started from PS to SFDC"]' />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Employment" doc:id="b7ed0f53-8306-4808-9cde-419238e110a5" variableName="currentTime_Employment" />
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_Employment" doc:id="b7ed0f53-8306-4808-9cde-419238e110a5" variableName="currentTime_Employment" />
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Employment" doc:id="6f00c01c-4dea-4c14-83d6-73d1ee42fb33" key="lastProcessedTime_Employment" objectStore="Object_store" target="lastProcessedTime_Employment">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

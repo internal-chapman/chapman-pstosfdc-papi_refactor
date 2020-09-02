@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
 		<http:listener doc:name="Listener" doc:id="a244c771-acee-4c36-9115-5178dd111617" path="/nspouse" config-ref="HTTP_Listener_config2"/>
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync flow"]' />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_NonSpouses" doc:id="f9b51ae4-3d5b-4bd6-a62a-66fd4e04bf81" variableName="currentTime_NonSpouses" />
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_NonSpouses" doc:id="f9b51ae4-3d5b-4bd6-a62a-66fd4e04bf81" variableName="currentTime_NonSpouses" />
 		<os:retrieve doc:name="Retrieve lastProcessedTime_NonSpouses" doc:id="d1e66eef-136f-4760-ba99-450561177bef" key="lastProcessedTime_NonSpouses" objectStore="Object_store" target="lastProcessedTime_NonSpouses">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>

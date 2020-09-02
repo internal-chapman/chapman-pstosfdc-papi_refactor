@@ -45,7 +45,7 @@ output application/json
 	</flow>
 	<flow name="pf-ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
-		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Address" doc:id="c3449f54-9d27-4b1b-beab-8a608d4fe4a7" variableName="currentTime_Address"/>
+		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable currentTime_Address" doc:id="c3449f54-9d27-4b1b-beab-8a608d4fe4a7" variableName="currentTime_Address"/>
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Address" doc:id="ba109461-e402-4301-b110-6b4882cf2524" key="lastProcessedTime_Address" objectStore="Object_store" target="lastProcessedTime_Address">
 			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
 		</os:retrieve>
