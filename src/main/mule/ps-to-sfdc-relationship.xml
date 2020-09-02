@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="sfdc-sys-call-relationship" doc:id="84fde2a7-2210-409f-86ae-f0372830173d" >
 		<http:request method="POST" doc:name="POST create realtionship" doc:id="fffd4ab8-983a-4140-8b39-44363548ffd3" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createRelationship}"/>
 		<error-handler >
@@ -39,8 +40,11 @@ where GUID = :tuuid"]]></ee:set-variable>
 	</flow>
 	<flow name="pf-relationship" doc:id="996c86a2-e6ad-420f-863b-4c606435bfc8" >
 		<http:listener doc:name="Listener" doc:id="fd0e122f-a10d-4a1b-bb5e-1444a45891ab" config-ref="HTTP_Listener_config2" path="/relation"/>
-		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="1e08afb5-1cc1-47be-bd7d-090d9d9c3202" variableName="lastProcessedTime"/>
-		<logger level="INFO" doc:name="LOG INFO Start" doc:id="185e82da-08b5-486c-9536-77b4b98e10e8" message='#["Relationship sync started from PS to SFDC at" ++ vars.lastProcessedTime]'/>
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="185e82da-08b5-486c-9536-77b4b98e10e8" message='#["Relationship sync started from PS to SFDC"]'/>
+		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Relationship" doc:id="1e08afb5-1cc1-47be-bd7d-090d9d9c3202" variableName="currentTime_Relationship" />
+		<os:retrieve doc:name="Retrieve lastProcessedTime_Relationship" doc:id="5101feac-2f6a-41d4-b327-d7167ac7f142" objectStore="Object_store" key="lastProcessedTime_Relationship" target="lastProcessedTime_Relationship">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<db:select doc:name="Relationship Data" doc:id="c257f8bd-16d4-4aee-80b2-ed83fc3eba4b" config-ref="rpt-db-config">
 			<db:sql >SELECT EMPLID as &quot;EMPLID&quot;, 
 EMPLID_RELATED as &quot;RELATEDEMPLID&quot;, 
@@ -52,7 +56,7 @@ END_DT             as &quot;RELENDDATE&quot;,
 XC_AQ_ENDED        as &quot;RELENDED&quot;
 FROM SYSADM.PS_XC_AQ_INRELA_VW where EMPLID = '1195726' </db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": vars.lastProcessedTime_Relationship
 }]]]></db:input-parameters>
 		</db:select>
 		<batch:job jobName="ps-to-sfdc-relationship-batch" doc:id="d86f8f87-954d-4896-bec9-876b5d9e6e92" maxFailedRecords="-1">
@@ -136,6 +140,8 @@ where GUID = :tuuid"]]></ee:set-variable>
 				<logger level="INFO" doc:name="LOG END Summary" doc:id="57b27402-7919-4e37-a1e0-0dd869c13ea5" message="Relationship Sync Completed from PS to SF: Batch Summary: #[payload]"/>
 			</batch:on-complete>
 		</batch:job>
-		<logger level="INFO" doc:name="Logger" doc:id="07b3329b-3fe5-465a-99df-4238c67a338d" />
+		<os:store doc:name="Store lastProcessedTime_Relationship" doc:id="1cd1baf3-5621-4a5a-8b96-cbd245781cb0" key="lastProcessedTime_Relationship" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.currentTime_Relationship]]]></os:value>
+		</os:store>
 	</flow>
 </mule>

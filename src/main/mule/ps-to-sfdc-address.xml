@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="sfdc-sys-api-call-address" doc:id="d7e569e7-1315-40bb-8334-5e6b4c565c1c" >
 		<http:request method="POST" doc:name="POST Create Address" doc:id="a32ac09f-03f7-45ba-98f0-ea9e612846a2" path="${http.request.system.sfdc.path.createAddress}" responseTimeout="100000000" target="sdfc_address_result" config-ref="sfdc-system-http-request-config">
 						<reconnect frequency="10000" count="3" />
@@ -44,11 +45,15 @@ output application/json
 	</flow>
 	<flow name="pf-ps-to-sfdc-address-sync" doc:id="a1b41d1f-fe61-428b-b052-42fbe7472c31">
 		<logger level="INFO" doc:name="LOG START  Trigger Address" doc:id="832f4e9c-5b96-4696-86d8-0d49313b5ace" message="Trigger entered for create address" />
+		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Address" doc:id="c3449f54-9d27-4b1b-beab-8a608d4fe4a7" variableName="currentTime_Address"/>
+		<os:retrieve doc:name="Retrieve lastProcessedTime_Address" doc:id="ba109461-e402-4301-b110-6b4882cf2524" key="lastProcessedTime_Address" objectStore="Object_store" target="lastProcessedTime_Address">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<db:select doc:name=" Select Addresses from PS DB" doc:id="402b7a12-7a32-4833-8fc5-e6a8453ef506" target="PSAddress" config-ref="rpt-db-config">
 			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.address')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": vars.lastProcessedTime_Address
 }]]]></db:input-parameters>
 		</db:select>
 		<choice doc:name="Choice" doc:id="4561687d-8e74-46e4-9682-8ac6d1074bfa" >
@@ -72,6 +77,9 @@ vars.PSAddress]]></ee:set-payload>
 				<logger level="INFO" doc:name="Log Info" doc:id="82efccef-becf-4b68-8231-4c15e549eb1e" message="No new record for Address"/>
 			</otherwise>
 		</choice>
+		<os:store doc:name="Store lastProcessedTime_Address" doc:id="c3711b45-ade1-426b-a2be-065e44d67ebf" key="lastProcessedTime_Address" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.currentTime_Address]]]></os:value>
+		</os:store>
 	</flow>
 	 <flow name="pf-address-sync-process-batch" doc:id="52784469-8dc5-444b-b271-e78deff56580" >
 		<batch:job jobName="address-sync-process" doc:id="b139b952-fa77-4e4e-8217-2bbcb2a0ac86" maxFailedRecords="-1">

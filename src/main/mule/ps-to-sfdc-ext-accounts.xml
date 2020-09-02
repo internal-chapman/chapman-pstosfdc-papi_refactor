@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	
 	<flow name="sfdc-sys-call-ext-account" doc:id="6392664a-eba2-4d1a-86aa-d52ca8d9e088" >
 		<http:request method="POST" doc:name="POST Create Ext Accounts" doc:id="4a27cdaf-9edc-46ce-9ef9-b66e82b273a7" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.extOrgAccounts}">
@@ -53,11 +54,15 @@ WHERE GUID= :GUID"]]></ee:set-variable>
 	</flow>
 	<flow name="pf-ext-accounts-sync-process" doc:id="cb7ad9aa-d871-4552-a7d8-ba55e7967683">
 		<logger level="INFO" doc:name="LOG START" doc:id="34c44034-0840-43bd-a5d5-89105619a65d" message='#["Starting account sync batch"]' />
+		<set-variable value="#[now()]" doc:name="Set Variable currentTime_ExtAccount" doc:id="017263d7-8364-40ca-a3f0-37485911a2ff" variableName="currentTime_ExtAccount"/>
+		<os:retrieve doc:name="Retrieve lastProcessedTime_ExtAccount" doc:id="5a4b867d-dfb2-44b6-a2dd-c63a52e6d148" key="lastProcessedTime_ExtAccount" objectStore="Object_store" target="lastProcessedTime_ExtAccount">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<db:select doc:name="Select accounts data from PS db" doc:id="9858ae83-c1df-48e4-8844-1b7b22c7a175" config-ref="rpt-db-config">
 			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.extAccounts')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessTime
+	"LAST_UPDT_DTTM": vars.lastProcessedTime_ExtAccount
 }]]]></db:input-parameters>
 		</db:select>
 		<choice doc:name="Choice" doc:id="0dde44cb-95c9-45e1-904b-fc107449ad72" >
@@ -88,6 +93,9 @@ payload map(account, index) -> {
 				<logger level="INFO" doc:name="Log Info" doc:id="390b197a-5b93-4a93-85b7-98ba3d6286fa" message="No new record for External Account"/>
 			</otherwise>
 		</choice>
+		<os:store doc:name="Store lastProcessedTime_ExtAccount" doc:id="b4879755-465c-4fad-8ee8-a61d79145796" objectStore="Object_store" key="lastProcessedTime_ExtAccount">
+			<os:value ><![CDATA[#[vars.currentTime_ExtAccount]]]></os:value>
+		</os:store>
 	</flow>
 	<flow name="pf-ext-accounts-sync-process-batch" doc:id="bb7e26f4-b1bf-44c4-ac1a-5e54a57907d7" >
 		<batch:job jobName="ext-accounts-sync-process" doc:id="3b3129ee-fb6a-4029-b284-59e19478e9fc" maxFailedRecords="-1">

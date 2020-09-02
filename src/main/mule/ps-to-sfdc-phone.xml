@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="sfdc-sys-api-call-phone" doc:id="50dfab99-3fce-43e2-9da4-b1d25b75d68b" >
 		<http:request method="POST" doc:name="POST Create Address" doc:id="36cd069a-b9b5-4df5-b101-5f24c53f4367" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createAddress}" target="sdfc_address_result">
 						<reconnect frequency="10000" count="3" />
@@ -45,11 +46,15 @@ output application/json
 	</flow>
 	<flow name="pf-ps-to-sfdc-phone-sync" doc:id="a5634c47-faea-414f-befc-81175fe9b6ce">
 		<logger level="INFO" doc:name="LOG START  Trigger Phone Flow" doc:id="de47de29-0a13-4c03-bd1c-c79f56a21f61" message="Trigger entered for create Email sync" />
+		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Phone" doc:id="70f59333-c01b-44c2-b0e4-e31ea47faa3f" variableName="currentTime_Phone"/>
+		<os:retrieve doc:name="Retrieve lastProcessedTime_Phone" doc:id="a2e8d4b1-d50a-4c87-aa79-a185b05e321e" key="lastProcessedTime_Phone" objectStore="Object_store" target="lastProcessedTime_Phone">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<db:select doc:name="Select Phone from PS DB" doc:id="9d5426fb-de36-4dfb-a999-b57539db6277" config-ref="rpt-db-config" target="PSPhone">
 			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.phone')]</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": vars.lastProcessedTime_Phone
 }]]]></db:input-parameters>
 			
 		
@@ -75,6 +80,9 @@ vars.PSPhone]]></ee:set-payload>
 				<logger level="INFO" doc:name="Log Info" doc:id="1b26b028-15f4-4045-ac06-e0f0dfc865dc" message="No new record for Phone"/>
 			</otherwise>
 		</choice>
+		<os:store doc:name="Store lastProcessedTime_Phone" doc:id="f399b8e9-18f5-4eab-926d-3467c84c79d0" key="lastProcessedTime_Phone" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.currentTime_Phone]]]></os:value>
+		</os:store>
 	</flow>
 	<flow name="pf-phone-sync-process-batch" doc:id="6ba067f8-e53b-4c7f-b602-4bd48fcee7b4" >
 		<batch:job jobName="phone-sync-process" doc:id="68ca8a79-ce78-4fd0-878c-2b8c3a4534d5" maxFailedRecords="-1">

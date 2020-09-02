@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="pf-non-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
 		<http:listener doc:name="Listener" doc:id="a244c771-acee-4c36-9115-5178dd111617" path="/nspouse" config-ref="HTTP_Listener_config2"/>
-		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="f9b51ae4-3d5b-4bd6-a62a-66fd4e04bf81" variableName="lastProcessedTime"/>
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Non Spouses sync flow"]' />
+		<set-variable value="#[now()]" doc:name="Set Variable current time" doc:id="f9b51ae4-3d5b-4bd6-a62a-66fd4e04bf81" variableName="currentTime_NonSpouses" />
+		<os:retrieve doc:name="Retrieve lastProcessedTime_NonSpouses" doc:id="d1e66eef-136f-4760-ba99-450561177bef" key="lastProcessedTime_NonSpouses" objectStore="Object_store" target="lastProcessedTime_NonSpouses">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<db:select doc:name="Select Non spouses data" doc:id="df876a6c-afb9-4f9e-ad98-68b74e7b0039" config-ref="rpt-db-config" target="DBConData">
 			<db:sql>select EMPLID       as &quot;EMPLID&quot;
 ,XC_AQ_CAE_CATEGORY as &quot;CAE&quot;
@@ -60,7 +64,7 @@ where ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:
 or LAST_UPDATE_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM, 'YYYY-MM-DD HH24:MI:SS.FF')
 or LAST_DTTM_UPDATE &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD HH24:MI:SS.FF') ) AND EMPLID = '1195726'</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": vars.lastProcessedTime_NonSpouses
 }]]]></db:input-parameters>
 		</db:select>
 		<choice doc:name="Choice" doc:id="ffdbece8-9638-4d33-a82e-f7ea7f3e8e88" >
@@ -106,6 +110,9 @@ output application/java
 				<logger level="INFO" doc:name="Log Info" doc:id="13f975fe-9332-4de1-b469-428cd5076972" message="No new record for Non Spouses"/>
 			</otherwise>
 		</choice>
+		<os:store doc:name="Store lastProcessedTime_NonSpouses" doc:id="822b4369-7d72-4ad9-b17b-fcebf5a6c20f" key="lastProcessedTime_NonSpouses" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.currentTime_NonSpouses]]]></os:value>
+		</os:store>
 	</flow>
 	<sub-flow name="sf-contacts-non-spouses" doc:id="63c77740-4f43-41bc-b44d-7d12fa162d98" >
 		<ee:transform doc:name="DW Set Variables" doc:id="799ff089-8182-413f-bac9-8bc2211e5583" >

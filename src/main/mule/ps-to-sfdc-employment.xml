@@ -54,16 +54,17 @@ where GUID = :tuuid"]]></ee:set-variable>
 	</flow>
 	<flow name="pf-employment" doc:id="ffebc1b9-787e-44ff-8720-91d86914a5ef">
 		<http:listener doc:name="Listener" doc:id="2b3ec47c-f722-44e3-b847-7d3021f0c836" path="/employment" config-ref="HTTP_Listener_config2"/>
-		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="b7ed0f53-8306-4808-9cde-419238e110a5" variableName="lastProcessedTime" />
-		<logger level="INFO" doc:name="LOG START"
-			doc:id="81d491e9-788d-4b66-95d2-1f25d84cdede"
-			message='#["Employment sync started from PS to SFDC at " ++ vars.lastProcessedTime]' />
+		<logger level="INFO" doc:name="LOG START" doc:id="81d491e9-788d-4b66-95d2-1f25d84cdede" message='#["Employment sync started from PS to SFDC"]' />
+		<set-variable value="#[now()]" doc:name="Set Variable currentTime_Employment" doc:id="b7ed0f53-8306-4808-9cde-419238e110a5" variableName="currentTime_Employment" />
+		<os:retrieve doc:name="Retrieve lastProcessedTime_Employment" doc:id="6f00c01c-4dea-4c14-83d6-73d1ee42fb33" key="lastProcessedTime_Employment" objectStore="Object_store" target="lastProcessedTime_Employment">
+			<os:default-value ><![CDATA[#[p('default.lastProcessedTime')]]]></os:default-value>
+		</os:retrieve>
 		<db:select doc:name="Fetch Data From ps DB" doc:id="c2cf9510-78ac-47ba-96b3-f79ac62c7438"
 			config-ref="rpt-db-config">
 			<reconnect frequency="10000" count="3" />
 			<db:sql>#[p('db.rpt.query.employment')]</db:sql>
 			<db:input-parameters><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": vars.lastProcessedTime_Employment
 }]]]></db:input-parameters>
 		</db:select>
 		<batch:job jobName="ps-to-sfdc-employment-batch" doc:id="5f5ee033-2e6c-4982-b1b9-b04092128de3" maxFailedRecords="-1">
@@ -128,5 +129,8 @@ payload]]></ee:set-payload>
 					message='Employments Sync Completed from PS to SF: Batch Summary: #[payload]' />
 			</batch:on-complete>
 		</batch:job>
+		<os:store doc:name="Store lastProcessedTime_Employment" doc:id="461ba3f1-e334-47d0-b19e-55157d2e1c7e" key="lastProcessedTime_Employment" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.currentTime_Employment]]]></os:value>
+		</os:store>
 	</flow>
 </mule>
