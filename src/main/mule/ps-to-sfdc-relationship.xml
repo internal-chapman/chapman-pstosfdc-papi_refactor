@@ -1,22 +1,140 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="sfdc-sys-call-relationship" doc:id="84fde2a7-2210-409f-86ae-f0372830173d" >
+		<http:request method="POST" doc:name="POST create realtionship" doc:id="fffd4ab8-983a-4140-8b39-44363548ffd3" config-ref="sfdc-system-http-request-config" path="${http.request.system.sfdc.path.createRelationship}"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4f557f4d-873c-47ed-938e-63388c281c2a" >
+				<ee:transform doc:name="DW Set variables"
+							doc:id="ee51a837-6ab8-48a9-aa39-5829171912a8">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(vars.originalPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
+	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.relationship'),
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if (error.description != null) (error.description) else "Error while Insert or Update in SFDC",
+	"tuuid": vars.vAuxInsertPayload[index].GUID
+}]]></ee:set-variable>
+								<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+where GUID = :tuuid"]]></ee:set-variable>
+							
+</ee:variables>
+						</ee:transform>
+				<flow-ref doc:name="Aux DB update" doc:id="b40c0fc2-4818-4aaa-9444-0353039f1446" name="cf-aux-update-bulk"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
 	<flow name="pf-relationship" doc:id="996c86a2-e6ad-420f-863b-4c606435bfc8" >
-		<logger level="INFO" doc:name="Logger" doc:id="185e82da-08b5-486c-9536-77b4b98e10e8" />
+		<http:listener doc:name="Listener" doc:id="fd0e122f-a10d-4a1b-bb5e-1444a45891ab" config-ref="HTTP_Listener_config2" path="/relation"/>
+		<set-variable value="#['1920-08-27 13:50:40.50']" doc:name="Set Variable" doc:id="1e08afb5-1cc1-47be-bd7d-090d9d9c3202" variableName="lastProcessedTime"/>
+		<logger level="INFO" doc:name="LOG INFO Start" doc:id="185e82da-08b5-486c-9536-77b4b98e10e8" message='#["Relationship sync started from PS to SFDC at" ++ vars.lastProcessedTime]'/>
 		<db:select doc:name="Relationship Data" doc:id="c257f8bd-16d4-4aee-80b2-ed83fc3eba4b" config-ref="rpt-db-config">
-			<db:sql >SELECT EMPLID as EMPLID, EMPLID_RELATED as &quot;RELATEDEMPLID&quot;, RELATION_DESCR as &quot;RELATIONSHIP&quot;, XC_AQ_REVERSE_RELA as &quot;REVRELATIONSHIP&quot; FROM SYSADM.PS_XC_AQ_INRELA_VW where ( LAST_UPDT_DTTM &gt; TO_TIMESTAMP( :LAST_UPDT_DTTM , 'YYYY-MM-DD') AND EMPLID = '1195726' </db:sql>
+			<db:sql >SELECT EMPLID as &quot;EMPLID&quot;, 
+EMPLID_RELATED as &quot;RELATEDEMPLID&quot;, 
+RELATION_DESCR as &quot;RELATIONSHIP&quot;,
+XC_AQ_REVERSE_RELA as &quot;REVRELATIONSHIP&quot; ,
+START_DT           as &quot;STARTDATE&quot;,
+XC_AQ_STARTED      as &quot;STARTED&quot;,
+END_DT             as &quot;RELENDDATE&quot;,
+XC_AQ_ENDED        as &quot;RELENDED&quot;
+FROM SYSADM.PS_XC_AQ_INRELA_VW where EMPLID = '1195726' </db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"LAST_UPDT_DTTM": vars.lastProcessedTime
+}]]]></db:input-parameters>
 		</db:select>
 		<batch:job jobName="ps-to-sfdc-relationship-batch" doc:id="d86f8f87-954d-4896-bec9-876b5d9e6e92" maxFailedRecords="-1">
 			<batch:process-records >
 				<batch:step name="ps-to-sfdc-relationship-sync" doc:id="bb2e5136-e643-4b3e-8971-ec3309f97fdb" acceptPolicy="ALL">
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="35b64651-6eb0-479d-a76a-31072379ec7c" size="20"/>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="35b64651-6eb0-479d-a76a-31072379ec7c" size="20">
+						<logger level="INFO" doc:name="LOG INFO"
+							doc:id="c727a402-3b87-4ada-b3e6-5632757c784e" message="Relationship records size : #[sizeOf(payload)]" />
+						<ee:transform doc:name="DW Set variables"
+							doc:id="a9b7b8a1-87ab-497e-add7-94109ce8686e">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="vAuxInsertQuery"><![CDATA["Insert into SYSADM.PS_XC_AQ_AUX_TBL (GUID, XC_AQ_SOURCE, XC_AQ_SOURCE_ID, XC_AQ_SOURCE_TYPE, XC_AQ_DESTINATION, XC_AQ_DEST_ID, XC_AQ_DEST_TYPE, XC_AQ_STATUS, DTTM_CREATED, DTTM_MODIFIED,  XC_AQ_METADATA, DESCR250) values (:GUID, :XC_AQ_SOURCE, :XC_AQ_SOURCE_ID, :XC_AQ_SOURCE_TYPE, :XC_AQ_DESTINATION, :XC_AQ_DEST_ID, :XC_AQ_DEST_TYPE, :XC_AQ_STATUS,  :DTTM_CREATED, :DTTM_MODIFIED, :XC_AQ_METADATA, :DESCR250)"]]></ee:set-variable>
+								<ee:set-variable variableName="vAuxInsertPayload" ><![CDATA[%dw 2.0
+output application/json
+fun gui() = using(id = uuid())(id[0 to 7] ++  id[9])
+---
+payload map (value, index) -> {
+	GUID: gui() default '',
+	XC_AQ_SOURCE: "PS-CS",
+	XC_AQ_SOURCE_ID: value.EMPLID default '',
+	XC_AQ_SOURCE_TYPE: p('auxDBColumns.XC_AQ_SOURCE_TYPE.relationship') default '',
+	XC_AQ_DESTINATION: '-',
+	XC_AQ_DEST_ID: '-',
+	XC_AQ_DEST_TYPE: p('auxDBColumns.XC_AQ_DEST_TYPE.relationship') default '',
+	XC_AQ_STATUS: 'IN PROGRESS',
+	DTTM_CREATED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	DTTM_MODIFIED: now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	XC_AQ_METADATA: "CS to SFDC",
+	DESCR250: "Employee data transfer from Campus Solution to SFDC"
+}]]></ee:set-variable>
+								<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+							
+</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Bulk insert to Aux DB" doc:id="42650b33-ffa9-484e-8eac-6596ee75d6b1"
+							name="cf-aux-insert-bulk" target="relationshipAuxSyncPayload" />
+						<logger level="INFO" doc:name="LOG INFO Request"
+							doc:id="845114a3-f0a3-4525-ba04-f2085200754f" message='Relationship record request to system:  #[payload]' />
+						<flow-ref doc:name="Flow Ref to sfdc-sys-call-relationship" doc:id="1333a746-d763-497e-bb58-bf63f7dde6c1" name="sfdc-sys-call-relationship" />
+						<logger level="INFO" doc:name="LOG INFO Response"
+							doc:id="87e33f64-6cd1-481f-9737-b8f682ff91eb" message="Relationship record response : #[payload]" />
+						<ee:transform doc:name="DW Set variables"
+							doc:id="047f3f85-e04c-4b3c-9eb5-4339d8fd26f5">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable variableName="vAuxUpdatePayload" ><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(vars.originalPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
+	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.relationship'),
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if(value.success == false)(value.errors.message reduce($$++ ' , ' ++$))[0 to size(value.errors.message reduce($$++ ' , ' ++$))] else "Error while Insert or Update in SFDC",
+	"tuuid": vars.vAuxInsertPayload[index].GUID
+}]]></ee:set-variable>
+								<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+where GUID = :tuuid"]]></ee:set-variable>
+							
+</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Bulk update to Aux DB" doc:id="42c9131a-a995-417d-a97d-99442844cad5"
+							name="cf-aux-update-bulk" />
+						<logger level="INFO" doc:name="LOG END Records"
+							doc:id="72076524-e7a6-4764-8df5-09b3bb1fa28d" message='#["Relationship Records synced with SFDC"]' />
+					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
+			<batch:on-complete>
+				<logger level="INFO" doc:name="LOG END Summary" doc:id="57b27402-7919-4e37-a1e0-0dd869c13ea5" message="Relationship Sync Completed from PS to SF: Batch Summary: #[payload]"/>
+			</batch:on-complete>
 		</batch:job>
 		<logger level="INFO" doc:name="Logger" doc:id="07b3329b-3fe5-465a-99df-4238c67a338d" />
 	</flow>
