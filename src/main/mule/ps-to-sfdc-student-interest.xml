@@ -9,12 +9,17 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef">
-		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Employment sync started" />
+		<http:listener doc:name="Listener" doc:id="c8ba2897-7037-4e1f-a02d-8de8dedb0a42" path="/test" config-ref="HTTP_Listener_config3"/>
+		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Student Interest  sync started" />
+		<set-variable value="#[now() as Date as String]" doc:name="Set Variable currentTime_Student_Interest" doc:id="42d8e230-5a69-4f96-9626-d6ec72e3e5f5" variableName="currentTime_Student_Interest" />
+		<os:retrieve doc:name="Retrieve lastProcessedTime_Student_Interest" doc:id="5098daa8-84cd-46e7-8f42-9c7c6a2f130a" key="lastProcessedTime_Student_Interest" objectStore="Object_store" target="lastProcessedTime_Student_Interest">
+						<os:default-value><![CDATA[#[p('default.lastProcessTime')]]]></os:default-value>
+					</os:retrieve>
 		<flow-ref doc:name="Flow Ref To sf-ps-to-sfdc-student-interest-type-upsert" doc:id="d24c5db3-5a26-43a1-8052-6ee442e20d24" name="sf-ps-to-sfdc-student-interest-type-upsert"/>
 		<db:select doc:name="Fetch Count From People Soft db" doc:id="241a87a9-8cf5-4d55-befd-b18efffcb8fd" config-ref="rpt-db-config" >
-			<db:sql >SELECT count(*) cnt FROM sysadm.PS_XC_AQ_STUINT_VW</db:sql>
+			<db:sql >SELECT count(*) cnt FROM sysadm.PS_XC_AQ_STUINT_VW WHERE CAST(LAST_UPDT_DTTM as DATE) &gt; To_timestamp(:LAST_UPDT_DTTM, 'YYYY-MM-DD')</db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime
+	"LAST_UPDT_DTTM": (vars.lastProcessedTime_Student_Interest)
 }]]]></db:input-parameters>
 		</db:select>
 		<choice doc:name="Check Student Count" doc:id="13461270-e88d-4b3d-8742-a1a5f834aa6b" >
@@ -30,12 +35,12 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<set-variable value="#[1 to 1]" doc:name="SET  FV batch_list" doc:id="c6fb2768-31e0-43c9-a4f6-001599597b42" variableName="batch_list" />
 				<foreach doc:name="For Each" doc:id="815a8769-7076-40d6-85eb-681e94a4d022" collection="#[vars.batch_list]" >
 					<logger level="INFO" doc:name="LOG INFO" doc:id="85540f29-88ed-4640-8bfe-6394b4855d04" message='#["Fetching the records for batch: " ++ vars.counter]'/>
-					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="cad3d4e3-480e-434f-990a-d5e9957cbc5a" config-ref="rpt-db-config" >
-						<db:sql >SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,XC_AQ_DEG_LVL,LAST_UPDT_DTTM FROM (
-  SELECT s.EMPLID,s.INSTITUTION_NAME,s.DESCR_GROUP_TYPE,si.DESCR_STDNT_GROUP,s.DESCR_POSITION,s.START_DT_DAY,s.START_DT_MONTH,s.START_DT_YEAR,s.END_DT_DAY,s.END_DT_MONTH,s.END_DT_YEAR,s.XC_AQ_DEG_LVL,s.LAST_UPDT_DTTM,RANK() OVER (ORDER BY s.EMPLID , s.LAST_UPDT_DTTM) as my_rank  FROM SYSADM.PS_XC_AQ_STUINT_VW s LEFT JOIN SYSADM.PS_XC_AQ_LL_INT_VW si ON s.DESCR_GROUP_TYPE = si.DESCR_GROUP_TYPE  )
-WHERE EMPLID IN ('0000332') </db:sql>
-						<db:input-parameters ><![CDATA[#[{
-	"LAST_UPDT_DTTM": vars.lastProcessedTime,
+					<db:select doc:name="Fetch Batch Data From PeopleSoft db" doc:id="cad3d4e3-480e-434f-990a-d5e9957cbc5a" config-ref="rpt-db-config">
+						<db:sql>SELECT EMPLID,INSTITUTION_NAME,DESCR_STDNT_GROUP,DESCR_GROUP_TYPE,DESCR_POSITION,START_DT_DAY,START_DT_MONTH,START_DT_YEAR,END_DT_DAY,END_DT_MONTH,END_DT_YEAR,XC_AQ_DEG_LVL ,LAST_UPDT_DTTM FROM (
+  SELECT s.EMPLID,s.INSTITUTION_NAME,s.DESCR_GROUP_TYPE,si.DESCR_STDNT_GROUP,s.DESCR_POSITION,s.START_DT_DAY,s.START_DT_MONTH,s.START_DT_YEAR,s.END_DT_DAY,s.END_DT_MONTH,s.END_DT_YEAR,s.XC_AQ_DEG_LVL,s.LAST_UPDT_DTTM,RANK() OVER (ORDER BY s.EMPLID , s.LAST_UPDT_DTTM) as my_rank  FROM SYSADM.PS_XC_AQ_STUINT_VW s LEFT JOIN SYSADM.PS_XC_AQ_LL_INT_VW si ON s.DESCR_GROUP_TYPE = si.DESCR_GROUP_TYPE WHERE CAST(LAST_UPDT_DTTM as DATE) &gt; To_timestamp(:LAST_UPDT_DTTM, 'YYYY-MM-DD') )
+WHERE my_rank &gt;= :start_offset  AND my_rank &lt;= :end_offset AND EMPLID IN ('0000332')</db:sql>
+						<db:input-parameters><![CDATA[#[{
+	"LAST_UPDT_DTTM": (vars.lastProcessedTime_Student_Interest),
 	"start_offset": ((vars.counter-1)* vars.batch_size) + 1,
 	"end_offset": ((vars.counter-1) * vars.batch_size) + vars.batch_size
 }]]]></db:input-parameters>
@@ -64,7 +69,44 @@ payload map(value, index) ->{
 					<logger level="INFO" doc:name="LOG INFO" doc:id="2313b54f-2965-41e8-9365-1c743b621fc7" message="#[payload]" />
 					<try doc:name="Try" doc:id="4cb2d958-338f-4da3-b261-5cb080b083d0" >
 						<logger level="INFO" doc:name="LOG INFO Sync Start" doc:id="12b1b85f-a3f0-4061-b09f-382b10662dc2" message='#["Sending request to system api to sync StudentInterest for batch: " ++ vars.counter]'/>
-						<http:request method="POST" doc:name="POST Student Interest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest"/>
+						<try doc:name="Try" doc:id="1aa0e7cf-f5ab-4701-909b-d85541ec83ea" >
+							<http:request method="POST" doc:name="POST Student Interest Upsert" doc:id="989c816a-e72a-4614-b8da-a864302b3fbf" config-ref="sfdc-system-http-request-config" path="/student-interest" />
+							<error-handler >
+								<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="67632b89-43d4-4026-9f62-db419d45a3b1" >
+									<ee:transform doc:name="DW Set vAuxUpdatePayload" doc:id="5fde4ee0-0072-4e63-b248-a2191aaeb2b5">
+										<ee:message />
+										<ee:variables>
+											<ee:set-variable variableName="vAuxUpdatePayload"><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(vars.vAuxInsertPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
+	"XC_AQ_SOURCE_TYPE": p('auxDBColumns.XC_AQ_SOURCE_TYPE.studentInterestType'),
+    "XC_AQ_DEST_TYPE": p('auxDBColumns.XC_AQ_DEST_TYPE.studentInterestType'),
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else  "Error while Insert or Update in SFDC" ,
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if(payload[index].success == false) (payload[index].errors.message reduce($$++ ' , ' ++$))[0 to size(payload[index].errors.message reduce($$++ ' , ' ++$))] else if(error.description != null) error.description else "Error Occurred while sending request to system api",
+	"tuuid": value.GUID,
+}]]></ee:set-variable>
+											<ee:set-variable variableName="vAuxUpdateQuery"><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'),
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = :metadata,
+DESCR250 = :description,
+XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE,
+XC_AQ_DEST_TYPE = :XC_AQ_DEST_TYPE
+where GUID = :tuuid"]]></ee:set-variable>
+										</ee:variables>
+									</ee:transform>
+									<flow-ref doc:name="Flow Ref To cf-aux-update-bulk" doc:id="ec000ffc-aca9-4f44-ab60-009355921510" name="cf-aux-update-bulk"/>
+								</on-error-continue>
+							</error-handler>
+						</try>
 						<logger level="INFO" doc:name="LOG INFO Sync End" doc:id="453bdb98-49be-4058-b7e0-3cbefcdc25d4" message="#[payload]" />
 						<choice doc:name="Check Error Records" doc:id="e2fdcb4b-82b6-4991-b4ac-cb3a728eb692" >
 							<when expression="#[sizeOf(payload[?(sizeOf($.errors default [])&gt;0)]  default []) &gt; 0]" >
@@ -173,7 +215,7 @@ fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
 	<sub-flow name="sf-ps-to-sfdc-student-interest-type-upsert" doc:id="39350610-21f8-4a2c-ad28-da65b1885f50" >
 		<logger level="INFO" doc:name="LOG INFO Start" doc:id="310bca3a-aa6d-4ddb-9d7c-dbb9f690ed29" message="Starting Student Interest Type Sync To SFDC"/>
 		<db:select doc:name="Retrieve Student Interet Types From PS DB" doc:id="168c5105-8d42-4ba8-a41f-e68d1ed2c9eb" config-ref="rpt-db-config">
-			<db:sql >SELECT DESCR_STDNT_GROUP,DESCR_GROUP_TYPE FROM SYSADM.PS_XC_AQ_LL_INT_VW</db:sql>
+			<db:sql>SELECT DESCR_STDNT_GROUP,DESCR_GROUP_TYPE FROM SYSADM.PS_XC_AQ_LL_INT_VW</db:sql>
 		</db:select>
 		<foreach doc:name="For Each" doc:id="05fac7d2-576e-4fc5-9547-6e7ce1f078d5" batchSize="100" collection="#[payload]">
 			<ee:transform doc:name="DW Java To JSON" doc:id="2ef072fa-5fba-4357-b56d-e0dcfa60601e">
@@ -211,7 +253,44 @@ DESCR250: "Std Int type Update In SFDC"
 				</ee:variables>
 			</ee:transform>
 			<flow-ref doc:name="Flow Ref To cf-aux-insert-bulk" doc:id="d1e742cc-739a-49c8-9505-afbe5b0608b5" name="cf-aux-insert-bulk" />
-			<http:request method="POST" doc:name="POST Student Interest Type Upsert" doc:id="250d613b-4b7c-45f2-ac68-6474b3d71189" config-ref="sfdc-system-http-request-config" path="/student-interest-type"/>
+			<try doc:name="Try" doc:id="ef51fb11-ae07-411a-9141-4e37429652a9" >
+				<http:request method="POST" doc:name="POST Student Interest Type Upsert" doc:id="250d613b-4b7c-45f2-ac68-6474b3d71189" config-ref="sfdc-system-http-request-config" path="/student-interest-type" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="89145506-7c3c-41bc-8489-ac9f1aa4c6c5" >
+						<ee:transform doc:name="DW Set vAuxUpdatePayload" doc:id="e62b8c8a-6756-44ff-ae07-5482fa01fbaa">
+							<ee:message />
+							<ee:variables>
+								<ee:set-variable variableName="vAuxUpdatePayload"><![CDATA[%dw 2.0
+output application/json
+fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
+---
+(vars.vAuxInsertPayload default[]) map(value, index) ->{
+	"id": payload[index].id default 'NA',
+	"XC_AQ_SOURCE_TYPE": p('auxDBColumns.XC_AQ_SOURCE_TYPE.studentInterestType'),
+    "XC_AQ_DEST_TYPE": p('auxDBColumns.XC_AQ_DEST_TYPE.studentInterestType'),
+	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
+	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
+	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else  "Error while Insert or Update in SFDC" ,
+	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if(payload[index].success == false) (payload[index].errors.message reduce($$++ ' , ' ++$))[0 to size(payload[index].errors.message reduce($$++ ' , ' ++$))] else if(error.description != null) error.description else "Error Occurred while sending request to system api",
+	"tuuid": value.GUID,
+}]]></ee:set-variable>
+								<ee:set-variable variableName="vAuxUpdateQuery"><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL 
+set 
+XC_AQ_DESTINATION = 'SFDC', 
+XC_AQ_DEST_ID = :id,
+DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'),
+XC_AQ_STATUS = :status,
+XC_AQ_METADATA = :metadata,
+DESCR250 = :description,
+XC_AQ_SOURCE_TYPE = :XC_AQ_SOURCE_TYPE,
+XC_AQ_DEST_TYPE = :XC_AQ_DEST_TYPE
+where GUID = :tuuid"]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference To cf-aux-update-bulk" doc:id="680b4ed3-d2c7-4d15-84c5-47ef7d55e9fc" name="cf-aux-update-bulk"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
 			<ee:transform doc:name="DW Set vAuxUpdatePayload" doc:id="be7e111e-8763-4328-9b4b-57a7abf95ba8" >
 				<ee:message >
 				</ee:message>

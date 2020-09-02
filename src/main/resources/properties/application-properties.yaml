@@ -72,6 +72,7 @@ auxDBColumns:
     employment: "PS_XC_AQ_EMPLOY_VW"
     education: "PS_XC_AQ_EDDTLS_VW"
     studentInterest: "PS_XC_AQ_STUINT_VW"
+    studentInterestType: "PS_XC_AQ_LL_INT_VW"
   XC_AQ_DEST_TYPE:
     contacts: "Contacts"
     extAccounts: "LL-Institution"
@@ -81,3 +82,4 @@ auxDBColumns:
     employment: "Employment"
     education: "Education"
     studentInterest: "AQB_StudentInterest__c"
+    studentInterestType: "AQB__LLStudentInterestType__c"
