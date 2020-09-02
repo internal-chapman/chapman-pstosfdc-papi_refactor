@@ -114,13 +114,14 @@ fun size(message) = if(sizeOf(message)> 245) 245 else (sizeOf(message)-1)
 (vars.originalPayload default[]) map(value, index) ->{
 	"id": payload[index].id default 'NA',
 	"sourceType": p('auxDBColumns.XC_AQ_SOURCE_TYPE.relationship'),
+	"destType": p('auxDBColumns.XC_AQ_DEST_TYPE.relationship'),
 	"now": now() as String {format: 'yyyy-MM-dd hh:mm:ss.SSS'},
 	"status": if(payload[index].success == true) "COMPLETED" else 'ERROR',// ERROR or COMPLETED
 	"metadata": if(payload[index].success == true) "Record Insert or Updated in SFDC" else "Error while Insert or Update in SFDC",
 	"description": if(payload[index].success == true) "Record Insert or Updated in SFDC" else if(value.success == false)(value.errors.message reduce($$++ ' , ' ++$))[0 to size(value.errors.message reduce($$++ ' , ' ++$))] else "Error while Insert or Update in SFDC",
 	"tuuid": vars.vAuxInsertPayload[index].GUID
 }]]></ee:set-variable>
-								<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_SOURCE_TYPE = :sourceType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
+								<ee:set-variable variableName="vAuxUpdateQuery" ><![CDATA["Update SYSADM.PS_XC_AQ_AUX_TBL set XC_AQ_DESTINATION = 'SFDC', XC_AQ_DEST_ID = :id, XC_AQ_DEST_TYPE = :destType, XC_AQ_SOURCE_TYPE = :sourceType, DT_TIMESTAMP = TO_TIMESTAMP( :now ,'YYYY-MM-DD HH24:MI:SS.FF'), XC_AQ_STATUS = :status, XC_AQ_METADATA = :metadata, DESCR250 = :description
 where GUID = :tuuid"]]></ee:set-variable>
 							
 </ee:variables>
