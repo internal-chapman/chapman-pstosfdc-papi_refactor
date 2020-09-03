@@ -1,3 +1,3 @@
-# chapman-salesforce-api-refactor
+# chapman-pstosfdc-papi
 
-key=sapi#ChapmanUniv
+key=CU@key
