@@ -92,7 +92,6 @@ where GUID = :tuuid"]]></ee:set-variable>
 		</error-handler>
 	</flow>
 	<flow name="pf-student-interest" doc:id="dcffb463-88f1-4b43-b053-c1b59f7bfeef">
-		<http:listener doc:name="Listener" doc:id="c8ba2897-7037-4e1f-a02d-8de8dedb0a42" path="/test" config-ref="HTTP_Listener_config2"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="78b217f2-2bbd-46c2-9b26-d62d96221628" message="Student Interest  sync started" />
 		<set-variable value="#[now() as Date as String]" doc:name="Set Variable currentTime_Student_Interest" doc:id="42d8e230-5a69-4f96-9626-d6ec72e3e5f5" variableName="currentTime_Student_Interest" />
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Student_Interest" doc:id="5098daa8-84cd-46e7-8f42-9c7c6a2f130a" key="lastProcessedTime_Student_Interest" objectStore="Object_store" target="lastProcessedTime_Student_Interest">

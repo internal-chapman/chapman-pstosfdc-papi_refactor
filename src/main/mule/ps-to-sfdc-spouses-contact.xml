@@ -9,11 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
-	<http:listener-config name="HTTP_Listener_config2" doc:name="HTTP Listener config" doc:id="66a7bc9c-ac9c-46c4-a501-96d54beb4939" >
-		<http:listener-connection host="0.0.0.0" port="8085" />
-	</http:listener-config>
 	<flow name="pf-spouses-contacts-sync" doc:id="26125323-af3a-45ee-af1e-3d85f5aced61">
-		<http:listener doc:name="Listener" doc:id="d7d7a072-1647-4c46-96d3-92adc3d77fea" config-ref="HTTP_Listener_config2" path="/spouse"/>
 		<logger level="INFO" doc:name="LOG START" doc:id="d6da63cd-6fce-43e6-8f0a-c240b69cc0e6" message='#["Starting Spouses sync batch"]' />
 		<set-variable value="#[now() as LocalDateTime replace 'T' with(' ')]" doc:name="Set Variable current time" doc:id="9e3f914c-65cf-4419-ba50-3bb8d4d9aa08" variableName="currentTime_Spouses" />
 		<os:retrieve doc:name="Retrieve lastProcessedTime_Spouses" doc:id="6acecf4a-8abd-407e-94dc-89085b93bdc3" key="lastProcessedTime_Spouses" target="lastProcessedTime_Spouses" objectStore="Object_store">
