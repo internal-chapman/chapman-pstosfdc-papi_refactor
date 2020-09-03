@@ -13,7 +13,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="started">
 		<scheduler doc:name="Scheduler" doc:id="1d06e247-93b4-409c-8b12-46e92c2e2518" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="24" timeUnit="HOURS" startDelay="24"/>
+				<cron expression="0 0 22 ? * *"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="LOG START  " doc:id="bde540b8-7d75-488f-880b-5e0d4e96967e" />
