@@ -30,7 +30,7 @@ http:
           createRelationship: "relationship"
           queryContact: "query"
 default.lastProcessedTime: "2000-08-11 13:50:40.50"
-default.lastProcessTime: "2000-08-11 13:50:40.50"
+default.lastProcessTime: "1980-08-11"
 db:
   rpt:
     host: "psdb-cs92rpt.chapman.edu"
@@ -69,7 +69,7 @@ report:
     initialState: "started"  #customercrm.schedulerFlow.initialState started stopped
   time:
     period: "PT"
-    interval: "60"
+    interval: "1440"
     designator: "M"
 auxDBColumns:
   XC_AQ_SOURCE_TYPE:
@@ -98,4 +98,4 @@ auxDBColumns:
     
 email:
   error:
-    sendNotification: "false"
+    sendNotification: "true"

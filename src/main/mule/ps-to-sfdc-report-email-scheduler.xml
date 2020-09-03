@@ -13,16 +13,17 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="ps-to-sfdc-report-email-schedulerFlow" doc:id="999614a6-6c2c-4da7-9542-2f26042a3efb" initialState="started">
 		<scheduler doc:name="Scheduler" doc:id="1d06e247-93b4-409c-8b12-46e92c2e2518" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="1" startDelay="2" timeUnit="HOURS"/>
+				<fixed-frequency frequency="24" timeUnit="HOURS" startDelay="24"/>
 			</scheduling-strategy>
 		</scheduler>
-		<logger level="INFO" doc:name="LOG START " doc:id="bde540b8-7d75-488f-880b-5e0d4e96967e" />
+		<logger level="INFO" doc:name="LOG START  " doc:id="bde540b8-7d75-488f-880b-5e0d4e96967e" />
 		<flow-ref doc:name="Flow Ref To ps-to-sfdc-report-email-api " doc:id="31aa6c6a-8819-4253-a693-f6d3d57998c8" name="ps-to-sfdc-report-email-api"/>
 	</flow>
 	<flow name="ps-to-sfdc-report-email-api" doc:id="e0ad022f-6168-4494-a8fb-d1d6cb1e1ac2" >
 		<logger level="INFO" doc:name="LOG INFO Query Start Time" doc:id="c3551c22-a8fe-498e-bbb6-6f97039baa56" message='#["Query execution started:" ++ now()]'/>
+		<set-variable value="#[now() as LocalDateTime as String replace ('T') with (&quot; &quot;)]" doc:name="Set Variable currentDateTimeEmailReport" doc:id="fa26f0b7-a952-4361-b529-012053d20f91" variableName="currentDateTimeEmailReport"/>
 		<os:retrieve doc:name="os timeStampKey Retrieve" doc:id="311b7fb7-f6e7-412e-a1a8-97bb366211be" key="timeStampKey" objectStore="Object_store">
-			<os:default-value ><![CDATA[#[(now() - (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator')))]]]></os:default-value>
+			<os:default-value ><![CDATA[#[(now() - |P1D|) as LocalDateTime as String replace ('T') with (" ")]]]></os:default-value>
 		</os:retrieve>
 		<ee:transform doc:name="DW Set Variables" doc:id="b995798a-8002-4a89-926c-1cb256afeed4" >
 			<ee:message >
@@ -31,7 +32,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 				<ee:set-variable variableName="queryStartDateTime" ><![CDATA[%dw 2.0
 output application/java
 ---
-payload as LocalDateTime {format: "yyyy-MM-dd HH:mm:ss"} as String {format: "yyyy-MM-dd HH:mm:ss"}]]></ee:set-variable>
+payload]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<db:select doc:name="Retrive  Error Records Last One hour" doc:id="91ea2d1d-d6df-4b25-b0e6-95447526a532" config-ref="aux-db-config" target="vErrorRecords">
@@ -49,7 +50,7 @@ output application/json
 }]]></ee:set-payload>
 					</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="vEmailSubject" ><![CDATA['Hourly Error Report']]></ee:set-variable>
+				<ee:set-variable variableName="vEmailSubject" ><![CDATA['Daily Error Report for PeopleSoft to Salesforce Sync']]></ee:set-variable>
 				<ee:set-variable variableName="vAttachment" ><![CDATA[%dw 2.0
 output application/json
 ---
@@ -98,8 +99,8 @@ valueSet(payload)]]></ee:set-variable>
 		</ee:transform>
 		<flow-ref doc:name="Flow Ref To cf-email-implementation" doc:id="7c0f6ee7-0b3e-4672-b1c4-926c174de934" name="cf-email-implementation"/>
 		<logger level="INFO" doc:name="LOG INFO Email Report Response" doc:id="1e44cc52-d554-4b00-9d88-b0b792bfc294" message='"Response from Email Application: " #[payload]'/>
-		<os:store doc:name="OS Update timeStapmKey" doc:id="e8119ed8-4ce7-4a15-b6a7-12626b782891" key="timeStampKey" objectStore="Object_store">
-			<os:value ><![CDATA[#[if(!(error.description != null)) (vars.queryStartDateTime ++ (p('report.time.period') ++ p('report.time.interval') ++ p('report.time.designator'))) else vars.queryStartDateTime]]]></os:value>
+		<os:store doc:name="OS Update timeStampKey" doc:id="e8119ed8-4ce7-4a15-b6a7-12626b782891" key="timeStampKey" objectStore="Object_store">
+			<os:value ><![CDATA[#[if(!(error.description != null)) (vars.currentDateTimeEmailReport) else vars.currentDateTimeEmailReport]]]></os:value>
 		</os:store>
 		<logger level="INFO" doc:name="LOG END Email Report Completed" doc:id="cd141e59-0372-470f-9f19-19ecf1952d9e" message="Email Report Sent Successfully"/>
 		<error-handler >
