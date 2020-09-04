@@ -92,6 +92,7 @@ payload map(value, index) ->{
 						<ee:transform doc:name="DW Map Payload from PS To SFDC" doc:id="8fa3d7b1-d33b-4255-990d-a8211f7f26ff">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
 output application/json
 
 var campus = [
@@ -270,7 +271,7 @@ var school = [
 ---
 payload map 
 {
-  "AQB__Contact__c": ($."EMPLID" as String),
+  "AQB__Contact__c": (leftPad($.EMPLID,9,"0") as String),
   "AQB__Institution__c": "a0u2E00000B1IyhQAF",
   "AQB__Campus__c": if(campus contains $.CAMPUS) ($.CAMPUS) else '',
   "AQB__IsPrimaryDegree__c": trim($.XC_AQ_PRI_DEG) default '',
