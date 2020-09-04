@@ -10,6 +10,11 @@
 	<munit:config name="ps-to-sfdc-student-interest-test-suite.xml" />
 	<munit:test name="ps-to-sfdc-student-interest-test-suite-pf-student-interestTest" doc:id="ead33e70-75f5-4d33-adb4-e5a31b1a1980" description="Test">
 		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="fbfbf5c8-00d5-4eeb-8038-16036e72cf00" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To sf-ps-to-sfdc-student-interest-type-upsert" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
 			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="3cc68cb2-931a-4131-9ad9-4c1f1c48cbca" processor="db:select">
 				<munit-tools:with-attributes >
 					<munit-tools:with-attribute whereValue="Fetch Count From People Soft db" attributeName="doc:name" />
@@ -58,6 +63,46 @@
 			<munit-tools:verify-call doc:name="Verify call LOG END" doc:id="9314f7c9-86e0-4b1f-8a2a-5d91e2042a78" processor="logger" atLeast="1">
 				<munit-tools:with-attributes >
 					<munit-tools:with-attribute whereValue="LOG END" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="ps-to-sfdc-student-interest-test-sf-ps-to-sfdc-student-interest-type-upsertsuiteTest" doc:id="985e86e9-deeb-4f7c-8dbd-ffa2736545d2">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="996bf1c4-a842-48ac-83cb-ebb3f785f094" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Retrieve Student Interet Types From PS DB" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/stdInterestTypeSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="06f6cb72-e6d4-46d1-a04c-f86ece020048" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-insert-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="5c7c68a6-a799-4582-a377-5416e08c9653" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST Student Interest Type Upsert" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/stdInterestTypeSFDCresponse.json')]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="15992ce1-d35e-46a4-956a-875b8eb863d6" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Flow Ref To cf-aux-update-bulk" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow Ref To sf-ps-to-sfdc-student-interest-type-upsert" doc:id="8589e3a6-cdf8-417e-9fd7-05b102283da8" name="sf-ps-to-sfdc-student-interest-type-upsert"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call LOG END Success" doc:id="86828ccc-78c2-4c7e-a26e-1509ed12d385" processor="logger" atLeast="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="LOG END Success" attributeName="doc:name" />
 				</munit-tools:with-attributes>
 			</munit-tools:verify-call>
 		</munit:validation>

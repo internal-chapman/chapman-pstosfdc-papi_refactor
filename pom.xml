@@ -60,6 +60,7 @@
 						</formats>
 						<ignoreFiles>
 							<ignoreFile>global-error-handler.xml</ignoreFile>
+							<ignoreFile>ps-to-sfdc-employment.xml</ignoreFile>
 						</ignoreFiles>
 						<ignoreFlows>
  						  	<ignoreFlow>pf-address-sync-process-batch</ignoreFlow>
@@ -67,6 +68,7 @@
 							<ignoreFlow>pf-email-sync-process-batch</ignoreFlow>
 							<ignoreFlow>pf-ext-accounts-sync-process-batch</ignoreFlow>
 							<ignoreFlow>pf-phone-sync-process-batch</ignoreFlow>
+							<ignoreFlow>pf-employment</ignoreFlow>
 	  					</ignoreFlows>
 					</coverage>
 				</configuration>
