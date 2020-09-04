@@ -18,7 +18,11 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 	<http:request-config name="sfdc-system-http-request-config"
 		doc:name="HTTP Request configuration" doc:id="4bc0f721-0f9c-4864-ab42-de756db99902" basePath="${http.request.system.sfdc.basePath}" doc:description="SFDC system config." responseTimeout="600000">
 		<http:request-connection host="${http.request.system.sfdc.host}"
-			port="${http.request.system.sfdc.port}" />
+			port="${http.request.system.sfdc.port}" >
+			<http:authentication >
+				<http:basic-authentication username="${secure::http.request.system.sfdc.username}" password="${secure::http.request.system.sfdc.password}" />
+			</http:authentication>
+		</http:request-connection>
 	</http:request-config>
 	<http:request-config name="persistence-system-http-request-config"
 		doc:name="HTTP Request configuration" doc:id="92931d4e-a3bc-4494-a92d-6026fc3e84e1" basePath="${http.request.system.persistence.basePath}" doc:description="Persistence system config.">

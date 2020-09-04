@@ -20,6 +20,10 @@ http:
       sfdc:
         host: "localhost"
         port: "8082"
+        #username: "chapman_sfdc_user"
+        username: "![Sg5jZQACP+G6I8wlW+QG/EX9lADCONME]"
+        #password: "chap@sfdc"
+        password: "![UE+zOKqxM8b/ec+9ikeazg==]"
         basePath: "/api/sfdc"
         path:
           createContact: "contacts"
