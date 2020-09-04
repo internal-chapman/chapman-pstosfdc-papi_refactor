@@ -66,7 +66,9 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 		<email:send doc:id="b9e24655-1c31-41d3-9074-fdf37765763a" config-ref="Email_SMTP" subject="#[vars.vEmailSubject]" doc:name="Send Email" fromAddress="mulesofterrorrpt@chapman.edu">
 			<email:to-addresses >
 				<email:to-address value="avanish.rai@apisero.com" />
-				<email:to-address value="deepanshu.gupta@apisero.com" />
+				<email:to-address value="tumbleso@chapman.edu" />
+				<email:to-address value="megenney@chapman.edu" />
+				<email:to-address value="sfdcadmin@chapman.edu" />
 			</email:to-addresses>
 			<email:body contentType="text/html" encoding="UTF-8">
 				<email:content ><![CDATA[#[vars.vEmailBody]]]></email:content>
