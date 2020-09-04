@@ -8,7 +8,7 @@
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="ps-to-sfdc-non-spouses-test-suite.xml" />
-	<munit:test name="ps-to-sfdc-non-spouses-test-suite-pf-non-spouses-contacts-syncTest" doc:id="6d7325da-eaf3-4373-b641-019a578369ad" description="Test">
+	<munit:test name="ps-to-sfdc-non-spouses-test-suite-pf-non-spouses-contacts-syncTest" doc:id="6d7325da-eaf3-4373-b641-019a578369ad" description="Test" ignore="true">
 		<munit:behavior >
 			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="c9e955b5-a4e7-491f-818a-c5f1b8b6a423" processor="db:select">
 				<munit-tools:with-attributes >
