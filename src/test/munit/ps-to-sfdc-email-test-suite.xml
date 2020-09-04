@@ -16,7 +16,7 @@
 				</munit-tools:with-attributes>
 				<munit-tools:then-return >
 					<munit-tools:variables >
-						<munit-tools:variable key="PSEmail" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/emailSELECT.json')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="PSEmail" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/emailSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
 					</munit-tools:variables>
 				</munit-tools:then-return>
 			</munit-tools:mock-when>

@@ -22,7 +22,7 @@
 			</munit-tools:mock-when>
 			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="bed643e8-d7bf-45b6-b79e-b77863745ab1" processor="http:request">
 				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="POST Create Accounts" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="POST Create Account" attributeName="doc:name" />
 				</munit-tools:with-attributes>
 				<munit-tools:then-return >
 					<munit-tools:variables >
@@ -32,7 +32,7 @@
 			</munit-tools:mock-when>
 			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="215b7b9e-3078-430c-957c-fc1222ee6fe6" processor="http:request">
 				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="POST Create nonSpouse Contact" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="POST Create Contact" attributeName="doc:name" />
 				</munit-tools:with-attributes>
 				<munit-tools:then-return >
 					<munit-tools:variables >
@@ -40,25 +40,15 @@
 					</munit-tools:variables>
 				</munit-tools:then-return>
 			</munit-tools:mock-when>
-			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="b0dc63e0-de89-4f44-bfce-ce61e491d77c" processor="http:select">
+			<munit-tools:mock-when doc:name="Mock when http:request" doc:id="b0dc63e0-de89-4f44-bfce-ce61e491d77c" processor="http:request">
 				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="POST Account Update" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="POST Update Account" attributeName="doc:name" />
 				</munit-tools:with-attributes>
 				<munit-tools:then-return >
 					<munit-tools:variables >
 						<munit-tools:variable key="sfdcAccountsUpdateResponse" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/nonSpousesAccUpdateRes.json')]" mediaType="application/json" encoding="UTF-8" />
 					</munit-tools:variables>
 				</munit-tools:then-return>
-			</munit-tools:mock-when>
-			<munit-tools:mock-when doc:name="Mock when http:select" doc:id="e8cd1e13-5470-4858-90f2-c1bbc1fca1be" processor="http:request">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="POST Account Update" attributeName="doc:name" />
-				</munit-tools:with-attributes>
-			</munit-tools:mock-when>
-			<munit-tools:mock-when doc:name="Mock when http:select" doc:id="52b77cd6-4cc4-4101-996b-561f3a299a39" processor="http:request">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="POST Create Relationship" attributeName="doc:name" />
-				</munit-tools:with-attributes>
 			</munit-tools:mock-when>
 			<munit-tools:mock-when doc:name="Mock when flow-ref" doc:id="942fe13c-ad87-4320-b08a-66974367b331" processor="flow-ref">
 				<munit-tools:with-attributes >
@@ -77,7 +67,7 @@
 		<munit:validation >
 			<munit-tools:verify-call doc:name="Verify call LOG END" doc:id="f736741c-d0e8-45d1-8a2d-1a1121856bc4" processor="logger" atLeast="1">
 				<munit-tools:with-attributes >
-					<munit-tools:with-attribute whereValue="LOG END" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="LOG INFO Updated account" attributeName="doc:name" />
 				</munit-tools:with-attributes>
 			</munit-tools:verify-call>
 		</munit:validation>

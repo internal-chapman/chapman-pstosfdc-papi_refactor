@@ -19,6 +19,9 @@
 				</munit-tools:then-return>
 			</munit-tools:mock-when>
 			<munit-tools:mock-when doc:name="Mock when db:select" doc:id="fdcf9fcd-9dbe-4bd0-8d30-79354a11f135" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Retrive  Error Records Last One hour" attributeName="doc:name" />
+				</munit-tools:with-attributes>
 				<munit-tools:then-return >
 					<munit-tools:variables >
 						<munit-tools:variable key="vErrorRecords" value="#[MunitTools::getResourceAsString('sample_data/PSDbOutputs/errorRecordsSELECT.json')]" mediaType="application/json" encoding="UTF-8" />
